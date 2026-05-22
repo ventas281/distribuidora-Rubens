@@ -58,6 +58,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let selectedCategory = 'all';
 
   const categoryItems = document.querySelectorAll('.category-item');
+  const allCategoryButton = document.querySelector('.category-item[data-category="all"]');
   const categoryList = document.getElementById('category-list');
   const toggleFiltersButton = document.getElementById('toggle-filters');
   const filterControls = document.getElementById('filter-controls');
@@ -103,7 +104,7 @@ window.addEventListener('DOMContentLoaded', () => {
     esmalte: ['Base Agua', 'Base Solvente', 'Esmalte Industrial'],
     epoxica: ['Pisos', 'Industrial', 'Alto Tráfico'],
     aerosoles: ['Normal', 'Metálico', 'Neón', 'Alta Temperatura'],
-    madera: ['Tintas', 'Barnices base agua', 'Barnices base esmalte', 'Lacas', 'Nitrocelulosas', 'Selladores', 'Resanadores', 'Aditivos'],
+    madera: ['Tintas', 'Barnices entintados', 'Barnices base agua', 'Barnices base esmalte', 'Lacas', 'Nitrocelulosas', 'Selladores', 'Primer para Madera', 'Poliuretanos', 'Resanadores', 'Aditivos'],
     aplicadores: ['Brochas', 'Rodillos'],
     diluyentes: ['Alberca y Tráfico'],
     primerarios: ['Primerarios'],
@@ -605,50 +606,67 @@ window.addEventListener('DOMContentLoaded', () => {
       name: 'Esmalack',
       description: 'Esmalte alquidálico de excelente acabado y resistencia, ideal para herrería, metal, madera y acabados decorativos.',
       detailText: 'Esmalack es un esmalte alquidálico de excelente acabado y resistencia, ideal para herrería, metal, madera y acabados decorativos.',
-      price: 409,
+      price: 310,
       sizeOptions: [
-        { id: '1lt', label: '1 Lt', price: 409 },
-        { id: '4lts', label: '4 Lts', price: 1471 },
-        { id: '19lts', label: '19 Lts', price: 6439 },
+        { id: '1lt', label: '1 Lt', price: 310 },
       ],
-      cantidad: '1 lt / 4 lts / 19 lts',
+      cantidad: '1 lt',
       popular: true,
       recommended: true,
       rating: 4,
       colorSwatch: '#fff8df',
       image: '',
       palette: [
-        { name: 'Aluminio', color: '#9ca6b3' },
-        { name: 'Blanco Ostión', color: '#f7f6de' },
         { name: 'Oro', color: '#7e8370' },
-        { name: 'Gris Perla', color: '#a8aaad' },
         { name: 'Cobre', color: '#79575a' },
+        { name: 'Aluminio', color: '#9ca6b3' },
         { name: 'Café Anodizado', color: '#2d2b2d' },
-        { name: 'Blanco Mate', color: '#f7f7f2' },
-        { name: 'Negro Mate', color: '#111111' },
-        { name: 'Marfil', color: '#fbf8d9' },
-        { name: 'Amarillo Limón', color: '#f9e758' },
-        { name: 'Amarillo Sol', color: '#fac64a' },
-        { name: 'Canela', color: '#cd9378' },
-        { name: 'Roble', color: '#8a674f' },
-        { name: 'Amarillo Óxido', color: '#bf9552' },
-        { name: 'Rojo Óxido', color: '#87342d' },
-        { name: 'Castaño Oscuro', color: '#604b3e' },
-        { name: 'Marrón', color: '#5f2321' },
-        { name: 'Rosa Mexicano', color: '#e76f83' },
-        { name: 'Lila', color: '#74559b' },
-        { name: 'Azul Modelo', color: '#293f78' },
-        { name: 'Azul Triángulo', color: '#172758' },
-        { name: 'Azul Fino', color: '#84b7cc' },
-        { name: 'Azul Holanda', color: '#5a8fbd' },
-        { name: 'Verde Bosque', color: '#285758' },
-        { name: 'Blanco Satinado', color: '#f6f6f2' },
-        { name: 'Blanco Brillante', color: '#ffffff' },
-        { name: 'Turquesa', color: '#64aaa2' },
-        { name: 'Verde Fresco', color: '#83bd62' },
-        { name: 'Verde Jardín', color: '#32704d' },
-        { name: 'Verde Esmeralda', color: '#1c202c' },
-        { name: 'Negro Brillante', color: '#050505' },
+      ],
+    });
+
+    products.push({
+      id: 'esmalte-xtrong',
+      category: 'esmalte',
+      categoryLabel: categoryLabels['esmalte'],
+      subcategory: 'Base Solvente',
+      name: 'Xtrong',
+      description: 'Esmalte de alta resistencia para acabados durables en metal y madera, con buena cobertura y brillo uniforme.',
+      detailText: 'Esmalte Xtrong de alta resistencia para acabados durables en metal y madera, con buena cobertura, brillo uniforme y amplia gama de colores.',
+      price: 226,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 226 },
+        { id: '4lts', label: '4 Lts', price: 732 },
+        { id: '19lts', label: '19 Lts', price: 3203 },
+      ],
+      cantidad: '1 lt / 4 lts / 19 lts',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#f7f3dd',
+      image: '',
+      palette: [
+        { name: 'Blanco Ostión - EX-0229', color: '#f7f3dd' },
+        { name: 'Marfil - EX-0773', color: '#f8f5c8' },
+        { name: 'Amarillo Sol - EX-0777', color: '#f4b84a' },
+        { name: 'Amarillo Limón - EX-0700', color: '#eee84f' },
+        { name: 'Beige - EX-0778', color: '#d5c2aa' },
+        { name: 'Crema - EX-0772', color: '#f8f3b7' },
+        { name: 'Naranja Fuego - EX-0600', color: '#df4a36' },
+        { name: 'Amarillo Óxido - EX-0775', color: '#a98245' },
+        { name: 'Roble - EX-0658', color: '#947363' },
+        { name: 'Gris Perla - EX-0113', color: '#9fa2a5' },
+        { name: 'Rojo Chino - EX-0500', color: '#a72e33' },
+        { name: 'Rojo Óxido - EX-0555', color: '#86392f' },
+        { name: 'Café Óxido - EX-0557', color: '#49332b' },
+        { name: 'Azul Fino - EX-0337', color: '#8bc4df' },
+        { name: 'Azul Tráfico - EX-3300', color: '#272a65' },
+        { name: 'Verde Océano - EX-0443', color: '#2f5a48' },
+        { name: 'Verde Claro - EX-0441', color: '#bde9c7' },
+        { name: 'Azul Holandés - EX-0335', color: '#5389bd' },
+        { name: 'Verde Industrial - 30GG 18450', color: '#3a8a75' },
+        { name: 'Verde Fresco - 94YY 48629', color: '#96cd66' },
+        { name: 'Turquesa - EX-0442', color: '#5fb1a9' },
+        { name: 'Azul Modelo - EX-0384', color: '#293d85' },
       ],
     });
 
@@ -786,10 +804,10 @@ window.addEventListener('DOMContentLoaded', () => {
       name: 'Mancha Sayer',
       description: 'Tinta base aceite universal compatible con procesos de barnizado, ideal para entintar madera, resaltar la veta natural y lograr acabados decorativos profesionales.',
       detailText: 'Tinta base aceite universal compatible con procesos de barnizado, ideal para entintar madera, resaltar la veta natural y lograr acabados decorativos profesionales.',
-      price: 91,
+      price: 67,
       sizeOptions: [
-        { id: 'cuarto-lt', label: '1/4 Lt', price: 91 },
-        { id: '1lt', label: '1 Lt', price: 303 },
+        { id: 'cuarto-lt', label: '1/4 Lt', price: 67 },
+        { id: '1lt', label: '1 Lt', price: 224 },
       ],
       cantidad: '1/4 lt / 1 lt',
       popular: true,
@@ -847,10 +865,10 @@ window.addEventListener('DOMContentLoaded', () => {
       name: 'Entona Sayer',
       description: 'Tinta base alcohol de secado rápido ideal para acabados profesionales sobre madera. Excelente penetración, color uniforme y gran compatibilidad con procesos de barnizado.',
       detailText: 'Tinta base alcohol de secado rápido ideal para acabados profesionales sobre madera. Excelente penetración, color uniforme y gran compatibilidad con procesos de barnizado.',
-      price: 91,
+      price: 67,
       sizeOptions: [
-        { id: 'cuarto-lt', label: '1/4 Lt', price: 91 },
-        { id: '1lt', label: '1 Lt', price: 303 },
+        { id: 'cuarto-lt', label: '1/4 Lt', price: 67 },
+        { id: '1lt', label: '1 Lt', price: 224 },
       ],
       cantidad: '1/4 lt / 1 lt',
       popular: true,
@@ -890,6 +908,420 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Avellana TS-6630 - 250 ml: TS663010 / 1 lt: TS663030', color: '#7b3422' },
         { name: 'Cherry TS-6631 - 250 ml: TS663110 / 1 lt: TS663130', color: '#8f1f46' },
       ],
+    });
+
+    products.push({
+      id: 'madera-barnices-entintados',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Barnices entintados',
+      name: 'Barnices Entintados',
+      description: 'Barniz entintado de acabado profesional para madera, diseñado para proteger, decorar y resaltar la veta natural con excelente adherencia y durabilidad.',
+      detailText: 'Barniz entintado de acabado profesional para madera, diseñado para proteger, decorar y resaltar la veta natural con excelente adherencia y durabilidad.',
+      price: 285,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 285 },
+        { id: '4lts', label: '4 Lts', price: 1128 },
+      ],
+      cantidad: '1 lt / 4 lts',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#8f1f46',
+      image: '',
+      palette: [
+        { name: 'Transparente - LT-0100', color: '#f6efe2' },
+        { name: 'Amaranto - LT-012730', color: '#8f1f46' },
+        { name: 'Arce - LT-012130', color: '#d97818' },
+        { name: 'Caoba Clásico - LT-011930', color: '#864126' },
+        { name: 'Caoba Inglés - LT-011730', color: '#9a3150' },
+        { name: 'Chocolate - LT-012930', color: '#321917' },
+        { name: 'Early American - LT-011230', color: '#806333' },
+        { name: 'Magnolia - LT-012530', color: '#ca8425' },
+        { name: 'Maple - LT-011630', color: '#c26739' },
+        { name: 'Nogal Americano - LT-011430', color: '#80612d' },
+        { name: 'Nogal Clásico - LT-011530', color: '#735016' },
+        { name: 'Roble - LT-012030', color: '#8c5f32' },
+      ],
+    });
+
+    products.push({
+      id: 'madera-sellalack-profesional',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Selladores',
+      name: 'Sellalack Profesional',
+      description: 'Sellador nitro profesional de excelente lijado y adherencia.',
+      detailText: 'Clave: NS-0270. Sellador nitro profesional de excelente lijado y adherencia.',
+      price: 161,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 161 },
+        { id: '4lts', label: '4 Lts', price: 627 },
+        { id: '19lts', label: '19 Lts', price: 2900 },
+      ],
+      cantidad: '1 lt / 4 lts / 19 lts',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#eadbc3',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-sellalack-directo',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Selladores',
+      name: 'Sellalack Directo',
+      description: 'Sellador nitrocelulosa directo de aplicación profesional para madera.',
+      detailText: 'Clave: NS-1000. Sellador nitrocelulosa directo de aplicación profesional para madera.',
+      price: 228,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 228 },
+        { id: '4lts', label: '4 Lts', price: 895 },
+      ],
+      cantidad: '1 lt / 4 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#e4d4bb',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-sellalack-cristal',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Selladores',
+      name: 'Sellalack Cristal',
+      description: 'Sellador transparente cristalino para acabados premium en madera.',
+      detailText: 'Clave: NS-1200. Sellador transparente cristalino para acabados premium en madera.',
+      price: 237,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 237 },
+      ],
+      cantidad: '1 lt',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#f2eadb',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-sellalack-altos-solidos',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Selladores',
+      name: 'Sellalack Altos Sólidos',
+      description: 'Sellador nitro de alta concentración y excelente cobertura.',
+      detailText: 'Clave: NS-44/300. Sellador nitro de alta concentración y excelente cobertura.',
+      price: 233,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 233 },
+        { id: '4lts', label: '4 Lts', price: 913 },
+      ],
+      cantidad: '1 lt / 4 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#dfcfb8',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-primer-nitro-blanco',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Primer para Madera',
+      name: 'Primer Nitro Blanco',
+      description: 'Primer para madera color blanco.',
+      detailText: 'Clave: PN-0010. Primer para madera color blanco.',
+      price: 283,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 283 },
+        { id: '4lts', label: '4 Lts', price: 1110 },
+      ],
+      cantidad: '1 lt / 4 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#ffffff',
+      image: '',
+      palette: [
+        { name: 'Blanco - PN-0010', color: '#ffffff' },
+      ],
+    });
+
+    products.push({
+      id: 'madera-primer-chocolate',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Primer para Madera',
+      name: 'Primer Chocolate',
+      description: 'Primer para madera color chocolate.',
+      detailText: 'Clave: PN-0082. Primer para madera color chocolate.',
+      price: 300,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 300 },
+        { id: '4lts', label: '4 Lts', price: 1177 },
+      ],
+      cantidad: '1 lt / 4 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#3a2118',
+      image: '',
+      palette: [
+        { name: 'Chocolate - PN-0082', color: '#3a2118' },
+      ],
+    });
+
+    products.push({
+      id: 'madera-primer-blanco',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Primer para Madera',
+      name: 'Primer Blanco',
+      description: 'Primer para madera color blanco.',
+      detailText: 'Clave: PN-0100. Primer para madera color blanco.',
+      price: 311,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 311 },
+        { id: '4lts', label: '4 Lts', price: 1219 },
+      ],
+      cantidad: '1 lt / 4 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#ffffff',
+      image: '',
+      palette: [
+        { name: 'Blanco - PN-0100', color: '#ffffff' },
+      ],
+    });
+
+    products.push({
+      id: 'madera-uresayer-ultra-brillante',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Poliuretanos',
+      name: 'Uresayer Ultra Brillante',
+      description: 'Poliuretano transparente brillante de alta resistencia para acabados premium en madera.',
+      detailText: 'Clave: UB-0005. Poliuretano transparente brillante de alta resistencia para acabados premium en madera. Acabado: Brillante. Catalizador recomendado: UC-1000 Enduresayer.',
+      price: 189,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 189 },
+      ],
+      cantidad: '1 lt',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#f4ead6',
+      image: '',
+      palette: [
+        { name: 'Transparente brillante - UB-0005', color: '#f4ead6' },
+      ],
+    });
+
+    products.push({
+      id: 'madera-t-0028-a-brillo-directo',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Poliuretanos',
+      name: 'T-0028/A Brillo Directo',
+      description: 'Poliuretano brillo directo para acabados profesionales en madera.',
+      detailText: 'T-0028/A Brillo Directo. Requiere catalizador T-0028/B para Brillo Directo.',
+      price: 311,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 311 },
+        { id: '4lts', label: '4 Lts', price: 1220 },
+      ],
+      cantidad: '1 lt / 4 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#f3e6cf',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-t-0028-b-catalizador',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Poliuretanos',
+      name: 'T-0028/B Catalizador para Brillo Directo',
+      description: 'Catalizador para Brillo Directo recomendado para T-0028/A y T-0030/A.',
+      detailText: 'T-0028/B Catalizador para Brillo Directo. Recomendado para T-0028/A y T-0030/A.',
+      price: 311,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 311 },
+        { id: '4lts', label: '4 Lts', price: 1220 },
+      ],
+      cantidad: '1 lt / 4 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#e2d5bc',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-t-0030-a-brillo-directo-negro',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Poliuretanos',
+      name: 'T-0030/A Brillo Directo Negro',
+      description: 'Poliuretano brillo directo negro para acabados profesionales en madera.',
+      detailText: 'T-0030/A Brillo Directo Negro. Catalizador recomendado: T-0028/B.',
+      price: 338,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 338 },
+      ],
+      cantidad: '1 lt',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#111111',
+      image: '',
+      palette: [
+        { name: 'Negro - T-0030/A', color: '#111111' },
+      ],
+    });
+
+    products.push({
+      id: 'madera-t-0031-a-brillo-directo-blanco',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Poliuretanos',
+      name: 'T-0031/A Brillo Directo Blanco',
+      description: 'Poliuretano brillo directo blanco para acabados profesionales en madera.',
+      detailText: 'T-0031/A Brillo Directo Blanco. Catalizador recomendado: TW-0028/B.',
+      price: 386,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 386 },
+        { id: '4lts', label: '4 Lts', price: 1513 },
+      ],
+      cantidad: '1 lt / 4 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#ffffff',
+      image: '',
+      palette: [
+        { name: 'Blanco - T-0031/A', color: '#ffffff' },
+      ],
+    });
+
+    products.push({
+      id: 'madera-tw-0028-b-catalizador',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Poliuretanos',
+      name: 'TW-0028/B Catalizador para Brillo Directo',
+      description: 'Catalizador para Brillo Directo recomendado para T-0031/A.',
+      detailText: 'TW-0028/B Catalizador para Brillo Directo. Recomendado para T-0031/A.',
+      price: 311,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 311 },
+        { id: '4lts', label: '4 Lts', price: 1220 },
+      ],
+      cantidad: '1 lt / 4 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#e2d5bc',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-uc-1000-enduresayer',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Poliuretanos',
+      name: 'UC-1000 Enduresayer',
+      description: 'Catalizador recomendado para poliuretanos de madera.',
+      detailText: 'UC-1000 Enduresayer. Catalizador recomendado para Uresayer Ultra Brillante y sistemas de poliuretano.',
+      price: 334,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 334 },
+        { id: '4lts', label: '4 Lts', price: 1635 },
+      ],
+      cantidad: '1 lt / 4 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#d8cab0',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-uresayer-top-mate-profesional',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Poliuretanos',
+      name: 'Uresayer Top Mate Profesional',
+      description: 'Poliuretano profesional mate ideal para acabados de alta calidad.',
+      detailText: 'Clave: UM-1015. Poliuretano profesional mate ideal para acabados de alta calidad. Acabado: Mate.',
+      price: 280,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 280 },
+        { id: '4lts', label: '4 Lts', price: 1097 },
+      ],
+      cantidad: '1 lt / 4 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#eadcc8',
+      image: '',
+      palette: [
+        { name: 'Mate - UM-1015', color: '#eadcc8' },
+      ],
+    });
+
+    products.push({
+      id: 'madera-uresayer-top-semi-mate-profesional',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Poliuretanos',
+      name: 'Uresayer Top Semi-Mate Profesional',
+      description: 'Poliuretano profesional semi-mate ideal para acabados de alta calidad.',
+      detailText: 'Clave: UM-1030. Poliuretano profesional semi-mate ideal para acabados de alta calidad. Acabado: Mate.',
+      price: 280,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 280 },
+        { id: '4lts', label: '4 Lts', price: 1097 },
+      ],
+      cantidad: '1 lt / 4 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#e5d5bf',
+      image: '',
+      palette: [
+        { name: 'Semi-Mate - UM-1030', color: '#e5d5bf' },
+      ],
+    });
+
+    products.push({
+      id: 'madera-uc-1010-catalizador-enduresayer',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Poliuretanos',
+      name: 'Catalizador Enduresayer',
+      description: 'Catalizador para poliuretano.',
+      detailText: 'Clave: UC-1010. Catalizador para poliuretano.',
+      price: 357,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 357 },
+        { id: '5lts', label: '5 Lts', price: 1748 },
+      ],
+      cantidad: '1 lt / 5 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#d8cab0',
+      image: '',
     });
 
     products.push({
@@ -1229,8 +1661,9 @@ window.addEventListener('DOMContentLoaded', () => {
     'esmalte-rocket-secado-rapido': 1,
     'esmalte-alva-fast': 2,
     'esmalte-esmalack': 3,
-    'esmalte-industrial-pintura-alberca': 4,
-    'esmalte-industrial-pintura-trafico': 5,
+    'esmalte-xtrong': 4,
+    'esmalte-industrial-pintura-alberca': 5,
+    'esmalte-industrial-pintura-trafico': 6,
   };
 
   const sortByDisplayPriority = (a, b) => {
@@ -1464,14 +1897,32 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const updateCompactCategoryLabel = (button) => {
+    if (!allCategoryButton) return;
+    if (button.dataset.category !== 'all') {
+      allCategoryButton.textContent = button.textContent;
+    } else {
+      allCategoryButton.textContent = 'Todos los productos';
+    }
+  };
+
   if (categoryItems.length > 0) {
     categoryItems.forEach((button) => {
       button.addEventListener('click', () => {
+        if (button.dataset.category === 'all' && categoryList && selectedCategory !== 'all' && categoryList.classList.contains('is-collapsed')) {
+          categoryList.classList.remove('is-collapsed');
+          allCategoryButton.textContent = 'Todos los productos';
+          return;
+        }
+
         if (button.dataset.category === 'all' && categoryList) {
           categoryList.classList.toggle('is-collapsed');
+        } else if (categoryList) {
+          categoryList.classList.add('is-collapsed');
         }
         categoryItems.forEach((item) => item.classList.remove('active'));
         button.classList.add('active');
+        updateCompactCategoryLabel(button);
         selectedCategory = button.dataset.category;
         renderSubcategoryOptions(button.dataset.category);
         if (subcategoryFilter) {
