@@ -16,8 +16,13 @@
           <p class="brand-tagline">Pintando tus proyectos con pasión en cada pared</p>
         </div>
       </div>
-      <nav class="main-nav">
-        <a href="index.html#inicio">Inicio</a>
+      <button class="mobile-menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="main-nav-products">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="main-nav" id="main-nav-products">
+        <a class="nav-home" href="index.html#inicio">Inicio</a>
         <a href="index.html#nosotros">Nosotros</a>
         <a class="active" href="productos.html">Productos</a>
         <a href="index.html#servicios">Servicios</a>
@@ -33,28 +38,40 @@
 
   <section class="section section-light reveal">
     <div class="section-header">
-      <p class="eyebrow">Catálogo</p>
-      <h2>Comienza tu selección por categoría</h2>
+      <p class="eyebrow catalog-eyebrow">Catálogo</p>
+      <h2>Comienza tu selección</h2>
       <p>Explora las principales familias de producto y agrega lo que necesitas al carrito.</p>
     </div>
 
     <div class="catalog-container">
       <aside class="catalog-sidebar reveal">
         <div class="sidebar-panel">
-          <p class="eyebrow">Familia accesorios</p>
           <h3>Categorías</h3>
-          <ul class="category-list">
+          <ul class="category-list is-collapsed" id="category-list">
             <li><button type="button" class="category-item active" data-category="all">Todos los productos</button></li>
-            <li><button type="button" class="category-item" data-category="vinilica">Vinílica</button></li>
-            <li><button type="button" class="category-item" data-category="esmalte">Esmalte</button></li>
-            <li><button type="button" class="category-item" data-category="epoxica">Impermeabilizante</button></li>
-            <li><button type="button" class="category-item" data-category="aerosoles">Aerosoles</button></li>
-            <li><button type="button" class="category-item" data-category="madera">Madera</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="vinilica">Vinílica</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="esmalte">Esmalte</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="epoxica">Impermeabilizante</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="aerosoles">Aerosoles</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="madera">Madera</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="aplicadores">Aplicadores</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="diluyentes">Diluyentes</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="primerarios">Primerarios</button></li>
           </ul>
+          <div class="search-panel sidebar-search">
+            <label for="product-search">Buscar producto</label>
+            <input type="search" id="product-search" placeholder="Buscar producto...">
+          </div>
         </div>
 
         <div class="sidebar-panel">
-          <h3>Filtros rápidos</h3>
+          <div class="panel-heading">
+            <h3>Filtros</h3>
+            <button class="icon-button filter-toggle" id="toggle-filters" type="button" aria-label="Mostrar filtros" aria-expanded="false" aria-controls="filter-controls">
+              <span class="filter-icon"></span>
+            </button>
+          </div>
+          <div class="filter-controls is-collapsed" id="filter-controls">
           <div class="sort-panel compact-sort">
             <label for="sort-order">Mostrar por</label>
             <select id="sort-order">
@@ -65,20 +82,14 @@
           </div>
           <div class="filter-panel compact-filter">
             <label for="price-filter">Precio máximo (MXN)</label>
-            <input type="number" id="price-filter" min="0" max="1000" value="800" step="10" placeholder="Ingresa precio máximo">
+            <input type="number" id="price-filter" min="0" max="1000" step="10" placeholder="Ingresa precio máximo">
             <button class="btn btn-primary compact-btn" id="apply-price-filter">Ver</button>
+          </div>
           </div>
         </div>
       </aside>
 
       <div class="catalog-main">
-        <div class="catalog-toolbar">
-          <div class="search-panel">
-            <label for="product-search">Buscar producto</label>
-            <input type="search" id="product-search" placeholder="Buscar producto...">
-          </div>
-        </div>
-
         <div class="product-meta">
           <p id="product-count">Mostrando 0 productos generales</p>
         </div>

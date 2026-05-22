@@ -14,10 +14,40 @@ window.addEventListener('DOMContentLoaded', () => {
   revealElements.forEach((element) => observer.observe(element));
 
   const navLinks = document.querySelectorAll('.main-nav a');
+  const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+  const mainNav = document.querySelector('.main-nav');
+  const closeMobileMenu = () => {
+    if (!mobileMenuToggle || !mainNav) return;
+    mobileMenuToggle.classList.remove('is-open');
+    mobileMenuToggle.setAttribute('aria-expanded', 'false');
+    mainNav.classList.remove('is-open');
+  };
+
+  if (mobileMenuToggle && mainNav) {
+    mobileMenuToggle.addEventListener('click', () => {
+      const isOpen = mainNav.classList.toggle('is-open');
+      mobileMenuToggle.classList.toggle('is-open', isOpen);
+      mobileMenuToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeMobileMenu();
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 760) {
+        closeMobileMenu();
+      }
+    });
+  }
+
   navLinks.forEach((link) => {
     link.addEventListener('click', () => {
       navLinks.forEach((item) => item.classList.remove('active'));
       link.classList.add('active');
+      closeMobileMenu();
     });
   });
 
@@ -28,6 +58,9 @@ window.addEventListener('DOMContentLoaded', () => {
   let selectedCategory = 'all';
 
   const categoryItems = document.querySelectorAll('.category-item');
+  const categoryList = document.getElementById('category-list');
+  const toggleFiltersButton = document.getElementById('toggle-filters');
+  const filterControls = document.getElementById('filter-controls');
   const productGeneralListEl = document.getElementById('product-general-list');
   const productPopularListEl = document.getElementById('product-popular-list');
   const productRecommendedListEl = document.getElementById('product-recommended-list');
@@ -60,30 +93,32 @@ window.addEventListener('DOMContentLoaded', () => {
     epoxica: 'Impermeabilizante',
     aerosoles: 'Aerosoles',
     madera: 'Productos para Madera',
+    aplicadores: 'Aplicadores',
+    diluyentes: 'Diluyentes',
+    primerarios: 'Primerarios',
   };
 
   const subcategories = {
     vinilica: ['Económica', 'Media', 'Mediana-Alta', 'Alta'],
-    esmalte: ['Base Agua', 'Base Solvente'],
+    esmalte: ['Base Agua', 'Base Solvente', 'Esmalte Industrial'],
     epoxica: ['Pisos', 'Industrial', 'Alto Tráfico'],
     aerosoles: ['Normal', 'Metálico', 'Neón', 'Alta Temperatura'],
     madera: ['Tintas', 'Barnices base agua', 'Barnices base esmalte', 'Lacas', 'Nitrocelulosas', 'Selladores', 'Resanadores', 'Aditivos'],
+    aplicadores: ['Brochas', 'Rodillos'],
+    diluyentes: ['Alberca y Tráfico'],
+    primerarios: ['Primerarios'],
   }; 
 
   const counts = {
     vinilica: 100,
     esmalte: 100,
-    epoxica: 100,
     aerosoles: 60,
-    madera: 140,
   };
 
   const prices = {
     vinilica: 420,
     esmalte: 520,
-    epoxica: 680,
     aerosoles: 140,
-    madera: 560,
   };
 
   let products = [];
@@ -118,16 +153,12 @@ window.addEventListener('DOMContentLoaded', () => {
     const popularRules = {
       vinilica: 5,
       esmalte: 4,
-      epoxica: 6,
       aerosoles: 3,
-      madera: 7,
     };
     const recommendedRules = {
       vinilica: 9,
       esmalte: 8,
-      epoxica: 5,
       aerosoles: 4,
-      madera: 6,
     };
 
     products.push({
@@ -541,6 +572,327 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     products.push({
+      id: 'esmalte-rocket-secado-rapido',
+      category: 'esmalte',
+      categoryLabel: categoryLabels['esmalte'],
+      subcategory: 'Base Solvente',
+      name: 'Rocket Secado Rápido',
+      description: 'Esmalte de secado rápido ideal para aplicaciones donde se requiere rapidez y excelente acabado.',
+      detailText: 'Esmalte Rocket Secado Rápido disponible en 1, 4 y 19 litros. Ideal para aplicaciones donde se requiere rapidez y excelente acabado.',
+      price: 449,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 449 },
+        { id: '4lts', label: '4 Lts', price: 1616 },
+        { id: '19lts', label: '19 Lts', price: 7070 },
+      ],
+      cantidad: '1 lt / 4 lts / 19 lts',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#f6f4ef',
+      image: '',
+      palette: [
+        { name: 'Blanco', color: '#f6f4ef' },
+        { name: 'Negro', color: '#171717' },
+      ],
+    });
+
+    products.push({
+      id: 'esmalte-esmalack',
+      category: 'esmalte',
+      categoryLabel: categoryLabels['esmalte'],
+      subcategory: 'Base Solvente',
+      name: 'Esmalack',
+      description: 'Esmalte alquidálico de excelente acabado y resistencia, ideal para herrería, metal, madera y acabados decorativos.',
+      detailText: 'Esmalack es un esmalte alquidálico de excelente acabado y resistencia, ideal para herrería, metal, madera y acabados decorativos.',
+      price: 409,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 409 },
+        { id: '4lts', label: '4 Lts', price: 1471 },
+        { id: '19lts', label: '19 Lts', price: 6439 },
+      ],
+      cantidad: '1 lt / 4 lts / 19 lts',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#fff8df',
+      image: '',
+      palette: [
+        { name: 'Aluminio', color: '#9ca6b3' },
+        { name: 'Blanco Ostión', color: '#f7f6de' },
+        { name: 'Oro', color: '#7e8370' },
+        { name: 'Gris Perla', color: '#a8aaad' },
+        { name: 'Cobre', color: '#79575a' },
+        { name: 'Café Anodizado', color: '#2d2b2d' },
+        { name: 'Blanco Mate', color: '#f7f7f2' },
+        { name: 'Negro Mate', color: '#111111' },
+        { name: 'Marfil', color: '#fbf8d9' },
+        { name: 'Amarillo Limón', color: '#f9e758' },
+        { name: 'Amarillo Sol', color: '#fac64a' },
+        { name: 'Canela', color: '#cd9378' },
+        { name: 'Roble', color: '#8a674f' },
+        { name: 'Amarillo Óxido', color: '#bf9552' },
+        { name: 'Rojo Óxido', color: '#87342d' },
+        { name: 'Castaño Oscuro', color: '#604b3e' },
+        { name: 'Marrón', color: '#5f2321' },
+        { name: 'Rosa Mexicano', color: '#e76f83' },
+        { name: 'Lila', color: '#74559b' },
+        { name: 'Azul Modelo', color: '#293f78' },
+        { name: 'Azul Triángulo', color: '#172758' },
+        { name: 'Azul Fino', color: '#84b7cc' },
+        { name: 'Azul Holanda', color: '#5a8fbd' },
+        { name: 'Verde Bosque', color: '#285758' },
+        { name: 'Blanco Satinado', color: '#f6f6f2' },
+        { name: 'Blanco Brillante', color: '#ffffff' },
+        { name: 'Turquesa', color: '#64aaa2' },
+        { name: 'Verde Fresco', color: '#83bd62' },
+        { name: 'Verde Jardín', color: '#32704d' },
+        { name: 'Verde Esmeralda', color: '#1c202c' },
+        { name: 'Negro Brillante', color: '#050505' },
+      ],
+    });
+
+    products.push({
+      id: 'esmalte-industrial-pintura-alberca',
+      category: 'esmalte',
+      categoryLabel: categoryLabels['esmalte'],
+      subcategory: 'Esmalte Industrial',
+      name: 'Pintura para Alberca',
+      description: 'Pintura especializada para albercas con excelente resistencia al agua y químicos.',
+      detailText: 'Pintura especializada para albercas con excelente resistencia al agua y químicos. Disponible en presentaciones de 4 y 19 litros.',
+      price: 2227,
+      sizeOptions: [
+        { id: '4lts', label: '4 Lts', price: 2227 },
+        { id: '19lts', label: '19 Lts', price: 9745 },
+      ],
+      cantidad: '4 lts / 19 lts',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#128bc5',
+      image: '',
+      palette: [
+        { name: 'Blanco', color: '#f7f7f5' },
+        { name: 'Azul Holandés', color: '#128bc5' },
+        { name: 'Azul Avándaro', color: '#6bb8df' },
+        { name: 'Turquesa', color: '#12a79b' },
+        { name: 'Verde Vallarta', color: '#9acdc9' },
+      ],
+    });
+
+    products.push({
+      id: 'esmalte-industrial-pintura-trafico',
+      category: 'esmalte',
+      categoryLabel: categoryLabels['esmalte'],
+      subcategory: 'Esmalte Industrial',
+      name: 'Pintura para Tráfico',
+      description: 'Pintura de alto desempeño para señalamiento vial y tráfico.',
+      detailText: 'Pintura de alto desempeño para señalamiento vial y tráfico. Disponible en presentaciones de 4 y 19 litros.',
+      price: 1640,
+      sizeOptions: [
+        { id: '4lts', label: '4 Lts', price: 1640 },
+        { id: '19lts', label: '19 Lts', price: 7177 },
+      ],
+      cantidad: '4 lts / 19 lts',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#ffffff',
+      image: '',
+      palette: [
+        { name: 'Blanco Tráfico SCT', color: '#ffffff' },
+        { name: 'Amarillo Tráfico SCT', color: '#f5c400' },
+      ],
+    });
+
+    products.push({
+      id: 'diluyente-alberca-trafico',
+      category: 'diluyentes',
+      categoryLabel: categoryLabels['diluyentes'],
+      subcategory: 'Alberca y Tráfico',
+      name: 'Diluyente para Pintura de Alberca y Tráfico',
+      description: 'Diluyente para pintura de alberca y tráfico.',
+      detailText: 'Diluyente para pintura de alberca y tráfico disponible en presentaciones de 4 y 19 litros.',
+      price: 551,
+      sizeOptions: [
+        { id: '4lts', label: '4 Lts', price: 551 },
+        { id: '19lts', label: '19 Lts', price: 2437 },
+      ],
+      cantidad: '4 lts / 19 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#d7dde3',
+      image: '',
+    });
+
+    products.push({
+      id: 'primario-anticorrosivo',
+      category: 'primerarios',
+      categoryLabel: categoryLabels['primerarios'],
+      subcategory: 'Primerarios',
+      name: 'Primario Anticorrosivo',
+      description: 'Primario protector para superficies metálicas con excelente adherencia y protección anticorrosiva.',
+      detailText: 'Primario protector para superficies metálicas con excelente adherencia y protección anticorrosiva. Disponible en 1, 4 y 19 litros.',
+      price: 362,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 362 },
+        { id: '4lts', label: '4 Lts', price: 1302 },
+        { id: '19lts', label: '19 Lts', price: 5695 },
+      ],
+      cantidad: '1 lt / 4 lts / 19 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#cfd2d4',
+      image: '',
+      palette: [
+        { name: 'Gris claro', color: '#cfd2d4' },
+        { name: 'Blanco', color: '#ffffff' },
+        { name: 'Rojo óxido', color: '#8b352c' },
+      ],
+    });
+
+    products.push({
+      id: 'primario-anticorrosivo-zinc',
+      category: 'primerarios',
+      categoryLabel: categoryLabels['primerarios'],
+      subcategory: 'Primerarios',
+      name: 'Primario Anticorrosivo de Zinc',
+      description: 'Protección industrial reforzada contra corrosión para superficies metálicas.',
+      detailText: 'Protección industrial reforzada contra corrosión para superficies metálicas. Disponible en 1, 4 y 19 litros.',
+      price: 579,
+      sizeOptions: [
+        { id: '1lt', label: '1 Lt', price: 579 },
+        { id: '4lts', label: '4 Lts', price: 2087 },
+        { id: '19lts', label: '19 Lts', price: 9129 },
+      ],
+      cantidad: '1 lt / 4 lts / 19 lts',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#9fa7ad',
+      image: '',
+      palette: [
+        { name: 'Zinc', color: '#9fa7ad' },
+      ],
+    });
+
+    products.push({
+      id: 'madera-tintas-base-aceite',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Tintas',
+      name: 'Mancha Sayer',
+      description: 'Tinta base aceite universal compatible con procesos de barnizado, ideal para entintar madera, resaltar la veta natural y lograr acabados decorativos profesionales.',
+      detailText: 'Tinta base aceite universal compatible con procesos de barnizado, ideal para entintar madera, resaltar la veta natural y lograr acabados decorativos profesionales.',
+      price: 91,
+      sizeOptions: [
+        { id: 'cuarto-lt', label: '1/4 Lt', price: 91 },
+        { id: '1lt', label: '1 Lt', price: 303 },
+      ],
+      cantidad: '1/4 lt / 1 lt',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#c58423',
+      image: '',
+      palette: [
+        { name: 'Blanco - TS-6101', color: '#f7f4e8' },
+        { name: 'Negro - TS-6102', color: '#171513' },
+        { name: 'Amarillo Ocre - TS-6103', color: '#c68d2b' },
+        { name: 'Amarillo Oro - TS-6105', color: '#f2b21d' },
+        { name: 'Rojo Colonial - TS-6106', color: '#b84b35' },
+        { name: 'Rojo Vivo - TS-6107', color: '#d9282e' },
+        { name: 'Naranja - TS-6108', color: '#db6f21' },
+        { name: 'Azul - TS-6109', color: '#12619b' },
+        { name: 'Verde - TS-6110', color: '#00a66a' },
+        { name: 'Royal Marrón - TS-6111', color: '#8f345f' },
+        { name: 'Early American - TS-6112', color: '#8c6a3d' },
+        { name: 'Verde Ficus - TS-6113', color: '#334d2b' },
+        { name: 'Nogal Americano - TS-6114', color: '#7d6132' },
+        { name: 'Nogal Clásico - TS-6115', color: '#7a5428' },
+        { name: 'Maple - TS-6116', color: '#c37034' },
+        { name: 'Caoba Inglés - TS-6117', color: '#9a3150' },
+        { name: 'Caoba Comercial - TS-6118', color: '#8d3424' },
+        { name: 'Caoba Clásico - TS-6119', color: '#a04d28' },
+        { name: 'Roble - TS-6120', color: '#9b6a35' },
+        { name: 'Arce - TS-6121', color: '#d87520' },
+        { name: 'Cedro - TS-6122', color: '#d36f22' },
+        { name: 'Olmo - TS-6123', color: '#9d7a39' },
+        { name: 'Oyamel - TS-6124', color: '#9b4a37' },
+        { name: 'Magnolia - TS-6125', color: '#b68d42' },
+        { name: 'Ciprés - TS-6126', color: '#d99a22' },
+        { name: 'Amaranto - TS-6127', color: '#8c2245' },
+        { name: 'Palo de Rosa - TS-6128', color: '#80365e' },
+        { name: 'Chocolate - TS-6129', color: '#3d1916' },
+        { name: 'Avellana - TS-6130', color: '#7b3422' },
+        { name: 'Cherry - TS-6131', color: '#8f1f46' },
+        { name: 'Nogal Claro - TS-6132', color: '#986235' },
+        { name: 'Encino Americano - TS-6133', color: '#8a5b2c' },
+        { name: 'Gris Perla - TS-6134', color: '#a6acb1' },
+        { name: 'Gris Titanio - TS-6135', color: '#667081' },
+        { name: 'Gris Grafito - TS-6136', color: '#323333' },
+        { name: 'Álamo - TS-6137', color: '#eadab8' },
+        { name: 'Cacao - TS-6138', color: '#8b5d35' },
+        { name: 'Abeto - TS-6139', color: '#a76431' },
+      ],
+    });
+
+    products.push({
+      id: 'madera-entona-sayer',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Tintas',
+      name: 'Entona Sayer',
+      description: 'Tinta base alcohol de secado rápido ideal para acabados profesionales sobre madera. Excelente penetración, color uniforme y gran compatibilidad con procesos de barnizado.',
+      detailText: 'Tinta base alcohol de secado rápido ideal para acabados profesionales sobre madera. Excelente penetración, color uniforme y gran compatibilidad con procesos de barnizado.',
+      price: 91,
+      sizeOptions: [
+        { id: 'cuarto-lt', label: '1/4 Lt', price: 91 },
+        { id: '1lt', label: '1 Lt', price: 303 },
+      ],
+      cantidad: '1/4 lt / 1 lt',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#a04d28',
+      image: '',
+      palette: [
+        { name: 'Blanco TS-6601 - 250 ml: TS660110 / 1 lt: TS660130', color: '#f4ead0' },
+        { name: 'Negro TS-6602 - 250 ml: TS660210 / 1 lt: TS660230', color: '#2a2928' },
+        { name: 'Amarillo Limón TS-6604 - 1 lt: TS660430', color: '#e0d91c' },
+        { name: 'Amarillo Oro TS-6605 - 1 lt: TS660530', color: '#f0af1a' },
+        { name: 'Café TS-6606 - 250 ml: TS660610 / 1 lt: TS660630', color: '#5a2d15' },
+        { name: 'Rojo Vivo TS-6607 - 1 lt: TS660730', color: '#e8262b' },
+        { name: 'Naranja TS-6608 - 1 lt: TS660830', color: '#e45f20' },
+        { name: 'Azul TS-6609 - 1 lt: TS660930', color: '#1261a0' },
+        { name: 'Verde TS-6610 - 1 lt: TS661030', color: '#0cad73' },
+        { name: 'Royal Marrón TS-6611 - 1 lt: TS661130', color: '#8c2f5d' },
+        { name: 'Early American TS-6612 - 250 ml: TS661210 / 1 lt: TS661230', color: '#806333' },
+        { name: 'Verde Ficus TS-6613 - 1 lt: TS661330', color: '#35472a' },
+        { name: 'Nogal Americano TS-6614 - 250 ml: TS661410 / 1 lt: TS661430', color: '#80612d' },
+        { name: 'Nogal Clásico TS-6615 - 250 ml: TS661510 / 1 lt: TS661530', color: '#735016' },
+        { name: 'Maple TS-6616 - 250 ml: TS661610 / 1 lt: TS661630', color: '#c26739' },
+        { name: 'Caoba Inglés TS-6617 - 250 ml: TS661710 / 1 lt: TS661730', color: '#9a3150' },
+        { name: 'Caoba Comercial TS-6618 - 250 ml: TS661810 / 1 lt: TS661830', color: '#8d3424' },
+        { name: 'Caoba Clásico TS-6619 - 250 ml: TS661910 / 1 lt: TS661930', color: '#864126' },
+        { name: 'Roble TS-6620 - 250 ml: TS662010 / 1 lt: TS662030', color: '#8c5f32' },
+        { name: 'Arce TS-6621 - 1 lt: TS662130', color: '#d97818' },
+        { name: 'Cedro TS-6622 - 250 ml: TS662210 / 1 lt: TS662230', color: '#d06c1f' },
+        { name: 'Olmo TS-6623 - 250 ml: TS662310 / 1 lt: TS662330', color: '#9a7936' },
+        { name: 'Oyamel TS-6624 - 250 ml: TS662410 / 1 lt: TS662430', color: '#9c4635' },
+        { name: 'Magnolia TS-6625 - 250 ml: TS662510 / 1 lt: TS662530', color: '#ca8425' },
+        { name: 'Ciprés TS-6626 - 250 ml: TS662610 / 1 lt: TS662630', color: '#8a6736' },
+        { name: 'Amaranto TS-6627 - 250 ml: TS662710 / 1 lt: TS662730', color: '#9b3945' },
+        { name: 'Palo de Rosa TS-6628 - 1 lt: TS662830 / 19 lts: TS662850', color: '#8b2053' },
+        { name: 'Chocolate TS-6629 - 250 ml: TS662910 / 1 lt: TS662930', color: '#321917' },
+        { name: 'Avellana TS-6630 - 250 ml: TS663010 / 1 lt: TS663030', color: '#7b3422' },
+        { name: 'Cherry TS-6631 - 250 ml: TS663110 / 1 lt: TS663130', color: '#8f1f46' },
+      ],
+    });
+
+    products.push({
       id: 'esmalte-oro-1lt',
       category: 'esmalte',
       categoryLabel: categoryLabels['esmalte'],
@@ -873,6 +1225,21 @@ window.addEventListener('DOMContentLoaded', () => {
     productCountEl.textContent = `Mostrando ${generalProducts.length} productos generales`;
   };
 
+  const productDisplayPriority = {
+    'esmalte-rocket-secado-rapido': 1,
+    'esmalte-alva-fast': 2,
+    'esmalte-esmalack': 3,
+    'esmalte-industrial-pintura-alberca': 4,
+    'esmalte-industrial-pintura-trafico': 5,
+  };
+
+  const sortByDisplayPriority = (a, b) => {
+    const priorityA = productDisplayPriority[a.id] || 99;
+    const priorityB = productDisplayPriority[b.id] || 99;
+    if (priorityA !== priorityB) return priorityA - priorityB;
+    return a.name.localeCompare(b.name);
+  };
+
   const applyFilters = () => {
     const categoryValue = selectedCategory;
     const subcategoryValue = subcategoryFilter ? subcategoryFilter.value : 'all';
@@ -900,10 +1267,10 @@ window.addEventListener('DOMContentLoaded', () => {
         const indexA = order.indexOf(a.subcategory);
         const indexB = order.indexOf(b.subcategory);
         if (indexA !== indexB) return indexA - indexB;
-        return a.name.localeCompare(b.name);
+        return sortByDisplayPriority(a, b);
       });
     } else {
-      filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
+      filteredProducts.sort(sortByDisplayPriority);
     }
 
     renderProducts();
@@ -1088,9 +1455,21 @@ window.addEventListener('DOMContentLoaded', () => {
     sortOrderSelect.addEventListener('change', applyFilters);
   }
 
+  if (toggleFiltersButton && filterControls) {
+    toggleFiltersButton.addEventListener('click', () => {
+      const isExpanded = toggleFiltersButton.getAttribute('aria-expanded') === 'true';
+      toggleFiltersButton.setAttribute('aria-expanded', String(!isExpanded));
+      toggleFiltersButton.setAttribute('aria-label', isExpanded ? 'Mostrar filtros' : 'Ocultar filtros');
+      filterControls.classList.toggle('is-collapsed', isExpanded);
+    });
+  }
+
   if (categoryItems.length > 0) {
     categoryItems.forEach((button) => {
       button.addEventListener('click', () => {
+        if (button.dataset.category === 'all' && categoryList) {
+          categoryList.classList.toggle('is-collapsed');
+        }
         categoryItems.forEach((item) => item.classList.remove('active'));
         button.classList.add('active');
         selectedCategory = button.dataset.category;
