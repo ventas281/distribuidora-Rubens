@@ -1453,15 +1453,19 @@ button,
   display: block;
 }
 
+#delivery-modal .modal-content {
+  max-width: 640px;
+}
+
 .delivery-flash-row label {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: start;
   gap: 0.75rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid rgba(194, 43, 43, 0.22);
-  border-radius: 14px;
-  background: #fff7f5;
+  padding: 1rem;
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fffbeb 0%, #fff7ed 100%);
   color: var(--text);
   font-weight: 800;
 }
@@ -1472,7 +1476,7 @@ button,
 }
 
 .delivery-flash-copy small {
-  color: var(--muted);
+  color: #7c4a03;
   font-size: 0.82rem;
   font-weight: 600;
   line-height: 1.35;
@@ -1505,9 +1509,9 @@ button,
 }
 
 .delivery-result {
-  padding: 0.9rem 1rem;
-  border-radius: 12px;
-  background: #f7f7f7;
+  padding: 0;
+  border-radius: 18px;
+  background: transparent;
   color: #333;
   min-height: 3rem;
 }
@@ -1521,6 +1525,7 @@ button,
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
+  align-items: center;
 }
 
 .delivery-modal-actions .btn {
@@ -1533,9 +1538,9 @@ button,
   justify-content: center;
   min-height: 48px;
   padding: 0.85rem 1rem;
-  border: 1px solid rgba(194, 43, 43, 0.2);
-  border-radius: 14px;
-  background: #fff7f5;
+  border: 1px solid rgba(194, 43, 43, 0.16);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fff7f5 0%, #ffffff 100%);
   color: var(--primary);
   font-weight: 900;
   letter-spacing: 0;
@@ -1568,71 +1573,146 @@ button,
 
 .delivery-status-card {
   display: grid;
-  gap: 0.75rem;
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  gap: 1rem;
+  padding: 1.15rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.1);
+  overflow: hidden;
 }
 
 .delivery-status-card strong {
   color: var(--text);
-  font-size: 1.05rem;
+  font-size: 1.08rem;
+  line-height: 1.25;
 }
 
 .delivery-status-card p {
   margin: 0;
   color: var(--muted);
+  line-height: 1.45;
 }
 
 .delivery-fast-note {
   display: grid;
-  gap: 0.25rem;
-  padding: 0.8rem 0.9rem;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.78);
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 16px;
+  background: #fffbeb;
   color: var(--text);
 }
 
-.delivery-fast-note strong {
-  font-size: 0.95rem;
-}
-
-.delivery-fast-note span {
-  color: var(--muted);
-  font-size: 0.86rem;
+.delivery-fast-note p {
+  color: #7c4a03;
+  font-size: 0.88rem;
+  font-weight: 700;
 }
 
 .delivery-status-card-ok {
-  border-color: rgba(34, 197, 94, 0.4);
-  background: #f3fff7;
+  border-color: rgba(34, 197, 94, 0.28);
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 42%, #f8fafc 100%);
 }
 
 .delivery-status-card-error {
   border-color: rgba(194, 43, 43, 0.35);
-  background: #fff7f7;
+  background: linear-gradient(180deg, #fff1f2 0%, #ffffff 70%);
 }
 
+.delivery-result-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.delivery-result-heading p {
+  margin-top: 0.18rem;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.delivery-result-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.delivery-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.delivery-badge-free {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.delivery-badge-paid {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.delivery-info-grid,
 .delivery-metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.65rem;
 }
 
+.delivery-info-grid span,
 .delivery-metrics span {
   display: grid;
-  gap: 0.25rem;
-  padding: 0.75rem;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.82);
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.1rem 0.55rem;
+  align-items: center;
+  padding: 0.82rem;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.86);
   color: var(--muted);
   font-size: 0.9rem;
+  min-width: 0;
 }
 
+.delivery-info-grid em {
+  grid-row: span 2;
+  font-style: normal;
+  font-size: 1.15rem;
+}
+
+.delivery-info-grid small {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.delivery-info-grid b,
 .delivery-metrics b {
   color: var(--text);
   font-size: 1rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.delivery-info-grid-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .delivery-free-text {
@@ -1680,6 +1760,16 @@ button,
   text-align: right;
 }
 
+.payment-customer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.payment-customer-field-wide {
+  grid-column: 1 / -1;
+}
+
 .payment-customer-field,
 .payment-grid label {
   display: grid;
@@ -1690,6 +1780,7 @@ button,
 }
 
 .payment-customer-field input,
+.payment-customer-field textarea,
 .payment-grid input {
   width: 100%;
   padding: 0.78rem 0.85rem;
@@ -1698,6 +1789,11 @@ button,
   background: #fff;
   color: var(--text);
   font: inherit;
+}
+
+.payment-customer-field textarea {
+  min-height: 92px;
+  resize: vertical;
 }
 
 .payment-methods {
@@ -1749,10 +1845,43 @@ button,
   line-height: 1.5;
 }
 
+.order-confirmation-actions {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.order-confirmation-actions .btn {
+  width: 100%;
+}
+
+.order-email-status {
+  min-height: 1.4rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.order-email-status.is-error {
+  color: #b42318;
+  font-weight: 700;
+}
+
 @media (max-width: 760px) {
   .delivery-option-row,
-  .delivery-metrics {
+  .delivery-metrics,
+  .delivery-info-grid,
+  .delivery-info-grid-compact {
     grid-template-columns: 1fr;
+  }
+
+  .delivery-result-heading {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .delivery-result-heading .delivery-badge {
+    grid-column: 1 / -1;
+    justify-self: start;
   }
 
   .delivery-body .btn {
@@ -1763,6 +1892,7 @@ button,
     grid-template-columns: 1fr;
   }
 
+  .payment-customer-grid,
   .payment-methods,
   .payment-grid {
     grid-template-columns: 1fr;

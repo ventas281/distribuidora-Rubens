@@ -180,9 +180,9 @@
           <label>
             <input type="checkbox" id="delivery-flash">
             <span class="delivery-flash-copy">
-              <span>🚚 Entrega rápida (+$150)</span>
-              <small>Checaremos disponibilidad de entrega.</small>
-              <small>Un asesor validará disponibilidad según zona y horario.</small>
+              <span>⚡ Entrega flash +$150 MXN</span>
+              <small>Disponible para entregas mayores a 15 km.</small>
+              <small>Checaremos disponibilidad de entrega rápida con un asesor.</small>
             </span>
           </label>
         </div>
@@ -206,10 +206,24 @@
       <div class="payment-body">
         <div class="payment-summary" id="payment-summary"></div>
 
-        <label class="payment-customer-field" for="payment-customer-name">
-          Nombre del cliente
-          <input type="text" id="payment-customer-name" placeholder="Escribe tu nombre">
-        </label>
+        <div class="payment-customer-grid">
+          <label class="payment-customer-field" for="payment-customer-name">
+            Nombre del cliente
+            <input type="text" id="payment-customer-name" placeholder="Escribe tu nombre" autocomplete="name">
+          </label>
+          <label class="payment-customer-field" for="payment-customer-phone">
+            Teléfono
+            <input type="tel" id="payment-customer-phone" placeholder="55 0000 0000" autocomplete="tel">
+          </label>
+          <label class="payment-customer-field" for="payment-customer-email">
+            Correo
+            <input type="email" id="payment-customer-email" placeholder="correo@ejemplo.com" autocomplete="email">
+          </label>
+          <label class="payment-customer-field payment-customer-field-wide" for="payment-customer-address">
+            Dirección
+            <textarea id="payment-customer-address" rows="3" placeholder="Calle, número, colonia, alcaldía o referencias" autocomplete="street-address"></textarea>
+          </label>
+        </div>
 
         <div class="payment-methods" id="payment-methods">
           <button class="payment-method-button is-selected" type="button" data-payment-method="transfer">Transferencia SPEI</button>
@@ -235,6 +249,11 @@
 
         <div class="payment-panel hidden" id="payment-cash-panel">
           <p class="payment-note">Paga en efectivo al recoger tu pedido en tienda.</p>
+          <button class="btn btn-primary" id="pay-in-store-whatsapp" type="button">Pagar en tienda</button>
+        </div>
+
+        <div class="order-confirmation-actions">
+          <p class="order-email-status" id="order-email-status" aria-live="polite"></p>
         </div>
       </div>
     </div>
@@ -247,6 +266,16 @@
   <script>
     window.GOOGLE_MAPS_API_KEY = 'AIzaSyD4TXHgscL3fN-qtLPSkP_g_NJIFpy1dYY';
     window.MERCADO_PAGO_LINK = '';
+    window.ORDER_DISCOUNT_AMOUNT = 0;
+    window.ORDER_EMAIL_CONFIG = {
+      provider: 'none',
+      formspreeEndpoint: '',
+      emailjsPublicKey: '',
+      emailjsServiceId: '',
+      emailjsCustomerTemplateId: '',
+      emailjsStoreTemplateId: '',
+      storeEmail: 'ventas@rubensdistribuidora.com'
+    };
   </script>
   <script src="script.js"></script>
 </body>

@@ -94,6 +94,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const closePaymentModal = document.getElementById('close-payment-modal');
   const paymentSummaryEl = document.getElementById('payment-summary');
   const paymentCustomerNameInput = document.getElementById('payment-customer-name');
+  const paymentCustomerPhoneInput = document.getElementById('payment-customer-phone');
+  const paymentCustomerEmailInput = document.getElementById('payment-customer-email');
+  const paymentCustomerAddressInput = document.getElementById('payment-customer-address');
   const paymentMethodButtons = document.querySelectorAll('.payment-method-button');
   const cashPaymentOption = document.getElementById('cash-payment-option');
   const paymentTransferPanel = document.getElementById('payment-transfer-panel');
@@ -105,6 +108,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const paymentClabeInput = document.getElementById('payment-clabe');
   const paymentConceptInput = document.getElementById('payment-concept');
   const sendTransferWhatsappButton = document.getElementById('send-transfer-whatsapp');
+  const payInStoreWhatsappButton = document.getElementById('pay-in-store-whatsapp');
+  const orderEmailStatusEl = document.getElementById('order-email-status');
   const mercadoPagoButton = document.getElementById('mercado-pago-button');
 
   const categoryLabels = {
@@ -163,13 +168,29 @@ window.addEventListener('DOMContentLoaded', () => {
   const GOOGLE_MAPS_API_KEY = window.GOOGLE_MAPS_API_KEY || '';
   const storeAddress = 'Rubens Distribuidora, Av. Azcapotzalco 756, Col. Los Reyes, CDMX, C.P. 02010, México';
   const deliveryCoverageKm = 15;
-  const metropolitanCoverageKm = 40;
-  const metropolitanMinimumSubtotal = 1500;
-  const metropolitanBaseDeliveryFee = 150;
+  const scheduledDeliveryLimitKm = 25;
+  const paidDeliveryFee = 200;
   const fastDeliveryExtraFee = 150;
   const paymentWhatsappNumber = '525510022372';
   const mercadoPagoLink = window.MERCADO_PAGO_LINK || '';
+  const mercadoPagoPendingOrderKey = 'rubensMercadoPagoPendingOrder';
+  const orderEmailConfig = {
+    provider: 'none',
+    formspreeEndpoint: '',
+    emailjsPublicKey: '',
+    emailjsServiceId: '',
+    emailjsCustomerTemplateId: '',
+    emailjsStoreTemplateId: '',
+    storeEmail: 'ventas@rubensdistribuidora.com',
+    ...(window.ORDER_EMAIL_CONFIG || {}),
+  };
   let latestDeliveryEstimate = null;
+  const deliveryDebugEnabled = Boolean(window.DEBUG_DELIVERY);
+  const debugDelivery = (...args) => {
+    if (deliveryDebugEnabled) {
+      console.log('[delivery-debug]', ...args);
+    }
+  };
 
   const savedCart = localStorage.getItem('rubensCart');
   if (savedCart) {
@@ -190,11 +211,11 @@ window.addEventListener('DOMContentLoaded', () => {
       return [{ label: 'Envío', value: 'GRATIS', free: true }];
     }
     const rows = [{
-      label: deliveryState.distanceKm > deliveryCoverageKm ? 'Envío metropolitano' : 'Envío',
+      label: deliveryState.distanceKm > deliveryCoverageKm ? 'Envío fuera de zona gratis' : 'Envío',
       value: formatCurrency(deliveryState.baseFee || deliveryState.fee),
     }];
     if (deliveryState.fastFee > 0) {
-      rows.push({ label: 'Entrega rápida', value: `+${formatCurrency(deliveryState.fastFee)}` });
+      rows.push({ label: 'Entrega flash', value: `+${formatCurrency(deliveryState.fastFee)}` });
     }
     return rows;
   };
@@ -1671,8 +1692,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const getDeliveryFee = (distanceKm) => {
     if (distanceKm <= deliveryCoverageKm) return 0;
-    if (distanceKm <= metropolitanCoverageKm) return metropolitanBaseDeliveryFee;
-    return null;
+    return paidDeliveryFee;
   };
 
   const getCartSubtotal = () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -1687,20 +1707,72 @@ window.addEventListener('DOMContentLoaded', () => {
     return Number(parts.find((part) => part.type === 'hour')?.value || 0);
   };
 
-  const getLocalDeliveryWindow = () => (
-    getMexicoCityHour() < 13 ? '✅ Entrega disponible hoy' : '📦 Entrega programada para mañana'
-  );
+  const getDeliverySchedule = (distanceKm) => {
+    const beforeCutoff = getMexicoCityHour() < 13;
+    if (distanceKm <= deliveryCoverageKm) {
+      return {
+        sameDay: beforeCutoff,
+        window: beforeCutoff ? 'Entrega disponible hoy' : 'Entrega programada para mañana',
+        type: 'Zona local',
+        caption: 'Entrega sin costo dentro de 15 km alrededor de la tienda.',
+      };
+    }
+    if (distanceKm <= scheduledDeliveryLimitKm) {
+      return {
+        sameDay: beforeCutoff,
+        window: beforeCutoff ? 'Entrega disponible hoy' : 'Entrega programada para el siguiente día disponible',
+        type: 'Área metropolitana',
+        caption: beforeCutoff
+          ? 'Pedido generado antes de la 1 PM. Aplica costo de envío de MXN 200.'
+          : 'Pedido generado después de la 1 PM. Aplica costo de envío de MXN 200.',
+      };
+    }
+    return {
+      sameDay: false,
+      window: 'Entrega sujeta a disponibilidad',
+      type: 'Fuera de área metropolitana',
+      caption: 'Checaremos disponibilidad de entrega rápida con un asesor.',
+    };
+  };
 
   const normalizeDeliveryDestination = (destination) => {
     const value = String(destination || '').trim();
-    if (/^\d{4,5}$/.test(value)) {
-      return `${value}, Ciudad de México, México`;
+    if (/^\d{5}$/.test(value)) {
+      return `${value}, México`;
     }
     return value;
   };
 
+  const withTimeout = (promise, timeoutMs, message) => new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      reject(new Error(message));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      });
+  });
+
+  const getGoogleMapsErrorMessage = (status) => {
+    const messages = {
+      REQUEST_DENIED: 'Google Maps rechazó la solicitud. Revisa la API key, permisos y restricciones de dominio.',
+      OVER_QUERY_LIMIT: 'Google Maps alcanzó el límite de consultas. Intenta nuevamente más tarde.',
+      INVALID_REQUEST: 'La solicitud a Google Maps no es válida.',
+      UNKNOWN_ERROR: 'Google Maps tuvo un error temporal. Intenta nuevamente.',
+      ZERO_RESULTS: 'Código postal inválido.',
+      NOT_FOUND: 'Código postal inválido.',
+    };
+    return messages[status] || 'No se pudo calcular la ruta. Intenta nuevamente.';
+  };
+
   const loadGoogleMapsApi = () => new Promise((resolve, reject) => {
-    if (window.google?.maps?.DistanceMatrixService) {
+    if (window.google?.maps?.DistanceMatrixService && window.google?.maps?.Geocoder) {
       resolve(window.google.maps);
       return;
     }
@@ -1708,9 +1780,32 @@ window.addEventListener('DOMContentLoaded', () => {
       reject(new Error('Falta agregar la variable GOOGLE_MAPS_API_KEY.'));
       return;
     }
+    window.gm_authFailure = () => {
+      window.__googleMapsAuthFailed = true;
+      debugDelivery('Error exacto de Google Maps:', 'gm_authFailure: API key rechazada o dominio no autorizado.');
+    };
     const existingScript = document.getElementById('google-maps-api');
     if (existingScript) {
-      existingScript.addEventListener('load', () => resolve(window.google.maps), { once: true });
+      if (window.__googleMapsAuthFailed) {
+        reject(new Error('No se pudo calcular la ruta. Intenta nuevamente.'));
+        return;
+      }
+      if (existingScript.dataset.loaded === 'true' && window.google?.maps) {
+        resolve(window.google.maps);
+        return;
+      }
+      existingScript.addEventListener('load', () => {
+        existingScript.dataset.loaded = 'true';
+        if (window.__googleMapsAuthFailed) {
+          reject(new Error('No se pudo calcular la ruta. Intenta nuevamente.'));
+          return;
+        }
+        if (window.google?.maps?.DistanceMatrixService && window.google?.maps?.Geocoder) {
+          resolve(window.google.maps);
+        } else {
+          reject(new Error('Google Maps cargó incompleto. Revisa la API key y las restricciones de dominio.'));
+        }
+      }, { once: true });
       existingScript.addEventListener('error', () => reject(new Error('No se pudo cargar Google Maps.')), { once: true });
       return;
     }
@@ -1719,10 +1814,81 @@ window.addEventListener('DOMContentLoaded', () => {
     script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(GOOGLE_MAPS_API_KEY)}`;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve(window.google.maps);
+    script.onload = () => {
+      script.dataset.loaded = 'true';
+      if (window.__googleMapsAuthFailed) {
+        reject(new Error('No se pudo calcular la ruta. Intenta nuevamente.'));
+        return;
+      }
+      if (window.google?.maps?.DistanceMatrixService && window.google?.maps?.Geocoder) {
+        resolve(window.google.maps);
+      } else {
+        reject(new Error('Google Maps cargó incompleto. Revisa la API key y las restricciones de dominio.'));
+      }
+    };
     script.onerror = () => reject(new Error('No se pudo cargar Google Maps.'));
     document.head.appendChild(script);
   });
+
+  const geocodeDeliveryDestination = (maps, destination) => withTimeout(new Promise((resolve, reject) => {
+    const geocoder = new maps.Geocoder();
+    debugDelivery('Código postal/dirección ingresado:', destination);
+    geocoder.geocode({
+      address: destination,
+      region: 'MX',
+      componentRestrictions: { country: 'MX' },
+    }, (results, status) => {
+      debugDelivery('Respuesta del geocoder:', { status, results });
+      if (status !== 'OK' || !results?.length) {
+        reject(new Error(getGoogleMapsErrorMessage(status)));
+        return;
+      }
+
+      const location = results[0].geometry?.location;
+      if (!location) {
+        reject(new Error('Código postal inválido.'));
+        return;
+      }
+
+      debugDelivery('Coordenadas obtenidas:', { lat: location.lat(), lng: location.lng() });
+      resolve({
+        formattedAddress: results[0].formatted_address,
+        location,
+        lat: location.lat(),
+        lng: location.lng(),
+      });
+    });
+  }), 12000, 'No se pudo calcular la ruta. Intenta nuevamente.');
+
+  const calculateRouteDistance = (maps, destinationLocation) => withTimeout(new Promise((resolve, reject) => {
+    const service = new maps.DistanceMatrixService();
+    service.getDistanceMatrix({
+      origins: [storeAddress],
+      destinations: [destinationLocation],
+      travelMode: maps.TravelMode.DRIVING,
+      unitSystem: maps.UnitSystem.METRIC,
+      region: 'MX',
+    }, (result, status) => {
+      debugDelivery('Respuesta Distance Matrix:', { status, result });
+      if (status !== 'OK') {
+        reject(new Error(getGoogleMapsErrorMessage(status)));
+        return;
+      }
+
+      const element = result.rows?.[0]?.elements?.[0];
+      if (!element || element.status !== 'OK') {
+        reject(new Error(getGoogleMapsErrorMessage(element?.status)));
+        return;
+      }
+
+      debugDelivery('Distancia calculada:', {
+        text: element.distance?.text,
+        meters: element.distance?.value,
+        duration: element.duration?.text,
+      });
+      resolve(element);
+    });
+  }), 15000, 'No se pudo calcular la ruta. Intenta nuevamente.');
 
   const calculateDeliveryEstimate = async (destinationInput) => {
     const destination = normalizeDeliveryDestination(destinationInput);
@@ -1731,65 +1897,34 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const maps = await loadGoogleMapsApi();
-      const service = new maps.DistanceMatrixService();
-      const response = await new Promise((resolve, reject) => {
-        service.getDistanceMatrix({
-          origins: [storeAddress],
-          destinations: [destination],
-          travelMode: maps.TravelMode.DRIVING,
-          unitSystem: maps.UnitSystem.METRIC,
-          region: 'MX',
-        }, (result, status) => {
-          if (status !== 'OK') {
-            reject(new Error('No se pudo calcular la ruta con Google Maps.'));
-            return;
-          }
-          resolve(result);
-        });
-      });
-      const element = response.rows?.[0]?.elements?.[0];
-      if (!element || element.status !== 'OK') {
-        return { valid: false, message: 'No pudimos encontrar esa zona. Intenta con una dirección más completa.' };
-      }
+      const maps = await withTimeout(loadGoogleMapsApi(), 12000, 'No se pudo cargar Google Maps. Revisa conexión, API key y restricciones de dominio.');
+      const geocodedDestination = await geocodeDeliveryDestination(maps, destination);
+      const element = await calculateRouteDistance(maps, geocodedDestination.location);
       const distanceKm = element.distance.value / 1000;
       const fee = getDeliveryFee(distanceKm);
-      if (fee === null) {
-        return {
-          valid: false,
-          noCoverage: true,
-          distanceKm,
-          durationText: element.duration.text,
-          message: 'Por el momento no contamos con cobertura de entrega en tu zona. Contáctanos por WhatsApp para cotización especial.',
-        };
-      }
-      const subtotal = getCartSubtotal();
-      const isMetropolitan = distanceKm > deliveryCoverageKm && distanceKm <= metropolitanCoverageKm;
-      if (isMetropolitan && subtotal < metropolitanMinimumSubtotal) {
-        return {
-          valid: false,
-          minimumRequired: true,
-          distanceKm,
-          durationText: element.duration.text,
-          message: 'Para entregas en área metropolitana fuera de 15 km, el pedido mínimo es de $1,500 MXN.',
-        };
-      }
+      const schedule = getDeliverySchedule(distanceKm);
+      const isPaidDelivery = distanceKm > deliveryCoverageKm;
+      const isLongRange = distanceKm > scheduledDeliveryLimitKm;
       return {
         valid: true,
-        sameDay: !isMetropolitan,
-        metropolitan: isMetropolitan,
-        allowFastDelivery: isMetropolitan,
+        sameDay: schedule.sameDay,
+        paidDelivery: isPaidDelivery,
+        longRange: isLongRange,
+        allowFastDelivery: isPaidDelivery,
         distanceKm,
         durationText: element.duration.text,
         fee,
-        deliveryWindow: isMetropolitan ? 'Entrega disponible en área metropolitana' : getLocalDeliveryWindow(),
-        deliveryCaption: isMetropolitan ? 'Un asesor confirmará disponibilidad y tiempo estimado de entrega.' : '',
-        message: isMetropolitan ? 'Entrega disponible en área metropolitana' : getLocalDeliveryWindow(),
+        address: geocodedDestination.formattedAddress,
+        deliveryWindow: schedule.window,
+        deliveryType: schedule.type,
+        deliveryCaption: schedule.caption,
+        message: 'Sí realizamos entregas en tu zona.',
       };
     } catch (error) {
+      debugDelivery('Error exacto al calcular entrega:', error);
       return {
         valid: false,
-        message: `${error.message} Define tu clave en GOOGLE_MAPS_API_KEY para activar el cálculo real.`,
+        message: error.message || 'No se pudo calcular la ruta. Intenta nuevamente.',
       };
     }
   };
@@ -1809,28 +1944,48 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!estimate.valid) {
       deliveryResult.innerHTML = `
         <div class="delivery-status-card delivery-status-card-error">
-          <strong>${estimate.noCoverage ? '❌ Sin cobertura' : estimate.minimumRequired ? 'Pedido mínimo requerido' : 'No pudimos calcular la entrega'}</strong>
-          <p>${estimate.message}</p>
-          ${estimate.distanceKm ? `<span>Distancia estimada: ${estimate.distanceKm.toFixed(1)} km</span>` : ''}
+          <div class="delivery-result-heading">
+            <span class="delivery-result-icon">!</span>
+            <div>
+              <strong>${estimate.noCoverage ? 'Por el momento no tenemos cobertura' : estimate.message === 'Código postal inválido.' ? 'Código postal inválido' : estimate.minimumRequired ? 'Pedido mínimo requerido' : 'No se pudo calcular la ruta'}</strong>
+              <p>${estimate.message}</p>
+            </div>
+          </div>
+          ${estimate.distanceKm ? `<div class="delivery-info-grid"><span><em>📍</em><small>Distancia estimada</small><b>${estimate.distanceKm.toFixed(1)} km</b></span></div>` : ''}
         </div>
       `;
       return;
     }
     const wantsFastDelivery = Boolean(deliveryFlashCheckbox?.checked && estimate.allowFastDelivery);
     const displayedDeliveryFee = estimate.fee + (wantsFastDelivery ? fastDeliveryExtraFee : 0);
-    const feeClass = displayedDeliveryFee === 0 ? 'delivery-free-text' : '';
+    const baseFeeIsFree = estimate.fee === 0;
+    const feeBadgeClass = baseFeeIsFree ? 'delivery-badge-free' : 'delivery-badge-paid';
+    const feeBadgeText = baseFeeIsFree ? 'Envío GRATIS' : 'Envío $200 MXN';
+    const mainIcon = wantsFastDelivery ? '⚡' : baseFeeIsFree ? '✅' : '🚚';
+    const displayedType = wantsFastDelivery ? 'Entrega flash' : (estimate.deliveryType || 'Envío');
     deliveryResult.innerHTML = `
       <div class="delivery-status-card delivery-status-card-ok">
-        <strong>${estimate.metropolitan ? '📍 Entrega disponible en área metropolitana' : estimate.deliveryWindow}</strong>
-        ${estimate.deliveryCaption ? `<p>${estimate.deliveryCaption}</p>` : ''}
-        <div class="delivery-metrics">
-          <span>📍 Distancia <b>${estimate.distanceKm.toFixed(1)} km</b></span>
-          <span>🚚 Envío <b class="${feeClass}">${formatDeliveryFee(displayedDeliveryFee)}</b></span>
+        <div class="delivery-result-heading">
+          <span class="delivery-result-icon">${mainIcon}</span>
+          <div>
+            <strong>Entrega disponible</strong>
+            <p>${estimate.address || 'Zona validada para entrega'}</p>
+          </div>
+          <span class="delivery-badge ${feeBadgeClass}">${feeBadgeText}</span>
+        </div>
+        <div class="delivery-info-grid">
+          <span><em>📍</em><small>Distancia</small><b>${estimate.distanceKm.toFixed(1)} km</b></span>
+          <span><em>🚚</em><small>Tipo de entrega</small><b>${displayedType}</b></span>
+          <span><em>⏰</em><small>Programación</small><b>${estimate.deliveryWindow}</b></span>
+          <span><em>💰</em><small>Costo de envío</small><b>${formatDeliveryFee(estimate.fee)}</b></span>
         </div>
         ${wantsFastDelivery ? `
           <div class="delivery-fast-note">
-            <strong>Checaremos disponibilidad de entrega.</strong>
-            <span>Un asesor validará disponibilidad según zona y horario.</span>
+            <div class="delivery-info-grid delivery-info-grid-compact">
+              <span><em>⚡</em><small>Entrega flash</small><b>+${formatCurrency(fastDeliveryExtraFee)}</b></span>
+              <span><em>🧾</em><small>Total envío</small><b>${formatCurrency(displayedDeliveryFee)}</b></span>
+            </div>
+            <p>Checaremos disponibilidad de entrega rápida con un asesor.</p>
           </div>
         ` : ''}
       </div>
@@ -1939,7 +2094,7 @@ window.addEventListener('DOMContentLoaded', () => {
       deliveryState.pickupConfirmed = false;
       if (pickupOptionButton) pickupOptionButton.classList.remove('is-selected');
       if (deliveryOptionsButton) deliveryOptionsButton.classList.add('is-selected');
-      deliveryState.note = `${estimate.message}. Distancia: ${estimate.distanceKm.toFixed(1)} km. Envío: ${deliveryFeeText}${wantsFastDelivery ? '. Checaremos disponibilidad de entrega rápida con un asesor.' : '.'}`;
+      deliveryState.note = `${estimate.message}. ${wantsFastDelivery ? 'Entrega flash solicitada' : estimate.deliveryWindow}. Distancia: ${estimate.distanceKm.toFixed(1)} km. Envío: ${deliveryFeeText}${wantsFastDelivery ? '. Un asesor validará disponibilidad.' : '.'}`;
     } else {
       deliveryState.type = 'pickup';
       deliveryState.postalCode = '';
@@ -2013,17 +2168,252 @@ window.addEventListener('DOMContentLoaded', () => {
     return rows.join('\n');
   };
 
+  const paymentMethodLabels = {
+    transfer: 'Transferencia',
+    mercado: 'Mercado Pago',
+    cash: 'Efectivo en tienda',
+  };
+
+  const getSelectedPaymentMethod = () => {
+    const selectedButton = Array.from(paymentMethodButtons).find((button) => button.classList.contains('is-selected'));
+    return selectedButton?.dataset.paymentMethod || 'transfer';
+  };
+
+  const getOrderDiscount = () => Number(window.ORDER_DISCOUNT_AMOUNT || 0);
+
+  const getCustomerData = () => ({
+    name: paymentCustomerNameInput?.value.trim() || '',
+    phone: paymentCustomerPhoneInput?.value.trim() || '',
+    email: paymentCustomerEmailInput?.value.trim() || '',
+    address: paymentCustomerAddressInput?.value.trim() || '',
+  });
+
+  const getDeliveryMethodLabel = () => deliveryState.type === 'delivery' ? 'Envío' : 'Pick up';
+
+  const getOrderTotals = () => {
+    const subtotal = getCartSubtotal();
+    const shipping = Number(deliveryState.fee || 0);
+    const discount = getOrderDiscount();
+    return {
+      subtotal,
+      shipping,
+      discount,
+      total: Math.max(0, subtotal + shipping - discount),
+    };
+  };
+
+  const buildOrderSummaryData = () => {
+    const customer = getCustomerData();
+    const totals = getOrderTotals();
+    const paymentMethod = getSelectedPaymentMethod();
+    const fallbackAddress = deliveryState.type === 'pickup'
+      ? storeAddress
+      : (deliveryState.postalCode || deliveryPostalInput?.value.trim() || 'Dirección pendiente de confirmar');
+
+    return {
+      customer: {
+        ...customer,
+        name: customer.name || 'Cliente',
+        phone: customer.phone || 'Teléfono pendiente',
+        email: customer.email || 'Correo pendiente',
+        address: customer.address || fallbackAddress,
+      },
+      deliveryMethod: getDeliveryMethodLabel(),
+      deliveryDetails: deliveryState.note || getDeliveryLineForSummary(),
+      paymentMethod: paymentMethodLabels[paymentMethod] || paymentMethodLabels.transfer,
+      products: cart.map((item) => ({
+        name: item.name,
+        description: item.description || '',
+        quantity: item.quantity,
+        unitPrice: item.price,
+        lineTotal: item.price * item.quantity,
+      })),
+      totals,
+    };
+  };
+
+  const buildOrderSummaryText = (intro = 'Nuevo pedido Ruben\'s Distribuidora') => {
+    const order = buildOrderSummaryData();
+    const productLines = order.products.map((item) => (
+      `- ${item.quantity} x ${item.name}${item.description ? ` (${item.description})` : ''} | ${formatCurrency(item.lineTotal)}`
+    )).join('\n');
+
+    return `${intro}
+
+Datos del cliente:
+Nombre: ${order.customer.name}
+Teléfono: ${order.customer.phone}
+Correo: ${order.customer.email}
+Dirección: ${order.customer.address}
+
+Entrega: ${order.deliveryMethod}
+Detalle de entrega: ${order.deliveryDetails}
+Método de pago: ${order.paymentMethod}
+
+Productos:
+${productLines}
+
+Subtotal: ${formatCurrency(order.totals.subtotal)}
+Envío: ${formatCurrency(order.totals.shipping)}
+Descuento: ${formatCurrency(order.totals.discount)}
+Total final: ${formatCurrency(order.totals.total)}`;
+  };
+
+  const openOrderWhatsapp = (orderText) => {
+    window.open(`https://wa.me/${paymentWhatsappNumber}?text=${encodeURIComponent(orderText)}`, '_blank');
+  };
+
+  const getCustomerConfirmationMessage = () => (
+    `Gracias por tu compra. Recibimos tu pedido y en breve confirmaremos disponibilidad y detalles de entrega.\n\n${buildOrderSummaryText('Resumen de pedido')}`
+  );
+
+  const validateOrderCustomerData = () => {
+    const customer = getCustomerData();
+    if (!customer.name || !customer.phone || !customer.email) {
+      alert('Por favor completa nombre, teléfono y correo para confirmar tu pedido.');
+      return false;
+    }
+    if (deliveryState.type === 'delivery' && !customer.address && !deliveryState.postalCode) {
+      alert('Por favor escribe la dirección de entrega.');
+      return false;
+    }
+    return true;
+  };
+
+  const setOrderEmailStatus = (message, isError = false) => {
+    if (!orderEmailStatusEl) return;
+    orderEmailStatusEl.textContent = message;
+    orderEmailStatusEl.classList.toggle('is-error', isError);
+  };
+
+  const loadEmailJsSdk = () => new Promise((resolve, reject) => {
+    if (window.emailjs) {
+      resolve(window.emailjs);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+    script.onload = () => resolve(window.emailjs);
+    script.onerror = () => reject(new Error('No se pudo cargar EmailJS.'));
+    document.head.appendChild(script);
+  });
+
+  const sendOrderEmailsWithEmailJs = async (orderText) => {
+    const emailjsClient = await loadEmailJsSdk();
+    const {
+      emailjsPublicKey,
+      emailjsServiceId,
+      emailjsCustomerTemplateId,
+      emailjsStoreTemplateId,
+      storeEmail,
+    } = orderEmailConfig;
+    const order = buildOrderSummaryData();
+    emailjsClient.init({ publicKey: emailjsPublicKey });
+    const templateParams = {
+      customer_name: order.customer.name,
+      customer_phone: order.customer.phone,
+      customer_email: order.customer.email,
+      customer_address: order.customer.address,
+      delivery_method: order.deliveryMethod,
+      delivery_details: order.deliveryDetails,
+      payment_method: order.paymentMethod,
+      products: order.products.map((item) => `${item.quantity} x ${item.name} - ${formatCurrency(item.lineTotal)}`).join('\n'),
+      subtotal: formatCurrency(order.totals.subtotal),
+      shipping: formatCurrency(order.totals.shipping),
+      discount: formatCurrency(order.totals.discount),
+      total: formatCurrency(order.totals.total),
+      order_summary: orderText,
+      customer_subject: 'Confirmación de pedido - Ruben’s Distribuidora',
+      store_subject: 'Nuevo pedido recibido - Ruben’s Distribuidora',
+      customer_message: getCustomerConfirmationMessage(),
+      store_email: storeEmail,
+      to_email: order.customer.email,
+      reply_to: order.customer.email,
+    };
+
+    await Promise.all([
+      emailjsClient.send(emailjsServiceId, emailjsCustomerTemplateId, templateParams),
+      emailjsClient.send(emailjsServiceId, emailjsStoreTemplateId, {
+        ...templateParams,
+        to_email: storeEmail,
+      }),
+    ]);
+  };
+
+  const sendOrderEmailsWithFormspree = async (orderText) => {
+    const order = buildOrderSummaryData();
+    const response = await fetch(orderEmailConfig.formspreeEndpoint, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        subject: 'Nuevo pedido recibido - Ruben’s Distribuidora',
+        customer_subject: 'Confirmación de pedido - Ruben’s Distribuidora',
+        customer_message: getCustomerConfirmationMessage(),
+        store_message: orderText,
+        name: order.customer.name,
+        phone: order.customer.phone,
+        email: order.customer.email,
+        _replyto: order.customer.email,
+        store_email: orderEmailConfig.storeEmail,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Formspree no pudo recibir el pedido.');
+    }
+  };
+
+  const sendOrderEmails = async (orderText) => {
+    const provider = (orderEmailConfig.provider || 'none').toLowerCase();
+    const hasEmailJsConfig = orderEmailConfig.emailjsPublicKey
+      && orderEmailConfig.emailjsServiceId
+      && orderEmailConfig.emailjsCustomerTemplateId
+      && orderEmailConfig.emailjsStoreTemplateId;
+    const hasFormspreeConfig = Boolean(orderEmailConfig.formspreeEndpoint);
+
+    if (provider === 'emailjs' && hasEmailJsConfig) {
+      await sendOrderEmailsWithEmailJs(orderText);
+      return 'Correos de confirmación enviados.';
+    }
+    if (provider === 'formspree' && hasFormspreeConfig) {
+      await sendOrderEmailsWithFormspree(orderText);
+      return 'Pedido enviado por correo mediante Formspree.';
+    }
+    return 'Correo listo para configurar: agrega EmailJS o Formspree en ORDER_EMAIL_CONFIG.';
+  };
+
+  const sendOrderByWhatsapp = (intro = 'Hola, quiero confirmar este pedido en Ruben\'s Distribuidora') => {
+    if (cart.length === 0) {
+      alert('Tu carrito está vacío. Agrega productos para continuar.');
+      return;
+    }
+    if (!validateOrderCustomerData()) return;
+
+    const orderText = buildOrderSummaryText(intro);
+    openOrderWhatsapp(orderText);
+
+    setOrderEmailStatus('Preparando confirmación por correo...');
+    sendOrderEmails(orderText)
+      .then((message) => setOrderEmailStatus(message))
+      .catch(() => {
+        setOrderEmailStatus('No se pudo enviar el correo automático. El pedido por WhatsApp sí quedó preparado.', true);
+      });
+  };
+
   const renderPaymentSummary = () => {
     if (!paymentSummaryEl) return;
-    const subtotal = getCartSubtotal();
-    const total = subtotal + deliveryState.fee;
+    const totals = getOrderTotals();
     const shippingRows = getShippingSummaryRows();
     paymentSummaryEl.innerHTML = `
       <strong>Resumen de compra</strong>
       <div class="payment-summary-list">
-        <span>Subtotal</span><b>${formatCurrency(subtotal)}</b>
+        <span>Subtotal</span><b>${formatCurrency(totals.subtotal)}</b>
         ${shippingRows.map((row) => `<span>${row.label}</span><b class="${row.free ? 'delivery-free-text' : ''}">${row.value}</b>`).join('')}
-        <span>Total</span><b>${formatCurrency(total)}</b>
+        <span>Descuento</span><b>${formatCurrency(totals.discount)}</b>
+        <span>Total</span><b>${formatCurrency(totals.total)}</b>
       </div>
     `;
   };
@@ -2039,6 +2429,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const showPaymentModal = () => {
     if (!paymentModal) return;
+    if (paymentCustomerAddressInput && !paymentCustomerAddressInput.value.trim()) {
+      paymentCustomerAddressInput.value = deliveryState.type === 'delivery'
+        ? (deliveryState.postalCode || deliveryPostalInput?.value.trim() || '')
+        : storeAddress;
+    }
+    setOrderEmailStatus('');
     renderPaymentSummary();
     const cashAllowed = deliveryState.type === 'pickup' && deliveryState.pickupConfirmed;
     if (cashPaymentOption) cashPaymentOption.classList.toggle('hidden', !cashAllowed);
@@ -2050,10 +2446,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (paymentModal) paymentModal.classList.add('hidden');
   };
 
-  const buildTransferWhatsappMessage = () => {
-    const customerName = paymentCustomerNameInput?.value.trim() || 'Cliente';
-    const subtotal = getCartSubtotal();
-    const total = subtotal + deliveryState.fee;
+  const getTransferBankText = () => {
     const bankData = [
       ['Banco', paymentBankInput?.value.trim()],
       ['Beneficiario', paymentBeneficiaryInput?.value.trim()],
@@ -2061,15 +2454,52 @@ window.addEventListener('DOMContentLoaded', () => {
       ['CLABE', paymentClabeInput?.value.trim()],
       ['Concepto', paymentConceptInput?.value.trim()],
     ].filter(([, value]) => value);
-    const bankText = bankData.length
+    return bankData.length
       ? `\nDatos SPEI capturados:\n${bankData.map(([label, value]) => `${label}: ${value}`).join('\n')}`
       : '';
-    return `Hola, soy ${customerName}.\n\nResumen del pedido:\n${getCartSummaryText()}\n\nSubtotal: ${formatCurrency(subtotal)}\n${getDeliveryLineForSummary()}\nTotal: ${formatCurrency(total)}\n\nMétodo de pago: Transferencia SPEI.\nAdjunto mi comprobante de pago.${bankText}`;
+  };
+
+  const buildTransferWhatsappMessage = () => {
+    const orderText = buildOrderSummaryText('Hola, envío mi comprobante SPEI y confirmo este pedido en Ruben\'s Distribuidora');
+    return `${orderText}\n\nAdjunto mi comprobante de pago.${getTransferBankText()}`;
   };
 
   const openTransferWhatsapp = () => {
+    if (!validateOrderCustomerData()) return;
     const message = encodeURIComponent(buildTransferWhatsappMessage());
     window.open(`https://wa.me/${paymentWhatsappNumber}?text=${message}`, '_blank');
+  };
+
+  const isMercadoPagoApprovedReturn = () => {
+    const params = new URLSearchParams(window.location.search);
+    const successValues = ['approved', 'success', 'accredited'];
+    return successValues.includes((params.get('status') || '').toLowerCase())
+      || successValues.includes((params.get('collection_status') || '').toLowerCase())
+      || successValues.includes((params.get('payment_status') || '').toLowerCase());
+  };
+
+  const rememberMercadoPagoOrder = () => {
+    const orderText = buildOrderSummaryText('Pago aprobado por Mercado Pago. Confirmo este pedido en Ruben\'s Distribuidora');
+    localStorage.setItem(mercadoPagoPendingOrderKey, JSON.stringify({
+      orderText,
+      createdAt: Date.now(),
+    }));
+  };
+
+  const sendPendingMercadoPagoOrder = () => {
+    if (!isMercadoPagoApprovedReturn()) return;
+    const savedOrder = localStorage.getItem(mercadoPagoPendingOrderKey);
+    if (!savedOrder) return;
+
+    try {
+      const pendingOrder = JSON.parse(savedOrder);
+      if (pendingOrder?.orderText) {
+        openOrderWhatsapp(pendingOrder.orderText);
+        localStorage.removeItem(mercadoPagoPendingOrderKey);
+      }
+    } catch (error) {
+      localStorage.removeItem(mercadoPagoPendingOrderKey);
+    }
   };
 
   const renderSubcategoryOptions = (category) => {
@@ -2685,9 +3115,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (saveDeliverySelectionButton) {
     saveDeliverySelectionButton.addEventListener('click', async () => {
-      if (!await applyDeliverySelection()) return;
-      updateDeliverySummary();
-      renderCart();
+      const originalText = saveDeliverySelectionButton.textContent;
+      saveDeliverySelectionButton.disabled = true;
+      saveDeliverySelectionButton.textContent = 'Calculando...';
+      try {
+        if (!await applyDeliverySelection()) return;
+        updateDeliverySummary();
+        renderCart();
+      } finally {
+        saveDeliverySelectionButton.disabled = false;
+        saveDeliverySelectionButton.textContent = originalText;
+      }
     });
   }
 
@@ -2737,7 +3175,7 @@ window.addEventListener('DOMContentLoaded', () => {
       deliveryState.fee = deliveryFee;
       if (pickupOptionButton) pickupOptionButton.classList.remove('is-selected');
       if (deliveryOptionsButton) deliveryOptionsButton.classList.add('is-selected');
-      deliveryState.note = `${latestDeliveryEstimate.message}. Distancia: ${latestDeliveryEstimate.distanceKm.toFixed(1)} km. Envío: ${deliveryFeeText}${wantsFastDelivery ? '. Checaremos disponibilidad de entrega rápida con un asesor.' : '.'}`;
+      deliveryState.note = `${latestDeliveryEstimate.message}. ${wantsFastDelivery ? 'Entrega flash solicitada' : latestDeliveryEstimate.deliveryWindow}. Distancia: ${latestDeliveryEstimate.distanceKm.toFixed(1)} km. Envío: ${deliveryFeeText}${wantsFastDelivery ? '. Un asesor validará disponibilidad.' : '.'}`;
       renderDeliveryResult(latestDeliveryEstimate);
       updateDeliverySummary();
       renderCart();
@@ -2808,9 +3246,17 @@ window.addEventListener('DOMContentLoaded', () => {
     sendTransferWhatsappButton.addEventListener('click', openTransferWhatsapp);
   }
 
+  if (payInStoreWhatsappButton) {
+    payInStoreWhatsappButton.addEventListener('click', () => {
+      sendOrderByWhatsapp('Hola, quiero pagar en tienda y confirmar este pedido en Ruben\'s Distribuidora');
+    });
+  }
+
   if (mercadoPagoButton) {
     mercadoPagoButton.addEventListener('click', () => {
+      if (!validateOrderCustomerData()) return;
       if (mercadoPagoLink) {
+        rememberMercadoPagoOrder();
         window.open(mercadoPagoLink, '_blank');
         return;
       }
@@ -2848,5 +3294,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   updateCartCount();
   renderCart();
+  sendPendingMercadoPagoOrder();
 });
 
