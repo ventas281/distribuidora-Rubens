@@ -3,3 +3,4 @@ chrome-accept-delivery /
 chrome-test-profile/ 
 *.exe 
 *.json 
+extensions/
