@@ -670,7 +670,8 @@ button,
   border: 0;
   background: transparent;
   color: #d7dbe2;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
+  font-family: Arial, sans-serif;
   line-height: 1;
   padding: 0.1rem;
   cursor: pointer;
@@ -2171,6 +2172,129 @@ button,
     padding: 0.55rem 0.75rem;
     white-space: nowrap;
     font-size: 0.78rem;
+  }
+}
+
+.product-card {
+  height: 100%;
+  min-height: 640px;
+}
+
+.product-footer {
+  margin-top: auto;
+  display: grid;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.product-price {
+  display: block;
+}
+
+.product-actions {
+  display: grid;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.product-action-main,
+.product-card .product-action-main {
+  width: 100%;
+  min-width: 0;
+}
+
+.product-action-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.product-action-small,
+.product-card .product-action-small {
+  width: 100%;
+  min-width: 0;
+  padding: 0.62rem 0.8rem;
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.product-card > h3 {
+  min-height: 3.1rem;
+  display: flex;
+  align-items: flex-start;
+}
+
+.product-card > p:not(.product-volume):not(.product-error):not(.product-sku) {
+  min-height: 5.4rem;
+  display: block;
+}
+
+.product-card .size-selector {
+  min-height: 3rem;
+}
+
+.size-selector-placeholder {
+  visibility: hidden;
+}
+
+.product-card .product-volume {
+  min-height: 2rem;
+  display: flex;
+  align-items: center;
+}
+
+.product-card .product-rating {
+  min-height: 2rem;
+  flex-wrap: wrap;
+}
+
+.product-card .rating-score {
+  min-width: 2rem;
+  color: var(--text);
+  font-weight: 800;
+}
+
+.product-card .rating-feedback {
+  color: var(--muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.product-card .product-sku {
+  font-size: 0.7rem;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 760px) {
+  .product-card {
+    min-height: 600px;
+  }
+
+  .product-card > h3 {
+    min-height: 3rem;
+  }
+
+  .product-card > p:not(.product-volume):not(.product-error):not(.product-sku) {
+    min-height: 5rem;
+  }
+
+  .product-card .size-selector {
+    min-height: 3rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .product-card {
+    min-height: 570px;
+  }
+
+  .product-card > p:not(.product-volume):not(.product-error):not(.product-sku) {
+    min-height: 4.8rem;
   }
 }
 
