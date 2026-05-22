@@ -72,8 +72,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const closeCartModal = document.getElementById('close-cart-modal');
   const cartItemsEl = document.getElementById('cart-items');
   const cartTotalEl = document.getElementById('cart-total');
+  const cartTotalBreakdownEl = document.getElementById('cart-total-breakdown');
   const checkoutButton = document.getElementById('checkout');
   const cartDeliverySummaryEl = document.getElementById('cart-delivery-summary');
+  const pickupOptionButton = document.getElementById('pickup-option');
   const deliveryOptionsButton = document.getElementById('delivery-options-button');
   const detailModal = document.getElementById('detail-modal');
   const closeDetailModal = document.getElementById('close-detail-modal');
@@ -87,6 +89,23 @@ window.addEventListener('DOMContentLoaded', () => {
   const deliveryFlashCheckbox = document.getElementById('delivery-flash');
   const deliveryResult = document.getElementById('delivery-result');
   const saveDeliverySelectionButton = document.getElementById('save-delivery-selection');
+  const acceptDeliverySelectionButton = document.getElementById('accept-delivery-selection');
+  const paymentModal = document.getElementById('payment-modal');
+  const closePaymentModal = document.getElementById('close-payment-modal');
+  const paymentSummaryEl = document.getElementById('payment-summary');
+  const paymentCustomerNameInput = document.getElementById('payment-customer-name');
+  const paymentMethodButtons = document.querySelectorAll('.payment-method-button');
+  const cashPaymentOption = document.getElementById('cash-payment-option');
+  const paymentTransferPanel = document.getElementById('payment-transfer-panel');
+  const paymentMercadoPanel = document.getElementById('payment-mercado-panel');
+  const paymentCashPanel = document.getElementById('payment-cash-panel');
+  const paymentBankInput = document.getElementById('payment-bank');
+  const paymentBeneficiaryInput = document.getElementById('payment-beneficiary');
+  const paymentAccountInput = document.getElementById('payment-account');
+  const paymentClabeInput = document.getElementById('payment-clabe');
+  const paymentConceptInput = document.getElementById('payment-concept');
+  const sendTransferWhatsappButton = document.getElementById('send-transfer-whatsapp');
+  const mercadoPagoButton = document.getElementById('mercado-pago-button');
 
   const categoryLabels = {
     vinilica: 'Pintura Vinílica',
@@ -96,18 +115,18 @@ window.addEventListener('DOMContentLoaded', () => {
     madera: 'Productos para Madera',
     aplicadores: 'Aplicadores',
     diluyentes: 'Diluyentes',
-    primerarios: 'Primerarios',
+    primerarios: 'Primarios',
   };
 
   const subcategories = {
     vinilica: ['Económica', 'Media', 'Mediana-Alta', 'Alta'],
     esmalte: ['Base Agua', 'Base Solvente', 'Esmalte Industrial'],
-    epoxica: ['Pisos', 'Industrial', 'Alto Tráfico'],
+    epoxica: ['Fester', 'Pisos', 'Industrial', 'Alto Tráfico'],
     aerosoles: ['Normal', 'Metálico', 'Neón', 'Alta Temperatura'],
     madera: ['Tintas', 'Barnices entintados', 'Barnices base agua', 'Barnices base esmalte', 'Lacas', 'Nitrocelulosas', 'Selladores', 'Primer para Madera', 'Poliuretanos', 'Resanadores', 'Aditivos'],
     aplicadores: ['Brochas', 'Rodillos'],
     diluyentes: ['Alberca y Tráfico'],
-    primerarios: ['Primerarios'],
+    primerarios: ['Primarios'],
   }; 
 
   const counts = {
@@ -131,11 +150,26 @@ window.addEventListener('DOMContentLoaded', () => {
     postalCode: '',
     sameDay: false,
     flash: false,
+    fastDelivery: false,
+    baseFee: 0,
+    fastFee: 0,
     fee: 0,
+    distanceKm: 0,
+    durationText: '',
+    deliveryWindow: '',
+    pickupConfirmed: false,
     note: 'Recoger en tienda',
   };
-  const flashDeliveryFee = 80;
-  const freeDeliveryMin = 500;
+  const GOOGLE_MAPS_API_KEY = window.GOOGLE_MAPS_API_KEY || '';
+  const storeAddress = 'Rubens Distribuidora, Av. Azcapotzalco 756, Col. Los Reyes, CDMX, C.P. 02010, México';
+  const deliveryCoverageKm = 15;
+  const metropolitanCoverageKm = 40;
+  const metropolitanMinimumSubtotal = 1500;
+  const metropolitanBaseDeliveryFee = 150;
+  const fastDeliveryExtraFee = 150;
+  const paymentWhatsappNumber = '525510022372';
+  const mercadoPagoLink = window.MERCADO_PAGO_LINK || '';
+  let latestDeliveryEstimate = null;
 
   const savedCart = localStorage.getItem('rubensCart');
   if (savedCart) {
@@ -146,7 +180,24 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  const formatCurrency = (value) => `MXN ${value.toFixed(2)}`;
+  const formatCurrency = (value) => `MXN ${Number(value || 0).toFixed(2)}`;
+  const formatDeliveryFee = (value) => Number(value || 0) === 0 ? 'GRATIS' : formatCurrency(value);
+  const getShippingSummaryRows = () => {
+    if (deliveryState.type !== 'delivery') {
+      return [{ label: 'Pick Up', value: 'Sin costo' }];
+    }
+    if (deliveryState.baseFee === 0 && deliveryState.fee === 0) {
+      return [{ label: 'Envío', value: 'GRATIS', free: true }];
+    }
+    const rows = [{
+      label: deliveryState.distanceKm > deliveryCoverageKm ? 'Envío metropolitano' : 'Envío',
+      value: formatCurrency(deliveryState.baseFee || deliveryState.fee),
+    }];
+    if (deliveryState.fastFee > 0) {
+      rows.push({ label: 'Entrega rápida', value: `+${formatCurrency(deliveryState.fastFee)}` });
+    }
+    return rows;
+  };
 
   const generateProducts = () => {
 
@@ -524,6 +575,236 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    const festerProducts = [
+      {
+        id: 'fester-acriton-ps-max-8',
+        name: 'FESTER ACRITON PS MAX 8 AÑOS',
+        description: 'Impermeabilizante acrílico premium de secado extra rápido y alta durabilidad, ideal para techos con alta exposición al sol, lluvia y cambios climáticos.',
+        variants: [
+          {
+            name: 'Blanco',
+            color: '#f7f7f2',
+            description: 'Impermeabilizante acrílico premium de secado extra rápido ideal para techos con alta exposición al sol, lluvia y cambios climáticos.',
+            sizes: [
+              { id: '4lts', label: '4 Lts', price: 1053 },
+              { id: '19lts', label: '19 Lts', price: 4458 },
+            ],
+          },
+          {
+            name: 'Rojo Terracota',
+            color: '#a94835',
+            description: 'Impermeabilizante elastomérico premium de alta durabilidad ideal para protección extrema de techos y azoteas.',
+            sizes: [
+              { id: '4lts', label: '4 Lts', price: 1046 },
+              { id: '19lts', label: '19 Lts', price: 4405 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'fester-acriton-ps-max-6',
+        name: 'FESTER ACRITON PS MAX 6 AÑOS',
+        description: 'Impermeabilizante acrílico profesional con excelente balance entre costo, rendimiento y protección prolongada.',
+        variants: [
+          {
+            name: 'Blanco',
+            color: '#f7f7f2',
+            description: 'Impermeabilizante acrílico profesional con excelente balance entre costo y rendimiento.',
+            sizes: [
+              { id: '19lts', label: '19 Lts', price: 3840 },
+            ],
+          },
+          {
+            name: 'Rojo Terracota',
+            color: '#a94835',
+            description: 'Impermeabilizante acrílico de alto desempeño ideal para mantenimiento preventivo y protección prolongada.',
+            sizes: [
+              { id: '19lts', label: '19 Lts', price: 3790 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'fester-acriton-ps-max-4',
+        name: 'FESTER ACRITON PS MAX 4 AÑOS',
+        description: 'Impermeabilizante acrílico de excelente adherencia para proyectos residenciales y mantenimiento preventivo.',
+        variants: [
+          {
+            name: 'Blanco',
+            color: '#f7f7f2',
+            description: 'Impermeabilizante acrílico de excelente adherencia ideal para proyectos residenciales y mantenimiento preventivo.',
+            sizes: [
+              { id: '4lts', label: '4 Lts', price: 954 },
+              { id: '19lts', label: '19 Lts', price: 3311 },
+            ],
+          },
+          {
+            name: 'Rojo Terracota',
+            color: '#a94835',
+            description: 'Impermeabilizante acrílico económico con buena resistencia al agua y rayos UV.',
+            sizes: [
+              { id: '4lts', label: '4 Lts', price: 941 },
+              { id: '19lts', label: '19 Lts', price: 3257 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'fester-a-7',
+        name: 'FESTER A 7 AÑOS',
+        description: 'Impermeabilizante con excelente relación calidad-precio para protección prolongada.',
+        variants: [
+          {
+            name: 'Blanco',
+            color: '#f7f7f2',
+            description: 'Impermeabilizante acrílico de gran rendimiento ideal para hogares y pequeños proyectos.',
+            sizes: [
+              { id: '19lts', label: '19 Lts', price: 2712 },
+            ],
+          },
+          {
+            name: 'Rojo Terracota',
+            color: '#a94835',
+            description: 'Impermeabilizante con excelente relación calidad-precio para protección prolongada.',
+            sizes: [
+              { id: '19lts', label: '19 Lts', price: 2712 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'fester-a-5',
+        name: 'FESTER A 5 AÑOS',
+        description: 'Impermeabilizante ideal para mantenimiento preventivo, protección confiable y costo accesible.',
+        variants: [
+          {
+            name: 'Blanco',
+            color: '#f7f7f2',
+            description: 'Impermeabilizante ideal para mantenimiento preventivo y protección confiable.',
+            sizes: [
+              { id: '4lts', label: '4 Lts', price: 552 },
+              { id: '19lts', label: '19 Lts', price: 2329 },
+            ],
+          },
+          {
+            name: 'Rojo Terracota',
+            color: '#a94835',
+            description: 'Impermeabilizante acrílico de excelente desempeño y costo accesible.',
+            sizes: [
+              { id: '4lts', label: '4 Lts', price: 552 },
+              { id: '19lts', label: '19 Lts', price: 2329 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'fester-a-3',
+        name: 'FESTER A 3 AÑOS',
+        description: 'Impermeabilizante económico ideal para mantenimiento básico, protección temporal y proyectos residenciales.',
+        variants: [
+          {
+            name: 'Blanco',
+            color: '#f7f7f2',
+            description: 'Impermeabilizante económico ideal para mantenimiento básico y proyectos residenciales.',
+            sizes: [
+              { id: '4lts', label: '4 Lts', price: 476 },
+              { id: '19lts', label: '19 Lts', price: 2025 },
+            ],
+          },
+          {
+            name: 'Rojo Terracota',
+            color: '#a94835',
+            description: 'Impermeabilizante de entrada ideal para protección temporal y mantenimiento preventivo.',
+            sizes: [
+              { id: '4lts', label: '4 Lts', price: 476 },
+              { id: '19lts', label: '19 Lts', price: 2025 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'fester-vaportite-550',
+        name: 'FESTER VAPORTITE 550',
+        description: 'Impermeabilizante asfáltico base solvente ideal para cimentaciones, jardineras, techos, baños y superficies con humedad extrema.',
+        finish: 'Negro Asfáltico',
+        color: '#111111',
+        sizes: [
+          { id: '1lt', label: '1 Lt', price: 329 },
+          { id: '4lts', label: '4 Lts', price: 882 },
+          { id: '19lts', label: '19 Lts', price: 3403 },
+        ],
+      },
+      {
+        id: 'fester-plastic-cement',
+        name: 'FESTER PLASTIC CEMENT',
+        description: 'Sellador y resanador profesional para grietas, fisuras y puntos críticos antes de impermeabilizar.',
+        finish: 'Negro Asfáltico',
+        color: '#111111',
+        sizes: [
+          { id: '1lt', label: '1 Lt', price: 245 },
+          { id: '4lts', label: '4 Lts', price: 773 },
+          { id: '19lts', label: '19 Lts', price: 3118 },
+        ],
+      },
+      {
+        id: 'fester-integral-a-z',
+        name: 'FESTER INTEGRAL A-Z',
+        description: 'Tratamiento especializado contra humedad y salitre para muros interiores y exteriores.',
+        finish: 'Transparente / Tratamiento',
+        color: '#d8dde2',
+        sizes: [
+          { id: '1lt', label: '1 Lt', price: 455 },
+          { id: '4lts', label: '4 Lts', price: 1169 },
+          { id: '19lts', label: '19 Lts', price: 4732 },
+        ],
+      },
+      {
+        id: 'festermicide',
+        name: 'FESTERMICIDE',
+        description: 'Tratamiento especializado para eliminar hongos, algas, moho y microorganismos antes de pintar o impermeabilizar.',
+        finish: 'Tratamiento Fungicida',
+        color: '#dfe8dc',
+        sizes: [
+          { id: '4lts', label: '4 Lts', price: 1240 },
+          { id: '19lts', label: '19 Lts', price: 5044 },
+        ],
+      },
+    ];
+
+    festerProducts.forEach((item) => {
+      const palette = item.variants
+        ? item.variants.map((variant) => ({
+          name: variant.name,
+          color: variant.color,
+          description: variant.description,
+          sizeOptions: variant.sizes,
+        }))
+        : [{ name: item.finish, color: item.color }];
+      const defaultSizes = item.variants ? item.variants[0].sizes : item.sizes;
+      const detailFinish = item.variants
+        ? `Colores disponibles: ${item.variants.map((variant) => variant.name).join(' y ')}.`
+        : `Acabado: ${item.finish}.`;
+
+      products.push({
+        id: item.id,
+        category: 'epoxica',
+        categoryLabel: categoryLabels['epoxica'],
+        subcategory: 'Fester',
+        name: item.name,
+        description: item.description,
+        detailText: `${item.description} ${detailFinish}`,
+        price: Math.min(...palette.flatMap((variant) => (variant.sizeOptions || defaultSizes).map((size) => size.price))),
+        sizeOptions: defaultSizes,
+        cantidad: defaultSizes.map((size) => size.label.toLowerCase()).join(' / '),
+        popular: item.name.includes('8 AÑOS') || item.id === 'fester-vaportite-550',
+        recommended: true,
+        rating: 4,
+        colorSwatch: palette[0].color,
+        image: '',
+        palette,
+      });
+    });
+
     products.push({
       id: 'esmalte-alva-fast',
       category: 'esmalte',
@@ -748,7 +1029,7 @@ window.addEventListener('DOMContentLoaded', () => {
       id: 'primario-anticorrosivo',
       category: 'primerarios',
       categoryLabel: categoryLabels['primerarios'],
-      subcategory: 'Primerarios',
+      subcategory: 'Primarios',
       name: 'Primario Anticorrosivo',
       description: 'Primario protector para superficies metálicas con excelente adherencia y protección anticorrosiva.',
       detailText: 'Primario protector para superficies metálicas con excelente adherencia y protección anticorrosiva. Disponible en 1, 4 y 19 litros.',
@@ -775,7 +1056,7 @@ window.addEventListener('DOMContentLoaded', () => {
       id: 'primario-anticorrosivo-zinc',
       category: 'primerarios',
       categoryLabel: categoryLabels['primerarios'],
-      subcategory: 'Primerarios',
+      subcategory: 'Primarios',
       name: 'Primario Anticorrosivo de Zinc',
       description: 'Protección industrial reforzada contra corrosión para superficies metálicas.',
       detailText: 'Protección industrial reforzada contra corrosión para superficies metálicas. Disponible en 1, 4 y 19 litros.',
@@ -1388,16 +1669,172 @@ window.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('rubensCart', JSON.stringify(cart));
   };
 
-  const getDeliveryEstimate = (postalCode) => {
-    const code = String(postalCode).trim();
-    const numeric = Number(code.replace(/\D/g, '').slice(0, 5));
-    if (!numeric || code.length < 4) {
-      return { valid: false, message: 'Ingresa un código postal válido para ver la disponibilidad.', sameDay: false, eta: '' };
+  const getDeliveryFee = (distanceKm) => {
+    if (distanceKm <= deliveryCoverageKm) return 0;
+    if (distanceKm <= metropolitanCoverageKm) return metropolitanBaseDeliveryFee;
+    return null;
+  };
+
+  const getCartSubtotal = () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const getMexicoCityHour = () => {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Mexico_City',
+      hour: 'numeric',
+      hour12: false,
+      hourCycle: 'h23',
+    }).formatToParts(new Date());
+    return Number(parts.find((part) => part.type === 'hour')?.value || 0);
+  };
+
+  const getLocalDeliveryWindow = () => (
+    getMexicoCityHour() < 13 ? '✅ Entrega disponible hoy' : '📦 Entrega programada para mañana'
+  );
+
+  const normalizeDeliveryDestination = (destination) => {
+    const value = String(destination || '').trim();
+    if (/^\d{4,5}$/.test(value)) {
+      return `${value}, Ciudad de México, México`;
     }
-    if (numeric >= 54000 && numeric <= 54150) {
-      return { valid: true, message: 'Entrega dentro de 15 km: mismo día disponible.', sameDay: true, eta: 'Mismo día' };
+    return value;
+  };
+
+  const loadGoogleMapsApi = () => new Promise((resolve, reject) => {
+    if (window.google?.maps?.DistanceMatrixService) {
+      resolve(window.google.maps);
+      return;
     }
-    return { valid: true, message: 'Fuera del rango de 15 km: entrega estimada en 1-2 días.', sameDay: false, eta: '1-2 días' };
+    if (!GOOGLE_MAPS_API_KEY) {
+      reject(new Error('Falta agregar la variable GOOGLE_MAPS_API_KEY.'));
+      return;
+    }
+    const existingScript = document.getElementById('google-maps-api');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve(window.google.maps), { once: true });
+      existingScript.addEventListener('error', () => reject(new Error('No se pudo cargar Google Maps.')), { once: true });
+      return;
+    }
+    const script = document.createElement('script');
+    script.id = 'google-maps-api';
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(GOOGLE_MAPS_API_KEY)}`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve(window.google.maps);
+    script.onerror = () => reject(new Error('No se pudo cargar Google Maps.'));
+    document.head.appendChild(script);
+  });
+
+  const calculateDeliveryEstimate = async (destinationInput) => {
+    const destination = normalizeDeliveryDestination(destinationInput);
+    if (!destination) {
+      return { valid: false, message: 'Ingresa un código postal o dirección completa para calcular la entrega.' };
+    }
+
+    try {
+      const maps = await loadGoogleMapsApi();
+      const service = new maps.DistanceMatrixService();
+      const response = await new Promise((resolve, reject) => {
+        service.getDistanceMatrix({
+          origins: [storeAddress],
+          destinations: [destination],
+          travelMode: maps.TravelMode.DRIVING,
+          unitSystem: maps.UnitSystem.METRIC,
+          region: 'MX',
+        }, (result, status) => {
+          if (status !== 'OK') {
+            reject(new Error('No se pudo calcular la ruta con Google Maps.'));
+            return;
+          }
+          resolve(result);
+        });
+      });
+      const element = response.rows?.[0]?.elements?.[0];
+      if (!element || element.status !== 'OK') {
+        return { valid: false, message: 'No pudimos encontrar esa zona. Intenta con una dirección más completa.' };
+      }
+      const distanceKm = element.distance.value / 1000;
+      const fee = getDeliveryFee(distanceKm);
+      if (fee === null) {
+        return {
+          valid: false,
+          noCoverage: true,
+          distanceKm,
+          durationText: element.duration.text,
+          message: 'Por el momento no contamos con cobertura de entrega en tu zona. Contáctanos por WhatsApp para cotización especial.',
+        };
+      }
+      const subtotal = getCartSubtotal();
+      const isMetropolitan = distanceKm > deliveryCoverageKm && distanceKm <= metropolitanCoverageKm;
+      if (isMetropolitan && subtotal < metropolitanMinimumSubtotal) {
+        return {
+          valid: false,
+          minimumRequired: true,
+          distanceKm,
+          durationText: element.duration.text,
+          message: 'Para entregas en área metropolitana fuera de 15 km, el pedido mínimo es de $1,500 MXN.',
+        };
+      }
+      return {
+        valid: true,
+        sameDay: !isMetropolitan,
+        metropolitan: isMetropolitan,
+        allowFastDelivery: isMetropolitan,
+        distanceKm,
+        durationText: element.duration.text,
+        fee,
+        deliveryWindow: isMetropolitan ? 'Entrega disponible en área metropolitana' : getLocalDeliveryWindow(),
+        deliveryCaption: isMetropolitan ? 'Un asesor confirmará disponibilidad y tiempo estimado de entrega.' : '',
+        message: isMetropolitan ? 'Entrega disponible en área metropolitana' : getLocalDeliveryWindow(),
+      };
+    } catch (error) {
+      return {
+        valid: false,
+        message: `${error.message} Define tu clave en GOOGLE_MAPS_API_KEY para activar el cálculo real.`,
+      };
+    }
+  };
+
+  const renderDeliveryResult = (estimate) => {
+    if (!deliveryResult) return;
+    latestDeliveryEstimate = estimate.valid ? estimate : null;
+    if (acceptDeliverySelectionButton) {
+      acceptDeliverySelectionButton.classList.toggle('hidden', !estimate.valid);
+    }
+    if (deliveryFlashRow) {
+      deliveryFlashRow.classList.toggle('hidden', !estimate.valid || !estimate.allowFastDelivery);
+    }
+    if (deliveryFlashCheckbox && (!estimate.valid || !estimate.allowFastDelivery)) {
+      deliveryFlashCheckbox.checked = false;
+    }
+    if (!estimate.valid) {
+      deliveryResult.innerHTML = `
+        <div class="delivery-status-card delivery-status-card-error">
+          <strong>${estimate.noCoverage ? '❌ Sin cobertura' : estimate.minimumRequired ? 'Pedido mínimo requerido' : 'No pudimos calcular la entrega'}</strong>
+          <p>${estimate.message}</p>
+          ${estimate.distanceKm ? `<span>Distancia estimada: ${estimate.distanceKm.toFixed(1)} km</span>` : ''}
+        </div>
+      `;
+      return;
+    }
+    const wantsFastDelivery = Boolean(deliveryFlashCheckbox?.checked && estimate.allowFastDelivery);
+    const displayedDeliveryFee = estimate.fee + (wantsFastDelivery ? fastDeliveryExtraFee : 0);
+    const feeClass = displayedDeliveryFee === 0 ? 'delivery-free-text' : '';
+    deliveryResult.innerHTML = `
+      <div class="delivery-status-card delivery-status-card-ok">
+        <strong>${estimate.metropolitan ? '📍 Entrega disponible en área metropolitana' : estimate.deliveryWindow}</strong>
+        ${estimate.deliveryCaption ? `<p>${estimate.deliveryCaption}</p>` : ''}
+        <div class="delivery-metrics">
+          <span>📍 Distancia <b>${estimate.distanceKm.toFixed(1)} km</b></span>
+          <span>🚚 Envío <b class="${feeClass}">${formatDeliveryFee(displayedDeliveryFee)}</b></span>
+        </div>
+        ${wantsFastDelivery ? `
+          <div class="delivery-fast-note">
+            <strong>Checaremos disponibilidad de entrega.</strong>
+            <span>Un asesor validará disponibilidad según zona y horario.</span>
+          </div>
+        ` : ''}
+      </div>
+    `;
   };
 
   const updateDeliverySummary = () => {
@@ -1408,7 +1845,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
     if (deliveryState.type === 'delivery') {
-      cartDeliverySummaryEl.innerHTML = `Entrega a domicilio: ${deliveryState.note}${deliveryState.fee ? ` — Costo adicional: ${formatCurrency(deliveryState.fee)}` : ''}`;
+      cartDeliverySummaryEl.innerHTML = `Entrega a domicilio: ${deliveryState.note}`;
       cartDeliverySummaryEl.classList.remove('hidden');
       return;
     }
@@ -1418,6 +1855,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const setDeliveryState = (state) => {
     Object.assign(deliveryState, state);
     if (deliveryState.type === 'pickup') {
+      deliveryState.baseFee = 0;
+      deliveryState.fastFee = 0;
       deliveryState.fee = 0;
       deliveryState.note = 'Recoger en tienda';
     }
@@ -1425,23 +1864,33 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCart();
   };
 
-  const showDeliveryModal = () => {
+  const showDeliveryModal = ({ payOnly = false } = {}) => {
     if (!deliveryModal) return;
+    deliveryModal.dataset.mode = payOnly ? 'pay' : 'delivery';
+    deliveryState.type = 'delivery';
+    deliveryState.pickupConfirmed = false;
     deliveryModal.classList.remove('hidden');
     const radio = document.querySelector(`input[name="delivery-type"][value="${deliveryState.type}"]`);
     if (radio) radio.checked = true;
     if (deliveryState.type === 'delivery') {
       if (deliveryPostalInput) deliveryPostalInput.value = deliveryState.postalCode || '';
-      if (deliveryFlashCheckbox) deliveryFlashCheckbox.checked = deliveryState.flash;
       if (deliveryPostalRow) deliveryPostalRow.classList.remove('hidden');
-      if (deliveryFlashRow) deliveryFlashRow.classList.remove('hidden');
+      if (deliveryFlashRow) {
+        deliveryFlashRow.classList.toggle('hidden', !latestDeliveryEstimate?.allowFastDelivery);
+      }
     } else {
       if (deliveryPostalRow) deliveryPostalRow.classList.add('hidden');
       if (deliveryFlashRow) deliveryFlashRow.classList.add('hidden');
     }
     if (deliveryResult) {
-      deliveryResult.textContent = deliveryState.type === 'delivery' ? deliveryState.note : 'Elige entrega o recogida.';
+      deliveryResult.innerHTML = deliveryState.type === 'delivery'
+        ? `<div class="delivery-status-card"><p>${deliveryState.note}</p></div>`
+        : '<div class="delivery-status-card"><p>Elige entrega a domicilio para calcular cobertura, distancia, tiempo y costo.</p></div>';
     }
+    if (acceptDeliverySelectionButton) {
+      acceptDeliverySelectionButton.classList.toggle('hidden', !deliveryState.postalCode || !deliveryState.durationText);
+    }
+    if (deliveryFlashCheckbox) deliveryFlashCheckbox.checked = deliveryState.fastDelivery;
   };
 
   const hideDeliveryModal = () => {
@@ -1452,59 +1901,73 @@ window.addEventListener('DOMContentLoaded', () => {
   const refreshDeliveryResult = () => {
     if (!deliveryResult) return;
     if (deliveryState.type === 'pickup') {
-      deliveryResult.textContent = 'Recoger en tienda seleccionado. No es necesario código postal ni entrega flash para esta opción.';
+      deliveryResult.innerHTML = '<div class="delivery-status-card"><p>Recoger en tienda seleccionado. Sin costo adicional.</p></div>';
       return;
     }
-    const postal = deliveryPostalInput ? deliveryPostalInput.value.trim() : '';
-    const estimate = getDeliveryEstimate(postal);
-    if (!estimate.valid) {
-      deliveryResult.textContent = estimate.message;
-      return;
-    }
-    const fee = deliveryState.flash ? flashDeliveryFee : 0;
-    deliveryResult.textContent = `${estimate.message} ETA: ${estimate.eta}.${deliveryState.flash ? ` Entrega flash activada (+${formatCurrency(fee)}).` : ''}`;
+    if (deliveryFlashRow) deliveryFlashRow.classList.add('hidden');
+    if (acceptDeliverySelectionButton) acceptDeliverySelectionButton.classList.add('hidden');
+    deliveryResult.innerHTML = '<div class="delivery-status-card"><p>Ingresa tu código postal o dirección y presiona Calcular entrega.</p></div>';
   };
 
-  const applyDeliverySelection = () => {
+  const applyDeliverySelection = async () => {
     const deliveryTypeInput = document.querySelector('input[name="delivery-type"]:checked');
     const selectedType = deliveryTypeInput ? deliveryTypeInput.value : 'pickup';
-    const postal = deliveryPostalInput ? deliveryPostalInput.value.trim() : '';
-    const flash = deliveryFlashCheckbox ? deliveryFlashCheckbox.checked : false;
-    const itemsTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const destination = deliveryPostalInput ? deliveryPostalInput.value.trim() : '';
     if (selectedType === 'delivery') {
-      const estimate = getDeliveryEstimate(postal);
+      if (deliveryResult) {
+        deliveryResult.innerHTML = '<div class="delivery-status-card"><p>Calculando ruta con Google Maps...</p></div>';
+      }
+      const estimate = await calculateDeliveryEstimate(destination);
+      renderDeliveryResult(estimate);
       if (!estimate.valid) {
-        if (deliveryResult) deliveryResult.textContent = estimate.message;
         return false;
       }
+      const wantsFastDelivery = Boolean(deliveryFlashCheckbox?.checked && estimate.allowFastDelivery);
+      const deliveryFee = estimate.fee + (wantsFastDelivery ? fastDeliveryExtraFee : 0);
+      const deliveryFeeText = formatDeliveryFee(deliveryFee);
       deliveryState.type = 'delivery';
-      deliveryState.postalCode = postal;
+      deliveryState.postalCode = destination;
       deliveryState.sameDay = estimate.sameDay;
-      deliveryState.flash = flash;
-      deliveryState.fee = flash ? flashDeliveryFee : 0;
-      deliveryState.note = `${estimate.message}${flash ? ' Con entrega flash.' : ''}`;
-      if (!flash && itemsTotal < freeDeliveryMin) {
-        alert(`El envío sin costo aplica a partir de MXN ${freeDeliveryMin}. Agrega algún producto más si quieres cumplir con la cantidad mínima para entrega gratis.`);
-      }
+      deliveryState.flash = wantsFastDelivery;
+      deliveryState.fastDelivery = wantsFastDelivery;
+      deliveryState.baseFee = estimate.fee;
+      deliveryState.fastFee = wantsFastDelivery ? fastDeliveryExtraFee : 0;
+      deliveryState.fee = deliveryFee;
+      deliveryState.distanceKm = estimate.distanceKm;
+      deliveryState.durationText = estimate.durationText;
+      deliveryState.deliveryWindow = estimate.deliveryWindow;
+      deliveryState.pickupConfirmed = false;
+      if (pickupOptionButton) pickupOptionButton.classList.remove('is-selected');
+      if (deliveryOptionsButton) deliveryOptionsButton.classList.add('is-selected');
+      deliveryState.note = `${estimate.message}. Distancia: ${estimate.distanceKm.toFixed(1)} km. Envío: ${deliveryFeeText}${wantsFastDelivery ? '. Checaremos disponibilidad de entrega rápida con un asesor.' : '.'}`;
     } else {
       deliveryState.type = 'pickup';
       deliveryState.postalCode = '';
       deliveryState.sameDay = false;
       deliveryState.flash = false;
+      deliveryState.fastDelivery = false;
+      deliveryState.baseFee = 0;
+      deliveryState.fastFee = 0;
       deliveryState.fee = 0;
+      deliveryState.distanceKm = 0;
+      deliveryState.durationText = '';
+      deliveryState.deliveryWindow = '';
+      deliveryState.pickupConfirmed = true;
       deliveryState.note = 'Recoger en tienda';
+      latestDeliveryEstimate = null;
+      refreshDeliveryResult();
     }
     return true;
   };
 
   const toggleDeliveryMode = (mode) => {
-    if (!deliveryPostalRow || !deliveryFlashRow) return;
+    if (!deliveryPostalRow) return;
     if (mode === 'delivery') {
       deliveryPostalRow.classList.remove('hidden');
-      deliveryFlashRow.classList.remove('hidden');
+      if (deliveryFlashRow) deliveryFlashRow.classList.add('hidden');
     } else {
       deliveryPostalRow.classList.add('hidden');
-      deliveryFlashRow.classList.add('hidden');
+      if (deliveryFlashRow) deliveryFlashRow.classList.add('hidden');
     }
   };
 
@@ -1515,23 +1978,98 @@ window.addEventListener('DOMContentLoaded', () => {
     cartTotalEl.textContent = formatCurrency(total);
   };
 
+  const renderCartTotalBreakdown = (itemsTotal) => {
+    if (!cartTotalBreakdownEl) return;
+    if (cart.length === 0) {
+      cartTotalBreakdownEl.innerHTML = '';
+      return;
+    }
+    const rows = [
+      { label: 'Subtotal', value: formatCurrency(itemsTotal) },
+      ...getShippingSummaryRows(),
+      { label: 'Total', value: formatCurrency(itemsTotal + deliveryState.fee), total: true },
+    ];
+    cartTotalBreakdownEl.innerHTML = rows.map((row) => `
+      <div class="cart-total-row ${row.total ? 'cart-total-row-strong' : ''}">
+        <span>${row.label}</span>
+        <b class="${row.free ? 'delivery-free-text' : ''}">${row.value}</b>
+      </div>
+    `).join('');
+  };
+
   const renderCartWithDelivery = () => {
     renderCart();
     updateDeliverySummary();
   };
 
-  const checkoutOrder = () => {
-    const itemsTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const total = itemsTotal + deliveryState.fee;
-    const deliveryText = deliveryState.type === 'pickup'
-      ? 'Recoger en tienda'
-      : `Entrega a domicilio (${deliveryState.postalCode || 'sin código postal'}) ${deliveryState.flash ? 'con entrega flash' : ''}`;
-    alert(`Gracias por tu pedido. Total: ${formatCurrency(total)}. ${deliveryText}. Pronto nos pondremos en contacto.`);
-    cart = [];
-    saveCart();
-    updateCartCount();
-    renderCartWithDelivery();
-    if (cartModal) cartModal.classList.add('hidden');
+  const getCartSummaryText = () => cart.map((item) => (
+    `${item.quantity} x ${item.name}${item.description ? ` (${item.description})` : ''} - ${formatCurrency(item.price * item.quantity)}`
+  )).join('\n');
+
+  const getDeliveryLineForSummary = () => {
+    if (deliveryState.type === 'pickup') return 'Pick Up: Sin costo';
+    if (deliveryState.fee === 0) return 'Envío: GRATIS';
+    const rows = getShippingSummaryRows().map((row) => `${row.label}: ${row.value}`);
+    return rows.join('\n');
+  };
+
+  const renderPaymentSummary = () => {
+    if (!paymentSummaryEl) return;
+    const subtotal = getCartSubtotal();
+    const total = subtotal + deliveryState.fee;
+    const shippingRows = getShippingSummaryRows();
+    paymentSummaryEl.innerHTML = `
+      <strong>Resumen de compra</strong>
+      <div class="payment-summary-list">
+        <span>Subtotal</span><b>${formatCurrency(subtotal)}</b>
+        ${shippingRows.map((row) => `<span>${row.label}</span><b class="${row.free ? 'delivery-free-text' : ''}">${row.value}</b>`).join('')}
+        <span>Total</span><b>${formatCurrency(total)}</b>
+      </div>
+    `;
+  };
+
+  const selectPaymentMethod = (method) => {
+    paymentMethodButtons.forEach((button) => {
+      button.classList.toggle('is-selected', button.dataset.paymentMethod === method);
+    });
+    if (paymentTransferPanel) paymentTransferPanel.classList.toggle('hidden', method !== 'transfer');
+    if (paymentMercadoPanel) paymentMercadoPanel.classList.toggle('hidden', method !== 'mercado');
+    if (paymentCashPanel) paymentCashPanel.classList.toggle('hidden', method !== 'cash');
+  };
+
+  const showPaymentModal = () => {
+    if (!paymentModal) return;
+    renderPaymentSummary();
+    const cashAllowed = deliveryState.type === 'pickup' && deliveryState.pickupConfirmed;
+    if (cashPaymentOption) cashPaymentOption.classList.toggle('hidden', !cashAllowed);
+    selectPaymentMethod('transfer');
+    paymentModal.classList.remove('hidden');
+  };
+
+  const hidePaymentModal = () => {
+    if (paymentModal) paymentModal.classList.add('hidden');
+  };
+
+  const buildTransferWhatsappMessage = () => {
+    const customerName = paymentCustomerNameInput?.value.trim() || 'Cliente';
+    const subtotal = getCartSubtotal();
+    const total = subtotal + deliveryState.fee;
+    const bankData = [
+      ['Banco', paymentBankInput?.value.trim()],
+      ['Beneficiario', paymentBeneficiaryInput?.value.trim()],
+      ['Cuenta', paymentAccountInput?.value.trim()],
+      ['CLABE', paymentClabeInput?.value.trim()],
+      ['Concepto', paymentConceptInput?.value.trim()],
+    ].filter(([, value]) => value);
+    const bankText = bankData.length
+      ? `\nDatos SPEI capturados:\n${bankData.map(([label, value]) => `${label}: ${value}`).join('\n')}`
+      : '';
+    return `Hola, soy ${customerName}.\n\nResumen del pedido:\n${getCartSummaryText()}\n\nSubtotal: ${formatCurrency(subtotal)}\n${getDeliveryLineForSummary()}\nTotal: ${formatCurrency(total)}\n\nMétodo de pago: Transferencia SPEI.\nAdjunto mi comprobante de pago.${bankText}`;
+  };
+
+  const openTransferWhatsapp = () => {
+    const message = encodeURIComponent(buildTransferWhatsappMessage());
+    window.open(`https://wa.me/${paymentWhatsappNumber}?text=${message}`, '_blank');
   };
 
   const renderSubcategoryOptions = (category) => {
@@ -1553,6 +2091,7 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   const normalizeSubcategory = (value) => value.toLowerCase().replace(/\s+/g, '-');
+  const getEffectiveSizeOptions = (product) => product.selectedPaletteColor?.sizeOptions || product.sizeOptions;
 
   const createProductCard = (product) => {
     const card = document.createElement('article');
@@ -1581,19 +2120,20 @@ window.addEventListener('DOMContentLoaded', () => {
       imageMarkup = 'Imagen';
     }
 
-    const sizeSelectorMarkup = product.sizeOptions ? `
+    const sizeOptions = getEffectiveSizeOptions(product);
+    const sizeSelectorMarkup = sizeOptions ? `
       <div class="size-selector">
-        ${product.sizeOptions.map((option) => `
+        ${sizeOptions.map((option) => `
           <button type="button" class="size-option" data-size="${option.id}" data-price="${option.price}">${option.label}</button>
         `).join('')}
       </div>
     ` : '<div class="size-selector size-selector-placeholder" aria-hidden="true"></div>';
 
-    const initialPriceText = product.sizeOptions ? 'Seleccione tamaño' : formatCurrency(product.price);
+    const initialPriceText = sizeOptions ? 'Seleccione tamaño' : formatCurrency(product.price);
     const selectedColorText = product.selectedPaletteColor ? ` - ${product.selectedPaletteColor.name}` : '';
     const priceMarkup = `<span class="product-price">${initialPriceText}${selectedColorText}</span>`;
     const addButtonText = 'Agregar';
-    const volumeMarkup = product.sizeOptions
+    const volumeMarkup = sizeOptions
       ? '<p class="product-volume">Contenido: Seleccione tamaño</p>'
       : (product.cantidad ? `<p class="product-volume">Contenido: ${product.cantidad}</p>` : '');
     const paletteButtonMarkup = product.palette ? `<button class="btn btn-primary view-palette product-action-main" type="button" data-palette-id="${product.id}">Colores</button>` : '';
@@ -1642,17 +2182,30 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   const updateProductCardSelection = (product) => {
-    const card = document.querySelector(`.product-card[data-product-id="${product.id}"]`);
-    if (!card) return;
-    const priceEl = card.querySelector('.product-price');
-    if (priceEl) {
-      const baseText = priceEl.textContent.replace(/\s*-\s*[^-]+$/, '').trim();
-      priceEl.textContent = product.selectedPaletteColor ? `${baseText} - ${product.selectedPaletteColor.name}` : baseText;
-    }
-    const addButton = card.querySelector('.add-to-cart');
-    if (addButton) {
-      addButton.textContent = 'Agregar';
-    }
+    document.querySelectorAll(`.product-card[data-product-id="${product.id}"]`).forEach((card) => {
+      const priceEl = card.querySelector('.product-price');
+      if (priceEl) {
+        priceEl.textContent = product.sizeOptions
+          ? `Seleccione tamaño - ${product.selectedPaletteColor.name}`
+          : `${formatCurrency(product.price)} - ${product.selectedPaletteColor.name}`;
+      }
+      const sizeOptions = getEffectiveSizeOptions(product);
+      const sizeSelector = card.querySelector('.size-selector');
+      if (sizeSelector && sizeOptions) {
+        sizeSelector.innerHTML = sizeOptions.map((option) => `
+          <button type="button" class="size-option" data-size="${option.id}" data-price="${option.price}">${option.label}</button>
+        `).join('');
+        card.dataset.selectedSize = '';
+      }
+      const volumeEl = card.querySelector('.product-volume');
+      if (volumeEl && sizeOptions) {
+        volumeEl.textContent = 'Contenido: Seleccione tamaño';
+      }
+      const addButton = card.querySelector('.add-to-cart');
+      if (addButton) {
+        addButton.textContent = 'Agregar';
+      }
+    });
   };
 
   const renderProducts = () => {
@@ -1766,12 +2319,13 @@ window.addEventListener('DOMContentLoaded', () => {
     if (product.selectedPaletteColor) {
       name = `${name} - ${product.selectedPaletteColor.name}`;
       colorKey = `-${product.selectedPaletteColor.name.replace(/\s+/g, '-')}`;
-      description = `Color: ${product.selectedPaletteColor.name}`;
+      description = product.selectedPaletteColor.description || `Color: ${product.selectedPaletteColor.name}`;
     }
 
-    if (product.sizeOptions) {
-      const option = selectedSize ? product.sizeOptions.find((opt) => opt.id === selectedSize) : null;
-      const selectedOption = option || product.sizeOptions[0];
+    const sizeOptions = getEffectiveSizeOptions(product);
+    if (sizeOptions) {
+      const option = selectedSize ? sizeOptions.find((opt) => opt.id === selectedSize) : null;
+      const selectedOption = option || sizeOptions[0];
       if (selectedOption) {
         price = selectedOption.price;
         name = `${product.name} - ${product.selectedPaletteColor ? product.selectedPaletteColor.name + ' ' : ''}(${selectedOption.label})`;
@@ -1808,6 +2362,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (cart.length === 0) {
       cartItemsEl.innerHTML = '<p>Aún no has agregado nada al carrito. Por favor selecciona color y tamaño que deseas agregar al carrito.</p>';
       cartTotalEl.textContent = formatCurrency(0);
+      if (cartTotalBreakdownEl) cartTotalBreakdownEl.innerHTML = '';
       if (cartDeliverySummaryEl) cartDeliverySummaryEl.classList.add('hidden');
       return;
     }
@@ -1834,13 +2389,14 @@ window.addEventListener('DOMContentLoaded', () => {
     const itemsTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const total = itemsTotal + deliveryState.fee;
     cartTotalEl.textContent = formatCurrency(total);
+    renderCartTotalBreakdown(itemsTotal);
 
     if (cartDeliverySummaryEl) {
       if (deliveryState.type === 'pickup') {
         cartDeliverySummaryEl.textContent = 'Recogida en tienda seleccionada. Sin costo adicional.';
         cartDeliverySummaryEl.classList.remove('hidden');
       } else if (deliveryState.type === 'delivery') {
-        cartDeliverySummaryEl.innerHTML = `Entrega a domicilio: ${deliveryState.note}${deliveryState.fee ? ` — Costo adicional: ${formatCurrency(deliveryState.fee)}` : ''}`;
+        cartDeliverySummaryEl.innerHTML = `Entrega a domicilio: ${deliveryState.note}`;
         cartDeliverySummaryEl.classList.remove('hidden');
       } else {
         cartDeliverySummaryEl.classList.add('hidden');
@@ -2018,7 +2574,13 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!product) return;
       const selectedName = addPaletteColorButton.dataset.name || 'Color';
       const selectedColor = addPaletteColorButton.dataset.color || '';
-      product.selectedPaletteColor = { name: selectedName, color: selectedColor };
+      const selectedSwatch = product.palette.find((swatch) => swatch.name === selectedName);
+      product.selectedPaletteColor = {
+        name: selectedName,
+        color: selectedColor,
+        description: selectedSwatch?.description || '',
+        sizeOptions: selectedSwatch?.sizeOptions || null,
+      };
       const selectedLabel = detailModal.querySelector('.selected-color-label');
       if (selectedLabel) {
         selectedLabel.textContent = `Color seleccionado: ${selectedName}`;
@@ -2078,7 +2640,34 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (deliveryOptionsButton) {
     deliveryOptionsButton.addEventListener('click', () => {
+      deliveryState.type = 'delivery';
+      deliveryState.pickupConfirmed = false;
+      if (pickupOptionButton) pickupOptionButton.classList.remove('is-selected');
+      if (deliveryOptionsButton) deliveryOptionsButton.classList.add('is-selected');
       showDeliveryModal();
+    });
+  }
+
+  if (pickupOptionButton) {
+    pickupOptionButton.addEventListener('click', () => {
+      deliveryState.type = 'pickup';
+      deliveryState.postalCode = '';
+      deliveryState.sameDay = false;
+      deliveryState.flash = false;
+      deliveryState.fastDelivery = false;
+      deliveryState.baseFee = 0;
+      deliveryState.fastFee = 0;
+      deliveryState.fee = 0;
+      deliveryState.distanceKm = 0;
+      deliveryState.durationText = '';
+      deliveryState.deliveryWindow = '';
+      deliveryState.pickupConfirmed = true;
+      deliveryState.note = 'Recoger en tienda';
+      latestDeliveryEstimate = null;
+      if (pickupOptionButton) pickupOptionButton.classList.add('is-selected');
+      if (deliveryOptionsButton) deliveryOptionsButton.classList.remove('is-selected');
+      updateDeliverySummary();
+      renderCart();
     });
   }
 
@@ -2095,10 +2684,15 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   if (saveDeliverySelectionButton) {
-    saveDeliverySelectionButton.addEventListener('click', () => {
-      if (!applyDeliverySelection()) return;
+    saveDeliverySelectionButton.addEventListener('click', async () => {
+      if (!await applyDeliverySelection()) return;
       updateDeliverySummary();
       renderCart();
+    });
+  }
+
+  if (acceptDeliverySelectionButton) {
+    acceptDeliverySelectionButton.addEventListener('click', () => {
       hideDeliveryModal();
     });
   }
@@ -2114,14 +2708,39 @@ window.addEventListener('DOMContentLoaded', () => {
   if (deliveryPostalInput) {
     deliveryPostalInput.addEventListener('input', () => {
       deliveryState.postalCode = deliveryPostalInput.value.trim();
+      deliveryState.baseFee = 0;
+      deliveryState.fastFee = 0;
+      deliveryState.fee = 0;
+      deliveryState.distanceKm = 0;
+      deliveryState.durationText = '';
+      latestDeliveryEstimate = null;
       refreshDeliveryResult();
     });
   }
 
   if (deliveryFlashCheckbox) {
     deliveryFlashCheckbox.addEventListener('change', () => {
-      deliveryState.flash = deliveryFlashCheckbox.checked;
-      refreshDeliveryResult();
+      if (!latestDeliveryEstimate || !latestDeliveryEstimate.allowFastDelivery || deliveryState.type !== 'delivery') {
+        deliveryState.flash = false;
+        deliveryState.fastDelivery = false;
+        deliveryState.fastFee = 0;
+        refreshDeliveryResult();
+        return;
+      }
+      const wantsFastDelivery = deliveryFlashCheckbox.checked;
+      const deliveryFee = latestDeliveryEstimate.fee + (wantsFastDelivery ? fastDeliveryExtraFee : 0);
+      const deliveryFeeText = formatDeliveryFee(deliveryFee);
+      deliveryState.flash = wantsFastDelivery;
+      deliveryState.fastDelivery = wantsFastDelivery;
+      deliveryState.baseFee = latestDeliveryEstimate.fee;
+      deliveryState.fastFee = wantsFastDelivery ? fastDeliveryExtraFee : 0;
+      deliveryState.fee = deliveryFee;
+      if (pickupOptionButton) pickupOptionButton.classList.remove('is-selected');
+      if (deliveryOptionsButton) deliveryOptionsButton.classList.add('is-selected');
+      deliveryState.note = `${latestDeliveryEstimate.message}. Distancia: ${latestDeliveryEstimate.distanceKm.toFixed(1)} km. Envío: ${deliveryFeeText}${wantsFastDelivery ? '. Checaremos disponibilidad de entrega rápida con un asesor.' : '.'}`;
+      renderDeliveryResult(latestDeliveryEstimate);
+      updateDeliverySummary();
+      renderCart();
     });
   }
 
@@ -2130,12 +2749,24 @@ window.addEventListener('DOMContentLoaded', () => {
     if (radio && radio.name === 'delivery-type') {
       toggleDeliveryMode(radio.value);
       if (radio.value === 'pickup') {
+        if (deliveryModal?.dataset.mode === 'pay') return;
         deliveryState.type = 'pickup';
         deliveryState.postalCode = '';
         deliveryState.flash = false;
+        deliveryState.fastDelivery = false;
+        deliveryState.baseFee = 0;
+        deliveryState.fastFee = 0;
+        deliveryState.fee = 0;
+        deliveryState.pickupConfirmed = true;
+        latestDeliveryEstimate = null;
+        if (pickupOptionButton) pickupOptionButton.classList.add('is-selected');
+        if (deliveryOptionsButton) deliveryOptionsButton.classList.remove('is-selected');
         refreshDeliveryResult();
       } else {
         deliveryState.type = 'delivery';
+        deliveryState.pickupConfirmed = false;
+        if (pickupOptionButton) pickupOptionButton.classList.remove('is-selected');
+        if (deliveryOptionsButton) deliveryOptionsButton.classList.add('is-selected');
         refreshDeliveryResult();
       }
     }
@@ -2147,15 +2778,43 @@ window.addEventListener('DOMContentLoaded', () => {
         alert('Tu carrito está vacío. Agrega productos para continuar.');
         return;
       }
-      if (deliveryState.type === 'delivery' && !deliveryState.postalCode) {
-        showDeliveryModal();
+      if (!deliveryState.pickupConfirmed && (!deliveryState.postalCode || !deliveryState.durationText)) {
+        showDeliveryModal({ payOnly: true });
         return;
       }
-      const itemsTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      if (deliveryState.type === 'delivery' && !deliveryState.flash && itemsTotal < freeDeliveryMin) {
-        alert(`El envío sin costo aplica a partir de MXN ${freeDeliveryMin}. Agrega algún producto más si quieres cumplir con la cantidad mínima para entrega gratis.`);
+      showPaymentModal();
+    });
+  }
+
+  if (closePaymentModal) {
+    closePaymentModal.addEventListener('click', hidePaymentModal);
+  }
+
+  if (paymentModal) {
+    paymentModal.addEventListener('click', (e) => {
+      if (e.target === paymentModal.querySelector('.modal-overlay')) {
+        hidePaymentModal();
       }
-      checkoutOrder();
+    });
+  }
+
+  paymentMethodButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      selectPaymentMethod(button.dataset.paymentMethod);
+    });
+  });
+
+  if (sendTransferWhatsappButton) {
+    sendTransferWhatsappButton.addEventListener('click', openTransferWhatsapp);
+  }
+
+  if (mercadoPagoButton) {
+    mercadoPagoButton.addEventListener('click', () => {
+      if (mercadoPagoLink) {
+        window.open(mercadoPagoLink, '_blank');
+        return;
+      }
+      alert('Mercado Pago está listo para configurarse. Agrega el link o API en window.MERCADO_PAGO_LINK.');
     });
   }
 

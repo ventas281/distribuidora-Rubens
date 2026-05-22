@@ -56,7 +56,7 @@
             <li class="category-extra"><button type="button" class="category-item" data-category="madera">Madera</button></li>
             <li class="category-extra"><button type="button" class="category-item" data-category="aplicadores">Aplicadores</button></li>
             <li class="category-extra"><button type="button" class="category-item" data-category="diluyentes">Diluyentes</button></li>
-            <li class="category-extra"><button type="button" class="category-item" data-category="primerarios">Primerarios</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="primerarios">Primarios</button></li>
           </ul>
           <div class="search-panel sidebar-search">
             <label for="product-search">Buscar producto</label>
@@ -137,8 +137,12 @@
         <span>Total:</span>
         <strong id="cart-total">0</strong>
       </div>
-      <button class="btn btn-secondary" id="delivery-options-button">Seleccionar entrega/recogida</button>
-      <button class="btn btn-primary" id="checkout">Finalizar compra</button>
+      <div class="cart-total-breakdown" id="cart-total-breakdown"></div>
+      <div class="cart-checkout-actions">
+        <button class="btn btn-secondary" id="pickup-option" type="button">Pick Up</button>
+        <button class="btn btn-secondary" id="delivery-options-button" type="button">Envío</button>
+        <button class="btn btn-primary" id="checkout" type="button">Pagar</button>
+      </div>
     </div>
   </div>
 
@@ -159,24 +163,79 @@
     <div class="modal-overlay"></div>
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Opciones de entrega</h3>
+        <h3>Calcular entrega</h3>
         <button class="modal-close" id="close-delivery-modal">&times;</button>
       </div>
       <div class="delivery-body">
-        <div class="delivery-option-row">
-          <label><input type="radio" name="delivery-type" value="pickup" checked> Recoger en tienda</label>
-          <label><input type="radio" name="delivery-type" value="delivery"> Entrega a domicilio</label>
+        <div class="delivery-mode-label">
+          <span>Envío</span>
+          <input class="hidden" type="radio" name="delivery-type" value="delivery" checked>
         </div>
         <div class="delivery-postal-row hidden" id="delivery-postal-row">
-          <label for="delivery-postal">Código postal</label>
-          <input type="text" id="delivery-postal" placeholder="Escribe tu código postal" maxlength="10">
-          <p class="delivery-note">Verificamos si es posible entrega el mismo día dentro de 15 km.</p>
+          <label for="delivery-postal">Código postal o dirección completa</label>
+          <input type="text" id="delivery-postal" placeholder="Ej. 02010 o Calle, colonia, alcaldía">
+          <p class="delivery-note">Calculamos la distancia desde Av. Azcapotzalco 756 para validar cobertura y costo de envío.</p>
         </div>
         <div class="delivery-flash-row hidden" id="delivery-flash-row">
-          <label><input type="checkbox" id="delivery-flash"> Solicitar entrega flash (+MXN 80)</label>
+          <label>
+            <input type="checkbox" id="delivery-flash">
+            <span class="delivery-flash-copy">
+              <span>🚚 Entrega rápida (+$150)</span>
+              <small>Checaremos disponibilidad de entrega.</small>
+              <small>Un asesor validará disponibilidad según zona y horario.</small>
+            </span>
+          </label>
         </div>
         <div class="delivery-result" id="delivery-result"></div>
-        <button class="btn btn-primary" id="save-delivery-selection">Guardar selección</button>
+        <div class="delivery-modal-actions">
+          <button class="btn btn-secondary hidden" id="accept-delivery-selection" type="button">Aceptar</button>
+          <button class="btn btn-primary" id="save-delivery-selection" type="button">Calcular entrega</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de pago -->
+  <div id="payment-modal" class="detail-modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content payment-modal-content">
+      <div class="modal-header">
+        <h3>Pago</h3>
+        <button class="modal-close" id="close-payment-modal">&times;</button>
+      </div>
+      <div class="payment-body">
+        <div class="payment-summary" id="payment-summary"></div>
+
+        <label class="payment-customer-field" for="payment-customer-name">
+          Nombre del cliente
+          <input type="text" id="payment-customer-name" placeholder="Escribe tu nombre">
+        </label>
+
+        <div class="payment-methods" id="payment-methods">
+          <button class="payment-method-button is-selected" type="button" data-payment-method="transfer">Transferencia SPEI</button>
+          <button class="payment-method-button" type="button" data-payment-method="mercado">Mercado Pago</button>
+          <button class="payment-method-button" type="button" data-payment-method="cash" id="cash-payment-option">Efectivo en tienda</button>
+        </div>
+
+        <div class="payment-panel" id="payment-transfer-panel">
+          <div class="payment-grid">
+            <label>Banco:<input type="text" id="payment-bank" placeholder="Banco"></label>
+            <label>Beneficiario:<input type="text" id="payment-beneficiary" placeholder="Beneficiario"></label>
+            <label>Cuenta:<input type="text" id="payment-account" placeholder="Cuenta"></label>
+            <label>CLABE:<input type="text" id="payment-clabe" placeholder="CLABE"></label>
+            <label class="payment-grid-wide">Concepto:<input type="text" id="payment-concept" placeholder="Pedido Ruben's Distribuidora"></label>
+          </div>
+          <button class="btn btn-primary" id="send-transfer-whatsapp" type="button">Enviar comprobante por WhatsApp</button>
+        </div>
+
+        <div class="payment-panel hidden" id="payment-mercado-panel">
+          <p class="payment-note">La integración queda preparada para agregar el link o API de Mercado Pago.</p>
+          <button class="btn btn-primary" id="mercado-pago-button" type="button">Pagar con Mercado Pago</button>
+        </div>
+
+        <div class="payment-panel hidden" id="payment-cash-panel">
+          <p class="payment-note">Paga en efectivo al recoger tu pedido en tienda.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -185,6 +244,10 @@
     <p>Ruben's Distribuidora © 2026. Todos los derechos reservados.</p>
   </footer>
 
+  <script>
+    window.GOOGLE_MAPS_API_KEY = 'AIzaSyD4TXHgscL3fN-qtLPSkP_g_NJIFpy1dYY';
+    window.MERCADO_PAGO_LINK = '';
+  </script>
   <script src="script.js"></script>
 </body>
 </html>

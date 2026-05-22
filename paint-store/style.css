@@ -1233,6 +1233,35 @@ button,
   font-weight: 700;
 }
 
+.cart-total-breakdown {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+}
+
+.cart-total-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--muted);
+  font-size: 0.94rem;
+}
+
+.cart-total-row b {
+  color: var(--text);
+}
+
+.cart-total-row-strong {
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 800;
+}
+
 @media (max-width: 880px) {
   .shop-controls {
     /* flex-direction: column; */
@@ -1380,6 +1409,33 @@ button,
   font-weight: 600;
 }
 
+.cart-checkout-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.cart-checkout-actions .btn {
+  width: 100%;
+  min-height: 46px;
+  padding-inline: 0.75rem;
+}
+
+.cart-checkout-actions .btn.is-selected {
+  background: #fff7f5;
+  color: var(--primary);
+  border-color: rgba(194, 43, 43, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(194, 43, 43, 0.2), 0 10px 22px rgba(194, 43, 43, 0.14);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 520px) {
+  .cart-checkout-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 .product-error {
   margin: 0.75rem 0 0;
   color: #c22b2b;
@@ -1390,12 +1446,42 @@ button,
 .hidden {
   display: none !important;
 }
-}
 
 .delivery-postal-row,
 .delivery-flash-row,
 .delivery-result {
   display: block;
+}
+
+.delivery-flash-row label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(194, 43, 43, 0.22);
+  border-radius: 14px;
+  background: #fff7f5;
+  color: var(--text);
+  font-weight: 800;
+}
+
+.delivery-flash-copy {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.delivery-flash-copy small {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.delivery-flash-row input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--primary);
 }
 
 .delivery-postal-row label {
@@ -1424,6 +1510,263 @@ button,
   background: #f7f7f7;
   color: #333;
   min-height: 3rem;
+}
+
+.delivery-body {
+  display: grid;
+  gap: 1rem;
+}
+
+.delivery-modal-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.delivery-modal-actions .btn {
+  width: 100%;
+}
+
+.delivery-mode-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(194, 43, 43, 0.2);
+  border-radius: 14px;
+  background: #fff7f5;
+  color: var(--primary);
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.delivery-option-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.delivery-option-row label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+  font-weight: 700;
+}
+
+#delivery-modal[data-mode="pay"] .delivery-option-row {
+  grid-template-columns: 1fr;
+}
+
+#delivery-modal[data-mode="pay"] .delivery-pickup-option {
+  display: none;
+}
+
+.delivery-status-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.delivery-status-card strong {
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.delivery-status-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.delivery-fast-note {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--text);
+}
+
+.delivery-fast-note strong {
+  font-size: 0.95rem;
+}
+
+.delivery-fast-note span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.delivery-status-card-ok {
+  border-color: rgba(34, 197, 94, 0.4);
+  background: #f3fff7;
+}
+
+.delivery-status-card-error {
+  border-color: rgba(194, 43, 43, 0.35);
+  background: #fff7f7;
+}
+
+.delivery-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.delivery-metrics span {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.delivery-metrics b {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.delivery-free-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d !important;
+  font-weight: 900;
+}
+
+.payment-modal-content {
+  max-width: 620px;
+}
+
+.payment-body {
+  display: grid;
+  gap: 1rem;
+}
+
+.payment-summary {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.payment-summary strong {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.payment-summary-list {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.45rem 1rem;
+  color: var(--muted);
+}
+
+.payment-summary-list b {
+  color: var(--text);
+  text-align: right;
+}
+
+.payment-customer-field,
+.payment-grid label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--text);
+  font-weight: 800;
+  font-size: 0.92rem;
+}
+
+.payment-customer-field input,
+.payment-grid input {
+  width: 100%;
+  padding: 0.78rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+}
+
+.payment-methods {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.payment-method-button {
+  min-height: 46px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text);
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.payment-method-button.is-selected {
+  background: #fff7f5;
+  border-color: rgba(194, 43, 43, 0.5);
+  color: var(--primary);
+  box-shadow: inset 0 0 0 1px rgba(194, 43, 43, 0.16);
+}
+
+.payment-panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.payment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.payment-grid-wide {
+  grid-column: 1 / -1;
+}
+
+.payment-note {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .delivery-option-row,
+  .delivery-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .delivery-body .btn {
+    width: 100%;
+  }
+
+  .delivery-modal-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-methods,
+  .payment-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 
@@ -2482,5 +2825,81 @@ button,
     min-height: auto;
     padding: 0.5rem 1rem;
     font-size: 0.8rem;
+  }
+}
+
+@media (min-width: 761px) {
+  .header-inner {
+    max-width: min(1320px, calc(100% - 2rem));
+    display: grid;
+    grid-template-columns: minmax(330px, 1.15fr) auto minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 1.35rem;
+  }
+
+  .brand-logo {
+    min-width: 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .brand-logo > div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.15rem;
+  }
+
+  .brand-name,
+  .brand-tagline {
+    display: block;
+    width: 100%;
+    white-space: normal;
+    overflow-wrap: normal;
+  }
+
+  .brand-name {
+    font-size: 1.08rem;
+    line-height: 1.2;
+  }
+
+  .brand-tagline {
+    font-size: 0.86rem;
+    line-height: 1.35;
+  }
+
+  .main-nav {
+    justify-self: center;
+    gap: clamp(0.75rem, 1.4vw, 1.35rem);
+    flex-wrap: nowrap;
+  }
+
+  .header-inner .cart-summary {
+    justify-self: end;
+    margin: 0;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1080px) {
+  .header-inner {
+    grid-template-columns: minmax(300px, 1fr) auto auto;
+    row-gap: 0.75rem;
+  }
+
+  .main-nav {
+    grid-column: 1 / -1;
+    order: 5;
+    justify-self: center;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-inner .cart-summary {
+    grid-column: 3;
   }
 }
