@@ -1735,12 +1735,26 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   };
 
-  const normalizeDeliveryDestination = (destination) => {
+  const getPostalCodeCandidates = (postalCode) => {
+    const stateHint = postalCode.startsWith('0') ? 'Ciudad de México' : 'Estado de México';
+    const candidates = [
+      `${postalCode}, ${stateHint}, México`,
+      `${postalCode}, México`,
+    ];
+
+    if (postalCode === '57100') {
+      candidates.unshift('57100, Nezahualcóyotl, Estado de México, México');
+    }
+
+    return [...new Set(candidates)];
+  };
+
+  const getDeliveryDestinationCandidates = (destination) => {
     const value = String(destination || '').trim();
     if (/^\d{5}$/.test(value)) {
-      return `${value}, México`;
+      return getPostalCodeCandidates(value);
     }
-    return value;
+    return value ? [value] : [];
   };
 
   const withTimeout = (promise, timeoutMs, message) => new Promise((resolve, reject) => {
@@ -1761,14 +1775,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const getGoogleMapsErrorMessage = (status) => {
     const messages = {
-      REQUEST_DENIED: 'Google Maps rechazó la solicitud. Revisa la API key, permisos y restricciones de dominio.',
+      REQUEST_DENIED: 'Hubo un problema validando la cobertura. Intenta escribir dirección completa con colonia y alcaldía/municipio.',
       OVER_QUERY_LIMIT: 'Google Maps alcanzó el límite de consultas. Intenta nuevamente más tarde.',
-      INVALID_REQUEST: 'La solicitud a Google Maps no es válida.',
-      UNKNOWN_ERROR: 'Google Maps tuvo un error temporal. Intenta nuevamente.',
+      INVALID_REQUEST: 'Hubo un problema validando la cobertura. Intenta escribir dirección completa con colonia y alcaldía/municipio.',
+      UNKNOWN_ERROR: 'Hubo un problema validando la cobertura. Intenta escribir dirección completa con colonia y alcaldía/municipio.',
       ZERO_RESULTS: 'Código postal inválido.',
       NOT_FOUND: 'Código postal inválido.',
     };
-    return messages[status] || 'No se pudo calcular la ruta. Intenta nuevamente.';
+    return messages[status] || 'Hubo un problema validando la cobertura. Intenta escribir dirección completa con colonia y alcaldía/municipio.';
   };
 
   const loadGoogleMapsApi = () => new Promise((resolve, reject) => {
@@ -1787,7 +1801,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const existingScript = document.getElementById('google-maps-api');
     if (existingScript) {
       if (window.__googleMapsAuthFailed) {
-        reject(new Error('No se pudo calcular la ruta. Intenta nuevamente.'));
+        reject(new Error('Hubo un problema validando la cobertura. Intenta escribir dirección completa con colonia y alcaldía/municipio.'));
         return;
       }
       if (existingScript.dataset.loaded === 'true' && window.google?.maps) {
@@ -1797,7 +1811,7 @@ window.addEventListener('DOMContentLoaded', () => {
       existingScript.addEventListener('load', () => {
         existingScript.dataset.loaded = 'true';
         if (window.__googleMapsAuthFailed) {
-          reject(new Error('No se pudo calcular la ruta. Intenta nuevamente.'));
+          reject(new Error('Hubo un problema validando la cobertura. Intenta escribir dirección completa con colonia y alcaldía/municipio.'));
           return;
         }
         if (window.google?.maps?.DistanceMatrixService && window.google?.maps?.Geocoder) {
@@ -1817,7 +1831,7 @@ window.addEventListener('DOMContentLoaded', () => {
     script.onload = () => {
       script.dataset.loaded = 'true';
       if (window.__googleMapsAuthFailed) {
-        reject(new Error('No se pudo calcular la ruta. Intenta nuevamente.'));
+        reject(new Error('Hubo un problema validando la cobertura. Intenta escribir dirección completa con colonia y alcaldía/municipio.'));
         return;
       }
       if (window.google?.maps?.DistanceMatrixService && window.google?.maps?.Geocoder) {
@@ -1858,7 +1872,25 @@ window.addEventListener('DOMContentLoaded', () => {
         lng: location.lng(),
       });
     });
-  }), 12000, 'No se pudo calcular la ruta. Intenta nuevamente.');
+  }), 12000, 'Hubo un problema validando la cobertura. Intenta escribir dirección completa con colonia y alcaldía/municipio.');
+
+  const geocodeDeliveryWithFallback = async (maps, destinations) => {
+    let lastError = null;
+
+    for (const destination of destinations) {
+      try {
+        return await geocodeDeliveryDestination(maps, destination);
+      } catch (error) {
+        lastError = error;
+        debugDelivery('Falló geocoding, probando siguiente candidato:', {
+          destination,
+          error: error.message,
+        });
+      }
+    }
+
+    throw lastError || new Error('Código postal inválido.');
+  };
 
   const calculateRouteDistance = (maps, destinationLocation) => withTimeout(new Promise((resolve, reject) => {
     const service = new maps.DistanceMatrixService();
@@ -1888,18 +1920,40 @@ window.addEventListener('DOMContentLoaded', () => {
       });
       resolve(element);
     });
-  }), 15000, 'No se pudo calcular la ruta. Intenta nuevamente.');
+  }), 15000, 'Hubo un problema validando la cobertura. Intenta escribir dirección completa con colonia y alcaldía/municipio.');
+
+  const calculateRouteDistanceWithFallback = async (maps, geocodedDestination) => {
+    const destinations = [
+      geocodedDestination.location,
+      geocodedDestination.formattedAddress,
+    ].filter(Boolean);
+    let lastError = null;
+
+    for (const destination of destinations) {
+      try {
+        return await calculateRouteDistance(maps, destination);
+      } catch (error) {
+        lastError = error;
+        debugDelivery('Falló Distance Matrix, probando siguiente destino:', {
+          destination,
+          error: error.message,
+        });
+      }
+    }
+
+    throw lastError || new Error('Hubo un problema validando la cobertura. Intenta escribir dirección completa con colonia y alcaldía/municipio.');
+  };
 
   const calculateDeliveryEstimate = async (destinationInput) => {
-    const destination = normalizeDeliveryDestination(destinationInput);
-    if (!destination) {
+    const destinations = getDeliveryDestinationCandidates(destinationInput);
+    if (!destinations.length) {
       return { valid: false, message: 'Ingresa un código postal o dirección completa para calcular la entrega.' };
     }
 
     try {
       const maps = await withTimeout(loadGoogleMapsApi(), 12000, 'No se pudo cargar Google Maps. Revisa conexión, API key y restricciones de dominio.');
-      const geocodedDestination = await geocodeDeliveryDestination(maps, destination);
-      const element = await calculateRouteDistance(maps, geocodedDestination.location);
+      const geocodedDestination = await geocodeDeliveryWithFallback(maps, destinations);
+      const element = await calculateRouteDistanceWithFallback(maps, geocodedDestination);
       const distanceKm = element.distance.value / 1000;
       const fee = getDeliveryFee(distanceKm);
       const schedule = getDeliverySchedule(distanceKm);
@@ -1924,7 +1978,7 @@ window.addEventListener('DOMContentLoaded', () => {
       debugDelivery('Error exacto al calcular entrega:', error);
       return {
         valid: false,
-        message: error.message || 'No se pudo calcular la ruta. Intenta nuevamente.',
+        message: error.message || 'Hubo un problema validando la cobertura. Intenta escribir dirección completa con colonia y alcaldía/municipio.',
       };
     }
   };
@@ -1942,12 +1996,13 @@ window.addEventListener('DOMContentLoaded', () => {
       deliveryFlashCheckbox.checked = false;
     }
     if (!estimate.valid) {
+      const isCoverageValidationError = estimate.message.includes('Hubo un problema validando la cobertura');
       deliveryResult.innerHTML = `
         <div class="delivery-status-card delivery-status-card-error">
           <div class="delivery-result-heading">
             <span class="delivery-result-icon">!</span>
             <div>
-              <strong>${estimate.noCoverage ? 'Por el momento no tenemos cobertura' : estimate.message === 'Código postal inválido.' ? 'Código postal inválido' : estimate.minimumRequired ? 'Pedido mínimo requerido' : 'No se pudo calcular la ruta'}</strong>
+              <strong>${estimate.noCoverage ? 'Por el momento no tenemos cobertura' : estimate.message === 'Código postal inválido.' ? 'Código postal inválido' : estimate.minimumRequired ? 'Pedido mínimo requerido' : isCoverageValidationError ? 'Hubo un problema validando la cobertura' : 'No se pudo calcular la ruta'}</strong>
               <p>${estimate.message}</p>
             </div>
           </div>
