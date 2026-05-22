@@ -1,0 +1,254 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productos | Ruben's Distribuidora</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand-logo">
+        <img src="logo.png.png" alt="Ruben's Distribuidora" class="brand-image">
+        <div>
+          <p class="brand-name">Ruben's Distribuidora</p>
+          <p class="brand-tagline">Pintando tus proyectos con pasión en cada pared</p>
+        </div>
+      </div>
+      <button class="mobile-menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="main-nav-products">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="main-nav" id="main-nav-products">
+        <a class="nav-home" href="index.html#inicio">Inicio</a>
+        <a href="index.html#nosotros">Nosotros</a>
+        <a class="active" href="productos.html">Productos</a>
+        <a href="index.html#servicios">Servicios</a>
+        <a href="index.html#contacto">Contacto</a>
+      </nav>
+      <div class="cart-summary">
+        <p>Carrito: <span id="cart-count">0</span> items</p>
+        <button class="btn btn-primary" id="view-cart">Ver carrito</button>
+      </div>
+      <a class="whatsapp-link header-ws" href="https://wa.me/5255610015?text=Hola,%20me%20gustaria%20recibir%20informacion%20sobre%20pinturas%20y%20productos%20de%20Rubens%20Distribuidora." target="_blank" aria-label="WhatsApp">WhatsApp</a>
+    </div>
+  </header>
+
+  <section class="section section-light reveal">
+    <div class="section-header">
+      <p class="eyebrow catalog-eyebrow">Catálogo</p>
+      <h2>Comienza tu selección</h2>
+      <p>Explora las principales familias de producto y agrega lo que necesitas al carrito.</p>
+    </div>
+
+    <div class="catalog-container">
+      <aside class="catalog-sidebar reveal">
+        <div class="sidebar-panel">
+          <h3>Categorías</h3>
+          <ul class="category-list is-collapsed" id="category-list">
+            <li><button type="button" class="category-item active" data-category="all">Todos los productos</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="vinilica">Vinílica</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="esmalte">Esmalte</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="epoxica">Impermeabilizante</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="aerosoles">Aerosoles</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="madera">Madera</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="aplicadores">Aplicadores</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="diluyentes">Diluyentes</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="primerarios">Primarios</button></li>
+          </ul>
+          <div class="search-panel sidebar-search">
+            <label for="product-search">Buscar producto</label>
+            <input type="search" id="product-search" placeholder="Buscar producto...">
+          </div>
+        </div>
+
+        <div class="sidebar-panel">
+          <div class="panel-heading">
+            <h3>Filtros</h3>
+            <button class="icon-button filter-toggle" id="toggle-filters" type="button" aria-label="Mostrar filtros" aria-expanded="false" aria-controls="filter-controls">
+              <span class="filter-icon"></span>
+            </button>
+          </div>
+          <div class="filter-controls is-collapsed" id="filter-controls">
+          <div class="sort-panel compact-sort">
+            <label for="sort-order">Mostrar por</label>
+            <select id="sort-order">
+              <option value="default">Orden alfabético</option>
+              <option value="price-asc">Menor precio</option>
+              <option value="price-desc">Mayor precio</option>
+            </select>
+          </div>
+          <div class="filter-panel compact-filter">
+            <label for="price-filter">Precio máximo (MXN)</label>
+            <input type="number" id="price-filter" min="0" max="1000" step="10" placeholder="Ingresa precio máximo">
+            <button class="btn btn-primary compact-btn" id="apply-price-filter">Ver</button>
+          </div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="catalog-main">
+        <div class="product-meta">
+          <p id="product-count">Mostrando 0 productos generales</p>
+        </div>
+
+        <div class="catalog-sections">
+          <section class="catalog-section">
+            <div class="catalog-section-header">
+              <h3>Productos generales</h3>
+              <p class="section-note">Todos los productos disponibles según tus filtros.</p>
+            </div>
+            <div class="product-grid" id="product-general-list"></div>
+          </section>
+
+          <section class="catalog-section">
+            <div class="catalog-section-header">
+              <h3>Más populares</h3>
+              <p class="section-note">Los productos más pedidos y consumidos por nuestros clientes.</p>
+            </div>
+            <div class="product-grid" id="product-popular-list"></div>
+          </section>
+
+          <section class="catalog-section">
+            <div class="catalog-section-header">
+              <h3>Recomendados para la fecha</h3>
+              <p class="section-note">Sugerencias especiales para la temporada y eventos actuales.</p>
+            </div>
+            <div class="product-grid" id="product-recommended-list"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal del carrito -->
+  <div id="cart-modal" class="cart-modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Resumen de compra</h3>
+        <button class="modal-close" id="close-cart-modal">&times;</button>
+      </div>
+      <div id="cart-items"></div>
+      <div class="cart-delivery-summary hidden" id="cart-delivery-summary"></div>
+      <div class="cart-total">
+        <span>Total:</span>
+        <strong id="cart-total">0</strong>
+      </div>
+      <div class="cart-total-breakdown" id="cart-total-breakdown"></div>
+      <div class="cart-checkout-actions">
+        <button class="btn btn-secondary" id="pickup-option" type="button">Pick Up</button>
+        <button class="btn btn-secondary" id="delivery-options-button" type="button">Envío</button>
+        <button class="btn btn-primary" id="checkout" type="button">Pagar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de detalles de producto -->
+  <div id="detail-modal" class="detail-modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="detail-modal-title">Detalle del producto</h3>
+        <button class="modal-close" id="close-detail-modal">&times;</button>
+      </div>
+      <div id="detail-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Modal de selección de entrega -->
+  <div id="delivery-modal" class="detail-modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Calcular entrega</h3>
+        <button class="modal-close" id="close-delivery-modal">&times;</button>
+      </div>
+      <div class="delivery-body">
+        <div class="delivery-mode-label">
+          <span>Envío</span>
+          <input class="hidden" type="radio" name="delivery-type" value="delivery" checked>
+        </div>
+        <div class="delivery-postal-row hidden" id="delivery-postal-row">
+          <label for="delivery-postal">Código postal o dirección completa</label>
+          <input type="text" id="delivery-postal" placeholder="Ej. 02010 o Calle, colonia, alcaldía">
+          <p class="delivery-note">Calculamos la distancia desde Av. Azcapotzalco 756 para validar cobertura y costo de envío.</p>
+        </div>
+        <div class="delivery-flash-row hidden" id="delivery-flash-row">
+          <label>
+            <input type="checkbox" id="delivery-flash">
+            <span class="delivery-flash-copy">
+              <span>🚚 Entrega rápida (+$150)</span>
+              <small>Checaremos disponibilidad de entrega.</small>
+              <small>Un asesor validará disponibilidad según zona y horario.</small>
+            </span>
+          </label>
+        </div>
+        <div class="delivery-result" id="delivery-result"></div>
+        <div class="delivery-modal-actions">
+          <button class="btn btn-secondary hidden" id="accept-delivery-selection" type="button">Aceptar</button>
+          <button class="btn btn-primary" id="save-delivery-selection" type="button">Calcular entrega</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de pago -->
+  <div id="payment-modal" class="detail-modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content payment-modal-content">
+      <div class="modal-header">
+        <h3>Pago</h3>
+        <button class="modal-close" id="close-payment-modal">&times;</button>
+      </div>
+      <div class="payment-body">
+        <div class="payment-summary" id="payment-summary"></div>
+
+        <label class="payment-customer-field" for="payment-customer-name">
+          Nombre del cliente
+          <input type="text" id="payment-customer-name" placeholder="Escribe tu nombre">
+        </label>
+
+        <div class="payment-methods" id="payment-methods">
+          <button class="payment-method-button is-selected" type="button" data-payment-method="transfer">Transferencia SPEI</button>
+          <button class="payment-method-button" type="button" data-payment-method="mercado">Mercado Pago</button>
+          <button class="payment-method-button" type="button" data-payment-method="cash" id="cash-payment-option">Efectivo en tienda</button>
+        </div>
+
+        <div class="payment-panel" id="payment-transfer-panel">
+          <div class="payment-grid">
+            <label>Banco:<input type="text" id="payment-bank" placeholder="Banco"></label>
+            <label>Beneficiario:<input type="text" id="payment-beneficiary" placeholder="Beneficiario"></label>
+            <label>Cuenta:<input type="text" id="payment-account" placeholder="Cuenta"></label>
+            <label>CLABE:<input type="text" id="payment-clabe" placeholder="CLABE"></label>
+            <label class="payment-grid-wide">Concepto:<input type="text" id="payment-concept" placeholder="Pedido Ruben's Distribuidora"></label>
+          </div>
+          <button class="btn btn-primary" id="send-transfer-whatsapp" type="button">Enviar comprobante por WhatsApp</button>
+        </div>
+
+        <div class="payment-panel hidden" id="payment-mercado-panel">
+          <p class="payment-note">La integración queda preparada para agregar el link o API de Mercado Pago.</p>
+          <button class="btn btn-primary" id="mercado-pago-button" type="button">Pagar con Mercado Pago</button>
+        </div>
+
+        <div class="payment-panel hidden" id="payment-cash-panel">
+          <p class="payment-note">Paga en efectivo al recoger tu pedido en tienda.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <p>Ruben's Distribuidora © 2026. Todos los derechos reservados.</p>
+  </footer>
+
+  <script>
+    window.GOOGLE_MAPS_API_KEY = 'AIzaSyD4TXHgscL3fN-qtLPSkP_g_NJIFpy1dYY';
+    window.MERCADO_PAGO_LINK = '';
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>
+
