@@ -666,6 +666,26 @@ button,
   gap: 0.35rem;
 }
 
+.rating-star {
+  border: 0;
+  background: transparent;
+  color: #d7dbe2;
+  font-size: 1.05rem;
+  line-height: 1;
+  padding: 0.1rem;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.rating-star.active,
+.rating-star:hover {
+  color: #f39c12;
+}
+
+.rating-star:hover {
+  transform: translateY(-1px);
+}
+
 .product-rating span {
   color: var(--muted);
   font-size: 0.85rem;
@@ -1258,6 +1278,9 @@ button,
     font-size: 0.9rem;
     color: #f39c12;
     margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
 }
 
 .product-actions {
@@ -2224,14 +2247,15 @@ button,
   .header-inner .cart-summary {
     order: 4;
     position: static;
-    grid-column: 1 / -1;
-    width: 100%;
+    grid-column: 2 / -1;
+    justify-self: end;
+    width: min(100%, 310px);
     margin: 0;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.6rem;
-    padding: 0.65rem 0.75rem;
+    padding: 0.55rem 0.65rem;
     border-radius: 16px;
     background: rgba(255, 255, 255, 0.94);
     border: 1px solid rgba(0, 0, 0, 0.08);
@@ -2241,7 +2265,7 @@ button,
 
   .header-inner .cart-summary p {
     margin: 0;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2250,10 +2274,10 @@ button,
 
   .header-inner .cart-summary button {
     width: auto;
-    min-height: 40px;
-    padding: 0.55rem 0.8rem;
+    min-height: 38px;
+    padding: 0.5rem 0.7rem;
     white-space: nowrap;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
   }
 
   .main-nav {

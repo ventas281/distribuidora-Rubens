@@ -1,4 +1,4 @@
-// Script ligero para Ruben's Distribuidora
+﻿// Script ligero para Ruben's Distribuidora
 
 window.addEventListener('DOMContentLoaded', () => {
   const revealElements = document.querySelectorAll('.reveal');
@@ -89,7 +89,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const saveDeliverySelectionButton = document.getElementById('save-delivery-selection');
 
   const categoryLabels = {
-    vinilica: 'Pintura Vinílica',
+    vinilica: 'Pintura VinÃ­lica',
     esmalte: 'Pintura de Esmalte',
     epoxica: 'Impermeabilizante',
     aerosoles: 'Aerosoles',
@@ -100,13 +100,13 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   const subcategories = {
-    vinilica: ['Económica', 'Media', 'Mediana-Alta', 'Alta'],
+    vinilica: ['EconÃ³mica', 'Media', 'Mediana-Alta', 'Alta'],
     esmalte: ['Base Agua', 'Base Solvente', 'Esmalte Industrial'],
-    epoxica: ['Pisos', 'Industrial', 'Alto Tráfico'],
-    aerosoles: ['Normal', 'Metálico', 'Neón', 'Alta Temperatura'],
+    epoxica: ['Pisos', 'Industrial', 'Alto TrÃ¡fico'],
+    aerosoles: ['Normal', 'MetÃ¡lico', 'NeÃ³n', 'Alta Temperatura'],
     madera: ['Tintas', 'Barnices entintados', 'Barnices base agua', 'Barnices base esmalte', 'Lacas', 'Nitrocelulosas', 'Selladores', 'Primer para Madera', 'Poliuretanos', 'Resanadores', 'Aditivos'],
     aplicadores: ['Brochas', 'Rodillos'],
-    diluyentes: ['Alberca y Tráfico'],
+    diluyentes: ['Alberca y TrÃ¡fico'],
     primerarios: ['Primerarios'],
   }; 
 
@@ -168,8 +168,8 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['aerosoles'],
       subcategory: 'Normal',
       name: 'Aerosol Alvamex',
-      description: 'Aerosol Alvamex de secado rápido, ideal para detalles metálicos e industriales.',
-      detailText: 'Aerosol de alta cobertura y secado rápido, perfecto para interiores y exteriores con acabado resistente.',
+      description: 'Aerosol Alvamex de secado rÃ¡pido, ideal para detalles metÃ¡licos e industriales.',
+      detailText: 'Aerosol de alta cobertura y secado rÃ¡pido, perfecto para interiores y exteriores con acabado resistente.',
       price: 79,
       cantidad: '400 ml',
       popular: true,
@@ -180,29 +180,29 @@ window.addEventListener('DOMContentLoaded', () => {
       palette: [
         { name: 'Oro', color: '#bfa14a' },
         { name: 'Blanco Antiguo', color: '#f3e7c7' },
-        { name: 'Amarillo Limón', color: '#ffd600' },
+        { name: 'Amarillo LimÃ³n', color: '#ffd600' },
         { name: 'Azul Francia', color: '#0d1a4a' },
-        { name: 'Azul Holandés', color: '#1e3a5c' },
+        { name: 'Azul HolandÃ©s', color: '#1e3a5c' },
         { name: 'Amarillo Seguridad', color: '#ffb300' },
         { name: 'Azul Naval', color: '#0a183d' },
-        { name: 'Verde Ecológico', color: '#2e7d32' },
+        { name: 'Verde EcolÃ³gico', color: '#2e7d32' },
         { name: 'Naranja', color: '#ff6d00' },
         { name: 'Marfil', color: '#ede7d0' },
         { name: 'Rojo', color: '#a31515' },
         { name: 'Rosa', color: '#e573b7' },
         { name: 'Verde Pino', color: '#1b5e20' },
-        { name: 'Café', color: '#4e342e' },
+        { name: 'CafÃ©', color: '#4e342e' },
         { name: 'Gris Claro', color: '#bdbdbd' },
         { name: 'Gris Oscuro', color: '#424242' },
-        { name: 'Verde Metálico', color: '#009688' },
+        { name: 'Verde MetÃ¡lico', color: '#009688' },
         { name: 'Cobre', color: '#b87333' },
-        { name: 'Azul Metálico', color: '#1976d2' },
-        { name: 'Lila Metálico', color: '#a259c4' },
+        { name: 'Azul MetÃ¡lico', color: '#1976d2' },
+        { name: 'Lila MetÃ¡lico', color: '#a259c4' },
         { name: 'Aluminio', color: '#b0b0b0' },
-        { name: 'Rojo Metálico', color: '#b71c1c' },
+        { name: 'Rojo MetÃ¡lico', color: '#b71c1c' },
         { name: 'Gris Anodizado', color: '#757575' },
         { name: 'Transparente', color: 'rgba(255,255,255,0.25)' },
-        { name: 'Primer Rojo Óxido', color: '#a31515' },
+        { name: 'Primer Rojo Ã“xido', color: '#a31515' },
         { name: 'Primer Gris Claro', color: '#bdbdbd' },
       ],
     });
@@ -211,10 +211,10 @@ window.addEventListener('DOMContentLoaded', () => {
       id: 'aerosol-cromo',
       category: 'aerosoles',
       categoryLabel: categoryLabels['aerosoles'],
-      subcategory: 'Metálico',
+      subcategory: 'MetÃ¡lico',
       name: 'Aerosol Cromo',
-      description: 'Aerosol Cromo con acabado metálico intenso.',
-      detailText: 'Aerosol cromado de alto brillo y rápida aplicación; perfecto para remates y acentos especiales.',
+      description: 'Aerosol Cromo con acabado metÃ¡lico intenso.',
+      detailText: 'Aerosol cromado de alto brillo y rÃ¡pida aplicaciÃ³n; perfecto para remates y acentos especiales.',
       price: 103,
       cantidad: '400 ml',
       popular: false,
@@ -228,10 +228,10 @@ window.addEventListener('DOMContentLoaded', () => {
       id: 'aerosol-oro',
       category: 'aerosoles',
       categoryLabel: categoryLabels['aerosoles'],
-      subcategory: 'Metálico',
+      subcategory: 'MetÃ¡lico',
       name: 'Aerosol Oro',
-      description: 'Aerosol Oro metálico para acabados decorativos.',
-      detailText: 'Aerosol color oro con excelente cobertura y brillo metálico.',
+      description: 'Aerosol Oro metÃ¡lico para acabados decorativos.',
+      detailText: 'Aerosol color oro con excelente cobertura y brillo metÃ¡lico.',
       price: 103,
       cantidad: '400 ml',
       popular: false,
@@ -266,10 +266,10 @@ window.addEventListener('DOMContentLoaded', () => {
       id: 'aerosol-neon',
       category: 'aerosoles',
       categoryLabel: categoryLabels['aerosoles'],
-      subcategory: 'Neón',
-      name: 'Aerosol Neón',
-      description: 'Aerosol Neón con colores vibrantes en presentación de 400 ml.',
-      detailText: 'Colores neón agrupados en un solo producto para acabados brillantes y llamativos.',
+      subcategory: 'NeÃ³n',
+      name: 'Aerosol NeÃ³n',
+      description: 'Aerosol NeÃ³n con colores vibrantes en presentaciÃ³n de 400 ml.',
+      detailText: 'Colores neÃ³n agrupados en un solo producto para acabados brillantes y llamativos.',
       price: 79,
       cantidad: '400 ml',
       popular: true,
@@ -278,10 +278,10 @@ window.addEventListener('DOMContentLoaded', () => {
       colorSwatch: '#d4ff00',
       image: '',
       palette: [
-        { name: 'Limón Neón', color: '#d4ff00' },
-        { name: 'Magenta Neón', color: '#ff00b0' },
-        { name: 'Mandarina Neón', color: '#ff6d00' },
-        { name: 'Verde Neón', color: '#00ff00' },
+        { name: 'LimÃ³n NeÃ³n', color: '#d4ff00' },
+        { name: 'Magenta NeÃ³n', color: '#ff00b0' },
+        { name: 'Mandarina NeÃ³n', color: '#ff6d00' },
+        { name: 'Verde NeÃ³n', color: '#00ff00' },
       ],
     });
 
@@ -291,16 +291,16 @@ window.addEventListener('DOMContentLoaded', () => {
       id: 'vinilica-alvacolor',
       category: 'vinilica',
       categoryLabel: categoryLabels['vinilica'],
-      subcategory: 'Económica',
+      subcategory: 'EconÃ³mica',
       name: 'Alvacolor',
-      description: 'Vinílica Alvacolor - pintura económica en galón y cubeta.',
-      detailText: 'Es una pintura en un porcentaje lavable, se puede aplicar al exterior e interior con una duración máxima de 2 años al exterior.',
+      description: 'VinÃ­lica Alvacolor - pintura econÃ³mica en galÃ³n y cubeta.',
+      detailText: 'Es una pintura en un porcentaje lavable, se puede aplicar al exterior e interior con una duraciÃ³n mÃ¡xima de 2 aÃ±os al exterior.',
       price: precioVinilicaGalon,
       sizeOptions: [
         { id: '4lts', label: '4 Lts', price: precioVinilicaGalon },
         { id: '19lts', label: '19 Lts', price: precioVinilicaCubeta },
       ],
-      cantidad: '1 galón / cubeta 4 galones',
+      cantidad: '1 galÃ³n / cubeta 4 galones',
       popular: true,
       recommended: true,
       rating: 4,
@@ -311,7 +311,7 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Marfil', color: '#f5e5c4' },
         { name: 'Menta', color: '#dcebcf' },
         { name: 'Lila', color: '#d9c2e0' },
-        { name: 'Salmón Claro', color: '#f6b5ad' },
+        { name: 'SalmÃ³n Claro', color: '#f6b5ad' },
         { name: 'Crema', color: '#f9e3b4' },
         { name: 'Verde Suave', color: '#afd4b0' },
         { name: 'Rosa Mexicano', color: '#f7a8c5' },
@@ -319,24 +319,24 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Amarillo', color: '#f7d36b' },
         { name: 'Verde Tierno', color: '#96c468' },
         { name: 'Azul Verde', color: '#49bdc0' },
-        { name: 'Amarillo Óxido', color: '#d28b38' },
+        { name: 'Amarillo Ã“xido', color: '#d28b38' },
         { name: 'Naranja', color: '#f38c34' },
         { name: 'Verde Claro', color: '#9fcc8f' },
         { name: 'Azul Capri', color: '#6fb9df' },
-        { name: 'Rojo Óxido', color: '#a24b45' },
+        { name: 'Rojo Ã“xido', color: '#a24b45' },
         { name: 'Napolitano', color: '#f1a45c' },
         { name: 'Turquesa', color: '#40b8b3' },
         { name: 'Azul Griego', color: '#3b7bb8' },
         { name: 'Blanco', color: '#ffffff' },
         { name: 'Negro', color: '#1a1a1a' },
-        { name: 'Piñón', color: '#ac8c79' },
+        { name: 'PiÃ±Ã³n', color: '#ac8c79' },
         { name: 'Capuchino', color: '#9e7f68' },
-        { name: 'Rojo Básico', color: '#d92134' },
-        { name: 'Naranja Básico', color: '#f16c2a' },
-        { name: 'Amarillo Básico', color: '#f8d208' },
-        { name: 'Verde Básico', color: '#2f913c' },
-        { name: 'Azul Básico', color: '#2e60c4' },
-        { name: 'Violeta Básico', color: '#7b3cc3' },
+        { name: 'Rojo BÃ¡sico', color: '#d92134' },
+        { name: 'Naranja BÃ¡sico', color: '#f16c2a' },
+        { name: 'Amarillo BÃ¡sico', color: '#f8d208' },
+        { name: 'Verde BÃ¡sico', color: '#2f913c' },
+        { name: 'Azul BÃ¡sico', color: '#2e60c4' },
+        { name: 'Violeta BÃ¡sico', color: '#7b3cc3' },
       ],
     });
 
@@ -349,8 +349,8 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['vinilica'],
       subcategory: 'Media',
       name: 'Alvaflex Master',
-      description: 'Vinílica Alvaflex Master - pintura de calidad media en galón y cubeta.',
-      detailText: 'Es una pintura en un porcentaje lavable, se puede aplicar al exterior e interior con una duración máxima de 2 años al exterior.',
+      description: 'VinÃ­lica Alvaflex Master - pintura de calidad media en galÃ³n y cubeta.',
+      detailText: 'Es una pintura en un porcentaje lavable, se puede aplicar al exterior e interior con una duraciÃ³n mÃ¡xima de 2 aÃ±os al exterior.',
       price: precioVinilicaMedia1Lt,
       sizeOptions: [
         { id: '1lt', label: '1 Lt', price: precioVinilicaMedia1Lt },
@@ -367,26 +367,26 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Mamey', color: '#ee8a7a' },
         { name: 'Monarca', color: '#f2aa4b' },
         { name: 'Blanco Menta', color: '#e1f1e3' },
-        { name: 'Blanco Ostión', color: '#f4e7d7' },
+        { name: 'Blanco OstiÃ³n', color: '#f4e7d7' },
         { name: 'Amarillo California', color: '#f8c95c' },
         { name: 'Amarillo Intenso', color: '#f7bf2d' },
         { name: 'Verde Locura', color: '#e5f4c3' },
         { name: 'Azul Cielo', color: '#5bb8d6' },
         { name: 'Mango', color: '#f2a537' },
-        { name: 'Salmón Fresco', color: '#f6b8ae' },
-        { name: 'Verde Reflexión', color: '#9ca677' },
+        { name: 'SalmÃ³n Fresco', color: '#f6b8ae' },
+        { name: 'Verde ReflexiÃ³n', color: '#9ca677' },
         { name: 'Azul Rey', color: '#1f4d96' },
         { name: 'Naranja', color: '#f06f34' },
-        { name: 'Arena Orgánica', color: '#edbe9f' },
+        { name: 'Arena OrgÃ¡nica', color: '#edbe9f' },
         { name: 'Verde Tierno', color: '#93c364' },
         { name: 'Rosa Mexicano', color: '#e462a5' },
         { name: 'Rojo Cardenal', color: '#bf312d' },
-        { name: 'Amarillo Óxido', color: '#cc8f39' },
+        { name: 'Amarillo Ã“xido', color: '#cc8f39' },
         { name: 'Turquesa', color: '#42b0ae' },
         { name: 'Violeta', color: '#8a4bb3' },
-        { name: 'Rojo Óxido', color: '#7e2d28' },
+        { name: 'Rojo Ã“xido', color: '#7e2d28' },
         { name: 'Capuchino', color: '#9b7963' },
-        { name: 'Verde Básico', color: '#1d6d4d' },
+        { name: 'Verde BÃ¡sico', color: '#1d6d4d' },
         { name: 'Negro', color: '#101112' },
         { name: 'Blanco Semi-Gloss', color: '#f8f8f7' },
         { name: 'Blanco Mate', color: '#f2f2f1' },
@@ -400,8 +400,8 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['vinilica'],
       subcategory: 'Alta',
       name: 'Alvacril GOLD',
-      description: 'Pintura 100% lavable ideal para exterior e interior con una durabilidad hasta 12 años.',
-      detailText: 'Pintura 100% lavable ideal para exterior e interior con una durabilidad hasta 12 años.',
+      description: 'Pintura 100% lavable ideal para exterior e interior con una durabilidad hasta 12 aÃ±os.',
+      detailText: 'Pintura 100% lavable ideal para exterior e interior con una durabilidad hasta 12 aÃ±os.',
       price: 116,
       sizeOptions: [
         { id: '1lt', label: '1 Lt', price: 116 },
@@ -416,7 +416,7 @@ window.addEventListener('DOMContentLoaded', () => {
       image: '',
       palette: [ 
         { name: 'Coral', color: '#f16d64' },
-        { name: 'Champaña', color: '#f4dfab' },
+        { name: 'ChampaÃ±a', color: '#f4dfab' },
         { name: 'Paja', color: '#f7dd9a' },
         { name: 'Blanco Amanecer', color: '#eef7f5' },
         { name: 'Blanco', color: '#ffffff' },
@@ -424,7 +424,7 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Crema', color: '#f4d8a5' },
         { name: 'Olivo', color: '#7f8668' },
         { name: 'Celeste', color: '#7fc5e0' },
-        { name: 'Blanco Ostión', color: '#ede4d5' },
+        { name: 'Blanco OstiÃ³n', color: '#ede4d5' },
         { name: 'Mango', color: '#f3a34f' },
         { name: 'Durazno', color: '#f2af8f' },
         { name: 'Verde Tierno', color: '#79b551' },
@@ -436,11 +436,11 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Azul Rey', color: '#203f7e' },
         { name: 'Rosa Mexicano', color: '#d63d88' },
         { name: 'Rojo', color: '#c72d2d' },
-        { name: 'Amarillo Limón', color: '#f7e242' },
-        { name: 'Verde Córdova', color: '#2c7f65' },
+        { name: 'Amarillo LimÃ³n', color: '#f7e242' },
+        { name: 'Verde CÃ³rdova', color: '#2c7f65' },
         { name: 'Azul Intenso', color: '#1c4e8c' },
         { name: 'Uva', color: '#7c3a8d' },
-        { name: 'Red Barón', color: '#8c2f2f' },
+        { name: 'Red BarÃ³n', color: '#8c2f2f' },
         { name: 'Mostaza', color: '#a77a2b' },
         { name: 'Turquesa', color: '#2f9fab' },
         { name: 'Azul Colonial', color: '#224d8c' },
@@ -456,14 +456,14 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['vinilica'],
       subcategory: 'Mediana-Alta',
       name: 'Viniplax',
-      description: 'Vinílica Viniplax - pintura premium en galón y cubeta.',
-      detailText: 'Es una pintura en un porcentaje lavable, se puede aplicar al exterior e interior con una duración máxima de 2 años al exterior.',
+      description: 'VinÃ­lica Viniplax - pintura premium en galÃ³n y cubeta.',
+      detailText: 'Es una pintura en un porcentaje lavable, se puede aplicar al exterior e interior con una duraciÃ³n mÃ¡xima de 2 aÃ±os al exterior.',
       price: precioVinilicaMediaAltaGalon,
       sizeOptions: [
         { id: '4lts', label: '4 Lts', price: precioVinilicaMediaAltaGalon },
         { id: '19lts', label: '19 Lts', price: precioVinilicaMediaAltaCubeta },
       ],
-      cantidad: '1 galón / cubeta 4 galones',
+      cantidad: '1 galÃ³n / cubeta 4 galones',
       popular: true,
       recommended: true,
       rating: 4,
@@ -476,7 +476,7 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Coral Pastel', color: '#f2a587' },
         { name: 'Rosa Empolvado', color: '#e9b8c0' },
         { name: 'Rosa Nude', color: '#deb0a4' },
-        { name: 'Amarillo Pálido', color: '#f8e7a2' },
+        { name: 'Amarillo PÃ¡lido', color: '#f8e7a2' },
         { name: 'Mostaza Suave', color: '#d7b35a' },
         { name: 'Terracota Claro', color: '#d18e5f' },
         { name: 'Naranja Crema', color: '#efb67c' },
@@ -486,7 +486,7 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Verde Oliva Claro', color: '#9fae74' },
         { name: 'Azul Cielo', color: '#a8c7d8' },
         { name: 'Azul Polvo', color: '#94adc2' },
-        { name: 'Azul Grisáceo', color: '#7d8ca0' },
+        { name: 'Azul GrisÃ¡ceo', color: '#7d8ca0' },
         { name: 'Azul Marino', color: '#3d5570' },
         { name: 'Lavanda', color: '#c9bbc8' },
         { name: 'Lila Suave', color: '#b89fb5' },
@@ -494,14 +494,14 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Gris Perla', color: '#d7d9da' },
         { name: 'Gris Claro', color: '#b7b8bb' },
         { name: 'Gris Medio', color: '#8c8e91' },
-        { name: 'Café Claro', color: '#c4a48f' },
-        { name: 'Café Madera', color: '#9e6f55' },
+        { name: 'CafÃ© Claro', color: '#c4a48f' },
+        { name: 'CafÃ© Madera', color: '#9e6f55' },
         { name: 'Rojo Suave', color: '#c96f6f' },
         { name: 'Rojo Profundo', color: '#8f3232' },
       ],
     });
 
-    // Generar productos normales para las demás categorías (esmaltes se agregan manualmente)
+    // Generar productos normales para las demÃ¡s categorÃ­as (esmaltes se agregan manualmente)
     Object.keys(counts).forEach((category) => {
       if (category === 'aerosoles' || category === 'vinilica' || category === 'esmalte') return;
       const categoryLabel = categoryLabels[category];
@@ -515,7 +515,7 @@ window.addEventListener('DOMContentLoaded', () => {
           categoryLabel,
           subcategory,
           name: `${categoryLabel} ${subcategory} #${i}`,
-          description: `Producto ${i} de ${categoryLabel} en la subcategoría ${subcategory}`,
+          description: `Producto ${i} de ${categoryLabel} en la subcategorÃ­a ${subcategory}`,
           price: prices[category] + Math.floor(Math.random() * 120),
           popular: i % popularRules[category] === 0,
           recommended: i % recommendedRules[category] === 0,
@@ -530,8 +530,8 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['esmalte'],
       subcategory: 'Base Solvente',
       name: 'Alva fast',
-      description: 'Esmalte industrial de secado rápido, resistente a la intemperie y a la corrosión.',
-      detailText: 'Esmalte Alva fast disponible en 1, 4 y 19 litros. Ideal para interiores y exteriores, con gran resistencia y secado rápido.',
+      description: 'Esmalte industrial de secado rÃ¡pido, resistente a la intemperie y a la corrosiÃ³n.',
+      detailText: 'Esmalte Alva fast disponible en 1, 4 y 19 litros. Ideal para interiores y exteriores, con gran resistencia y secado rÃ¡pido.',
       price: 189,
       sizeOptions: [
         { id: '1lt', label: '1 Lts', price: 189 },
@@ -549,15 +549,15 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Blanco Ostra', color: '#e9e0d6' },
         { name: 'Verde Confort', color: '#2a5b33' },
         { name: 'Rojo Cereza', color: '#921c20' },
-        { name: 'Amarillo Limón', color: '#f7dd4f' },
-        { name: 'Verde Orgánico', color: '#267b3a' },
+        { name: 'Amarillo LimÃ³n', color: '#f7dd4f' },
+        { name: 'Verde OrgÃ¡nico', color: '#267b3a' },
         { name: 'Rojo Cardenal', color: '#8f1d26' },
         { name: 'Amarillo Canario', color: '#f4a322' },
-        { name: 'Atlántida', color: '#1f5275' },
-        { name: 'Rojo Óxido', color: '#7d3221' },
+        { name: 'AtlÃ¡ntida', color: '#1f5275' },
+        { name: 'Rojo Ã“xido', color: '#7d3221' },
         { name: 'Amarillo Caterpillar', color: '#d88f1c' },
         { name: 'Azul Alvamax', color: '#185895' },
-        { name: 'Marrón', color: '#591f1c' },
+        { name: 'MarrÃ³n', color: '#591f1c' },
         { name: 'Amarillo Cromo', color: '#f09610' },
         { name: 'Azul Prusia', color: '#0f316a' },
         { name: 'Gris', color: '#8d8e90' },
@@ -577,9 +577,9 @@ window.addEventListener('DOMContentLoaded', () => {
       category: 'esmalte',
       categoryLabel: categoryLabels['esmalte'],
       subcategory: 'Base Solvente',
-      name: 'Rocket Secado Rápido',
-      description: 'Esmalte de secado rápido ideal para aplicaciones donde se requiere rapidez y excelente acabado.',
-      detailText: 'Esmalte Rocket Secado Rápido disponible en 1, 4 y 19 litros. Ideal para aplicaciones donde se requiere rapidez y excelente acabado.',
+      name: 'Rocket Secado RÃ¡pido',
+      description: 'Esmalte de secado rÃ¡pido ideal para aplicaciones donde se requiere rapidez y excelente acabado.',
+      detailText: 'Esmalte Rocket Secado RÃ¡pido disponible en 1, 4 y 19 litros. Ideal para aplicaciones donde se requiere rapidez y excelente acabado.',
       price: 449,
       sizeOptions: [
         { id: '1lt', label: '1 Lt', price: 449 },
@@ -604,8 +604,8 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['esmalte'],
       subcategory: 'Base Solvente',
       name: 'Esmalack',
-      description: 'Esmalte alquidálico de excelente acabado y resistencia, ideal para herrería, metal, madera y acabados decorativos.',
-      detailText: 'Esmalack es un esmalte alquidálico de excelente acabado y resistencia, ideal para herrería, metal, madera y acabados decorativos.',
+      description: 'Esmalte alquidÃ¡lico de excelente acabado y resistencia, ideal para herrerÃ­a, metal, madera y acabados decorativos.',
+      detailText: 'Esmalack es un esmalte alquidÃ¡lico de excelente acabado y resistencia, ideal para herrerÃ­a, metal, madera y acabados decorativos.',
       price: 310,
       sizeOptions: [
         { id: '1lt', label: '1 Lt', price: 310 },
@@ -620,7 +620,7 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Oro', color: '#7e8370' },
         { name: 'Cobre', color: '#79575a' },
         { name: 'Aluminio', color: '#9ca6b3' },
-        { name: 'Café Anodizado', color: '#2d2b2d' },
+        { name: 'CafÃ© Anodizado', color: '#2d2b2d' },
       ],
     });
 
@@ -645,24 +645,24 @@ window.addEventListener('DOMContentLoaded', () => {
       colorSwatch: '#f7f3dd',
       image: '',
       palette: [
-        { name: 'Blanco Ostión - EX-0229', color: '#f7f3dd' },
+        { name: 'Blanco OstiÃ³n - EX-0229', color: '#f7f3dd' },
         { name: 'Marfil - EX-0773', color: '#f8f5c8' },
         { name: 'Amarillo Sol - EX-0777', color: '#f4b84a' },
-        { name: 'Amarillo Limón - EX-0700', color: '#eee84f' },
+        { name: 'Amarillo LimÃ³n - EX-0700', color: '#eee84f' },
         { name: 'Beige - EX-0778', color: '#d5c2aa' },
         { name: 'Crema - EX-0772', color: '#f8f3b7' },
         { name: 'Naranja Fuego - EX-0600', color: '#df4a36' },
-        { name: 'Amarillo Óxido - EX-0775', color: '#a98245' },
+        { name: 'Amarillo Ã“xido - EX-0775', color: '#a98245' },
         { name: 'Roble - EX-0658', color: '#947363' },
         { name: 'Gris Perla - EX-0113', color: '#9fa2a5' },
         { name: 'Rojo Chino - EX-0500', color: '#a72e33' },
-        { name: 'Rojo Óxido - EX-0555', color: '#86392f' },
-        { name: 'Café Óxido - EX-0557', color: '#49332b' },
+        { name: 'Rojo Ã“xido - EX-0555', color: '#86392f' },
+        { name: 'CafÃ© Ã“xido - EX-0557', color: '#49332b' },
         { name: 'Azul Fino - EX-0337', color: '#8bc4df' },
-        { name: 'Azul Tráfico - EX-3300', color: '#272a65' },
-        { name: 'Verde Océano - EX-0443', color: '#2f5a48' },
+        { name: 'Azul TrÃ¡fico - EX-3300', color: '#272a65' },
+        { name: 'Verde OcÃ©ano - EX-0443', color: '#2f5a48' },
         { name: 'Verde Claro - EX-0441', color: '#bde9c7' },
-        { name: 'Azul Holandés - EX-0335', color: '#5389bd' },
+        { name: 'Azul HolandÃ©s - EX-0335', color: '#5389bd' },
         { name: 'Verde Industrial - 30GG 18450', color: '#3a8a75' },
         { name: 'Verde Fresco - 94YY 48629', color: '#96cd66' },
         { name: 'Turquesa - EX-0442', color: '#5fb1a9' },
@@ -676,8 +676,8 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['esmalte'],
       subcategory: 'Esmalte Industrial',
       name: 'Pintura para Alberca',
-      description: 'Pintura especializada para albercas con excelente resistencia al agua y químicos.',
-      detailText: 'Pintura especializada para albercas con excelente resistencia al agua y químicos. Disponible en presentaciones de 4 y 19 litros.',
+      description: 'Pintura especializada para albercas con excelente resistencia al agua y quÃ­micos.',
+      detailText: 'Pintura especializada para albercas con excelente resistencia al agua y quÃ­micos. Disponible en presentaciones de 4 y 19 litros.',
       price: 2227,
       sizeOptions: [
         { id: '4lts', label: '4 Lts', price: 2227 },
@@ -691,8 +691,8 @@ window.addEventListener('DOMContentLoaded', () => {
       image: '',
       palette: [
         { name: 'Blanco', color: '#f7f7f5' },
-        { name: 'Azul Holandés', color: '#128bc5' },
-        { name: 'Azul Avándaro', color: '#6bb8df' },
+        { name: 'Azul HolandÃ©s', color: '#128bc5' },
+        { name: 'Azul AvÃ¡ndaro', color: '#6bb8df' },
         { name: 'Turquesa', color: '#12a79b' },
         { name: 'Verde Vallarta', color: '#9acdc9' },
       ],
@@ -703,9 +703,9 @@ window.addEventListener('DOMContentLoaded', () => {
       category: 'esmalte',
       categoryLabel: categoryLabels['esmalte'],
       subcategory: 'Esmalte Industrial',
-      name: 'Pintura para Tráfico',
-      description: 'Pintura de alto desempeño para señalamiento vial y tráfico.',
-      detailText: 'Pintura de alto desempeño para señalamiento vial y tráfico. Disponible en presentaciones de 4 y 19 litros.',
+      name: 'Pintura para TrÃ¡fico',
+      description: 'Pintura de alto desempeÃ±o para seÃ±alamiento vial y trÃ¡fico.',
+      detailText: 'Pintura de alto desempeÃ±o para seÃ±alamiento vial y trÃ¡fico. Disponible en presentaciones de 4 y 19 litros.',
       price: 1640,
       sizeOptions: [
         { id: '4lts', label: '4 Lts', price: 1640 },
@@ -718,8 +718,8 @@ window.addEventListener('DOMContentLoaded', () => {
       colorSwatch: '#ffffff',
       image: '',
       palette: [
-        { name: 'Blanco Tráfico SCT', color: '#ffffff' },
-        { name: 'Amarillo Tráfico SCT', color: '#f5c400' },
+        { name: 'Blanco TrÃ¡fico SCT', color: '#ffffff' },
+        { name: 'Amarillo TrÃ¡fico SCT', color: '#f5c400' },
       ],
     });
 
@@ -727,10 +727,10 @@ window.addEventListener('DOMContentLoaded', () => {
       id: 'diluyente-alberca-trafico',
       category: 'diluyentes',
       categoryLabel: categoryLabels['diluyentes'],
-      subcategory: 'Alberca y Tráfico',
-      name: 'Diluyente para Pintura de Alberca y Tráfico',
-      description: 'Diluyente para pintura de alberca y tráfico.',
-      detailText: 'Diluyente para pintura de alberca y tráfico disponible en presentaciones de 4 y 19 litros.',
+      subcategory: 'Alberca y TrÃ¡fico',
+      name: 'Diluyente para Pintura de Alberca y TrÃ¡fico',
+      description: 'Diluyente para pintura de alberca y trÃ¡fico.',
+      detailText: 'Diluyente para pintura de alberca y trÃ¡fico disponible en presentaciones de 4 y 19 litros.',
       price: 551,
       sizeOptions: [
         { id: '4lts', label: '4 Lts', price: 551 },
@@ -750,8 +750,8 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['primerarios'],
       subcategory: 'Primerarios',
       name: 'Primario Anticorrosivo',
-      description: 'Primario protector para superficies metálicas con excelente adherencia y protección anticorrosiva.',
-      detailText: 'Primario protector para superficies metálicas con excelente adherencia y protección anticorrosiva. Disponible en 1, 4 y 19 litros.',
+      description: 'Primario protector para superficies metÃ¡licas con excelente adherencia y protecciÃ³n anticorrosiva.',
+      detailText: 'Primario protector para superficies metÃ¡licas con excelente adherencia y protecciÃ³n anticorrosiva. Disponible en 1, 4 y 19 litros.',
       price: 362,
       sizeOptions: [
         { id: '1lt', label: '1 Lt', price: 362 },
@@ -767,7 +767,7 @@ window.addEventListener('DOMContentLoaded', () => {
       palette: [
         { name: 'Gris claro', color: '#cfd2d4' },
         { name: 'Blanco', color: '#ffffff' },
-        { name: 'Rojo óxido', color: '#8b352c' },
+        { name: 'Rojo Ã³xido', color: '#8b352c' },
       ],
     });
 
@@ -777,8 +777,8 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['primerarios'],
       subcategory: 'Primerarios',
       name: 'Primario Anticorrosivo de Zinc',
-      description: 'Protección industrial reforzada contra corrosión para superficies metálicas.',
-      detailText: 'Protección industrial reforzada contra corrosión para superficies metálicas. Disponible en 1, 4 y 19 litros.',
+      description: 'ProtecciÃ³n industrial reforzada contra corrosiÃ³n para superficies metÃ¡licas.',
+      detailText: 'ProtecciÃ³n industrial reforzada contra corrosiÃ³n para superficies metÃ¡licas. Disponible en 1, 4 y 19 litros.',
       price: 579,
       sizeOptions: [
         { id: '1lt', label: '1 Lt', price: 579 },
@@ -825,22 +825,22 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Naranja - TS-6108', color: '#db6f21' },
         { name: 'Azul - TS-6109', color: '#12619b' },
         { name: 'Verde - TS-6110', color: '#00a66a' },
-        { name: 'Royal Marrón - TS-6111', color: '#8f345f' },
+        { name: 'Royal MarrÃ³n - TS-6111', color: '#8f345f' },
         { name: 'Early American - TS-6112', color: '#8c6a3d' },
         { name: 'Verde Ficus - TS-6113', color: '#334d2b' },
         { name: 'Nogal Americano - TS-6114', color: '#7d6132' },
-        { name: 'Nogal Clásico - TS-6115', color: '#7a5428' },
+        { name: 'Nogal ClÃ¡sico - TS-6115', color: '#7a5428' },
         { name: 'Maple - TS-6116', color: '#c37034' },
-        { name: 'Caoba Inglés - TS-6117', color: '#9a3150' },
+        { name: 'Caoba InglÃ©s - TS-6117', color: '#9a3150' },
         { name: 'Caoba Comercial - TS-6118', color: '#8d3424' },
-        { name: 'Caoba Clásico - TS-6119', color: '#a04d28' },
+        { name: 'Caoba ClÃ¡sico - TS-6119', color: '#a04d28' },
         { name: 'Roble - TS-6120', color: '#9b6a35' },
         { name: 'Arce - TS-6121', color: '#d87520' },
         { name: 'Cedro - TS-6122', color: '#d36f22' },
         { name: 'Olmo - TS-6123', color: '#9d7a39' },
         { name: 'Oyamel - TS-6124', color: '#9b4a37' },
         { name: 'Magnolia - TS-6125', color: '#b68d42' },
-        { name: 'Ciprés - TS-6126', color: '#d99a22' },
+        { name: 'CiprÃ©s - TS-6126', color: '#d99a22' },
         { name: 'Amaranto - TS-6127', color: '#8c2245' },
         { name: 'Palo de Rosa - TS-6128', color: '#80365e' },
         { name: 'Chocolate - TS-6129', color: '#3d1916' },
@@ -851,7 +851,7 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Gris Perla - TS-6134', color: '#a6acb1' },
         { name: 'Gris Titanio - TS-6135', color: '#667081' },
         { name: 'Gris Grafito - TS-6136', color: '#323333' },
-        { name: 'Álamo - TS-6137', color: '#eadab8' },
+        { name: 'Ãlamo - TS-6137', color: '#eadab8' },
         { name: 'Cacao - TS-6138', color: '#8b5d35' },
         { name: 'Abeto - TS-6139', color: '#a76431' },
       ],
@@ -863,8 +863,8 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['madera'],
       subcategory: 'Tintas',
       name: 'Entona Sayer',
-      description: 'Tinta base alcohol de secado rápido ideal para acabados profesionales sobre madera. Excelente penetración, color uniforme y gran compatibilidad con procesos de barnizado.',
-      detailText: 'Tinta base alcohol de secado rápido ideal para acabados profesionales sobre madera. Excelente penetración, color uniforme y gran compatibilidad con procesos de barnizado.',
+      description: 'Tinta base alcohol de secado rÃ¡pido ideal para acabados profesionales sobre madera. Excelente penetraciÃ³n, color uniforme y gran compatibilidad con procesos de barnizado.',
+      detailText: 'Tinta base alcohol de secado rÃ¡pido ideal para acabados profesionales sobre madera. Excelente penetraciÃ³n, color uniforme y gran compatibilidad con procesos de barnizado.',
       price: 67,
       sizeOptions: [
         { id: 'cuarto-lt', label: '1/4 Lt', price: 67 },
@@ -879,29 +879,29 @@ window.addEventListener('DOMContentLoaded', () => {
       palette: [
         { name: 'Blanco TS-6601 - 250 ml: TS660110 / 1 lt: TS660130', color: '#f4ead0' },
         { name: 'Negro TS-6602 - 250 ml: TS660210 / 1 lt: TS660230', color: '#2a2928' },
-        { name: 'Amarillo Limón TS-6604 - 1 lt: TS660430', color: '#e0d91c' },
+        { name: 'Amarillo LimÃ³n TS-6604 - 1 lt: TS660430', color: '#e0d91c' },
         { name: 'Amarillo Oro TS-6605 - 1 lt: TS660530', color: '#f0af1a' },
-        { name: 'Café TS-6606 - 250 ml: TS660610 / 1 lt: TS660630', color: '#5a2d15' },
+        { name: 'CafÃ© TS-6606 - 250 ml: TS660610 / 1 lt: TS660630', color: '#5a2d15' },
         { name: 'Rojo Vivo TS-6607 - 1 lt: TS660730', color: '#e8262b' },
         { name: 'Naranja TS-6608 - 1 lt: TS660830', color: '#e45f20' },
         { name: 'Azul TS-6609 - 1 lt: TS660930', color: '#1261a0' },
         { name: 'Verde TS-6610 - 1 lt: TS661030', color: '#0cad73' },
-        { name: 'Royal Marrón TS-6611 - 1 lt: TS661130', color: '#8c2f5d' },
+        { name: 'Royal MarrÃ³n TS-6611 - 1 lt: TS661130', color: '#8c2f5d' },
         { name: 'Early American TS-6612 - 250 ml: TS661210 / 1 lt: TS661230', color: '#806333' },
         { name: 'Verde Ficus TS-6613 - 1 lt: TS661330', color: '#35472a' },
         { name: 'Nogal Americano TS-6614 - 250 ml: TS661410 / 1 lt: TS661430', color: '#80612d' },
-        { name: 'Nogal Clásico TS-6615 - 250 ml: TS661510 / 1 lt: TS661530', color: '#735016' },
+        { name: 'Nogal ClÃ¡sico TS-6615 - 250 ml: TS661510 / 1 lt: TS661530', color: '#735016' },
         { name: 'Maple TS-6616 - 250 ml: TS661610 / 1 lt: TS661630', color: '#c26739' },
-        { name: 'Caoba Inglés TS-6617 - 250 ml: TS661710 / 1 lt: TS661730', color: '#9a3150' },
+        { name: 'Caoba InglÃ©s TS-6617 - 250 ml: TS661710 / 1 lt: TS661730', color: '#9a3150' },
         { name: 'Caoba Comercial TS-6618 - 250 ml: TS661810 / 1 lt: TS661830', color: '#8d3424' },
-        { name: 'Caoba Clásico TS-6619 - 250 ml: TS661910 / 1 lt: TS661930', color: '#864126' },
+        { name: 'Caoba ClÃ¡sico TS-6619 - 250 ml: TS661910 / 1 lt: TS661930', color: '#864126' },
         { name: 'Roble TS-6620 - 250 ml: TS662010 / 1 lt: TS662030', color: '#8c5f32' },
         { name: 'Arce TS-6621 - 1 lt: TS662130', color: '#d97818' },
         { name: 'Cedro TS-6622 - 250 ml: TS662210 / 1 lt: TS662230', color: '#d06c1f' },
         { name: 'Olmo TS-6623 - 250 ml: TS662310 / 1 lt: TS662330', color: '#9a7936' },
         { name: 'Oyamel TS-6624 - 250 ml: TS662410 / 1 lt: TS662430', color: '#9c4635' },
         { name: 'Magnolia TS-6625 - 250 ml: TS662510 / 1 lt: TS662530', color: '#ca8425' },
-        { name: 'Ciprés TS-6626 - 250 ml: TS662610 / 1 lt: TS662630', color: '#8a6736' },
+        { name: 'CiprÃ©s TS-6626 - 250 ml: TS662610 / 1 lt: TS662630', color: '#8a6736' },
         { name: 'Amaranto TS-6627 - 250 ml: TS662710 / 1 lt: TS662730', color: '#9b3945' },
         { name: 'Palo de Rosa TS-6628 - 1 lt: TS662830 / 19 lts: TS662850', color: '#8b2053' },
         { name: 'Chocolate TS-6629 - 250 ml: TS662910 / 1 lt: TS662930', color: '#321917' },
@@ -916,8 +916,8 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['madera'],
       subcategory: 'Barnices entintados',
       name: 'Barnices Entintados',
-      description: 'Barniz entintado de acabado profesional para madera, diseñado para proteger, decorar y resaltar la veta natural con excelente adherencia y durabilidad.',
-      detailText: 'Barniz entintado de acabado profesional para madera, diseñado para proteger, decorar y resaltar la veta natural con excelente adherencia y durabilidad.',
+      description: 'Barniz entintado de acabado profesional para madera, diseÃ±ado para proteger, decorar y resaltar la veta natural con excelente adherencia y durabilidad.',
+      detailText: 'Barniz entintado de acabado profesional para madera, diseÃ±ado para proteger, decorar y resaltar la veta natural con excelente adherencia y durabilidad.',
       price: 285,
       sizeOptions: [
         { id: '1lt', label: '1 Lt', price: 285 },
@@ -933,14 +933,14 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Transparente - LT-0100', color: '#f6efe2' },
         { name: 'Amaranto - LT-012730', color: '#8f1f46' },
         { name: 'Arce - LT-012130', color: '#d97818' },
-        { name: 'Caoba Clásico - LT-011930', color: '#864126' },
-        { name: 'Caoba Inglés - LT-011730', color: '#9a3150' },
+        { name: 'Caoba ClÃ¡sico - LT-011930', color: '#864126' },
+        { name: 'Caoba InglÃ©s - LT-011730', color: '#9a3150' },
         { name: 'Chocolate - LT-012930', color: '#321917' },
         { name: 'Early American - LT-011230', color: '#806333' },
         { name: 'Magnolia - LT-012530', color: '#ca8425' },
         { name: 'Maple - LT-011630', color: '#c26739' },
         { name: 'Nogal Americano - LT-011430', color: '#80612d' },
-        { name: 'Nogal Clásico - LT-011530', color: '#735016' },
+        { name: 'Nogal ClÃ¡sico - LT-011530', color: '#735016' },
         { name: 'Roble - LT-012030', color: '#8c5f32' },
       ],
     });
@@ -973,8 +973,8 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['madera'],
       subcategory: 'Selladores',
       name: 'Sellalack Directo',
-      description: 'Sellador nitrocelulosa directo de aplicación profesional para madera.',
-      detailText: 'Clave: NS-1000. Sellador nitrocelulosa directo de aplicación profesional para madera.',
+      description: 'Sellador nitrocelulosa directo de aplicaciÃ³n profesional para madera.',
+      detailText: 'Clave: NS-1000. Sellador nitrocelulosa directo de aplicaciÃ³n profesional para madera.',
       price: 228,
       sizeOptions: [
         { id: '1lt', label: '1 Lt', price: 228 },
@@ -1013,9 +1013,9 @@ window.addEventListener('DOMContentLoaded', () => {
       category: 'madera',
       categoryLabel: categoryLabels['madera'],
       subcategory: 'Selladores',
-      name: 'Sellalack Altos Sólidos',
-      description: 'Sellador nitro de alta concentración y excelente cobertura.',
-      detailText: 'Clave: NS-44/300. Sellador nitro de alta concentración y excelente cobertura.',
+      name: 'Sellalack Altos SÃ³lidos',
+      description: 'Sellador nitro de alta concentraciÃ³n y excelente cobertura.',
+      detailText: 'Clave: NS-44/300. Sellador nitro de alta concentraciÃ³n y excelente cobertura.',
       price: 233,
       sizeOptions: [
         { id: '1lt', label: '1 Lt', price: 233 },
@@ -1330,8 +1330,8 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['esmalte'],
       subcategory: 'Base Solvente',
       name: 'Esmalte Oro 1 Lts',
-      description: 'Esmalte color oro en presentación de 1 litro.',
-      detailText: 'Esmalte metálico color oro, ideal para acabados decorativos y detalles en 1 litro.',
+      description: 'Esmalte color oro en presentaciÃ³n de 1 litro.',
+      detailText: 'Esmalte metÃ¡lico color oro, ideal para acabados decorativos y detalles en 1 litro.',
       price: 239,
       cantidad: '1 lt',
       popular: false,
@@ -1347,8 +1347,8 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['esmalte'],
       subcategory: 'Base Solvente',
       name: 'Esmalte Plata 1 Lts',
-      description: 'Esmalte color plata en presentación de 1 litro.',
-      detailText: 'Esmalte metálico color plata, ideal para acabados brillantes y detalles en 1 litro.',
+      description: 'Esmalte color plata en presentaciÃ³n de 1 litro.',
+      detailText: 'Esmalte metÃ¡lico color plata, ideal para acabados brillantes y detalles en 1 litro.',
       price: 239,
       cantidad: '1 lt',
       popular: false,
@@ -1364,8 +1364,8 @@ window.addEventListener('DOMContentLoaded', () => {
       categoryLabel: categoryLabels['esmalte'],
       subcategory: 'Base Solvente',
       name: 'Esmalte Bronce 1 Lts',
-      description: 'Esmalte color bronce en presentación de 1 litro.',
-      detailText: 'Esmalte metálico color bronce, ideal para acabados cálidos y detalles en 1 litro.',
+      description: 'Esmalte color bronce en presentaciÃ³n de 1 litro.',
+      detailText: 'Esmalte metÃ¡lico color bronce, ideal para acabados cÃ¡lidos y detalles en 1 litro.',
       price: 269,
       cantidad: '1 lt',
       popular: false,
@@ -1392,12 +1392,12 @@ window.addEventListener('DOMContentLoaded', () => {
     const code = String(postalCode).trim();
     const numeric = Number(code.replace(/\D/g, '').slice(0, 5));
     if (!numeric || code.length < 4) {
-      return { valid: false, message: 'Ingresa un código postal válido para ver la disponibilidad.', sameDay: false, eta: '' };
+      return { valid: false, message: 'Ingresa un cÃ³digo postal vÃ¡lido para ver la disponibilidad.', sameDay: false, eta: '' };
     }
     if (numeric >= 54000 && numeric <= 54150) {
-      return { valid: true, message: 'Entrega dentro de 15 km: mismo día disponible.', sameDay: true, eta: 'Mismo día' };
+      return { valid: true, message: 'Entrega dentro de 15 km: mismo dÃ­a disponible.', sameDay: true, eta: 'Mismo dÃ­a' };
     }
-    return { valid: true, message: 'Fuera del rango de 15 km: entrega estimada en 1-2 días.', sameDay: false, eta: '1-2 días' };
+    return { valid: true, message: 'Fuera del rango de 15 km: entrega estimada en 1-2 dÃ­as.', sameDay: false, eta: '1-2 dÃ­as' };
   };
 
   const updateDeliverySummary = () => {
@@ -1408,7 +1408,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
     if (deliveryState.type === 'delivery') {
-      cartDeliverySummaryEl.innerHTML = `Entrega a domicilio: ${deliveryState.note}${deliveryState.fee ? ` — Costo adicional: ${formatCurrency(deliveryState.fee)}` : ''}`;
+      cartDeliverySummaryEl.innerHTML = `Entrega a domicilio: ${deliveryState.note}${deliveryState.fee ? ` â€” Costo adicional: ${formatCurrency(deliveryState.fee)}` : ''}`;
       cartDeliverySummaryEl.classList.remove('hidden');
       return;
     }
@@ -1452,7 +1452,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const refreshDeliveryResult = () => {
     if (!deliveryResult) return;
     if (deliveryState.type === 'pickup') {
-      deliveryResult.textContent = 'Recoger en tienda seleccionado. No es necesario código postal ni entrega flash para esta opción.';
+      deliveryResult.textContent = 'Recoger en tienda seleccionado. No es necesario cÃ³digo postal ni entrega flash para esta opciÃ³n.';
       return;
     }
     const postal = deliveryPostalInput ? deliveryPostalInput.value.trim() : '';
@@ -1484,7 +1484,7 @@ window.addEventListener('DOMContentLoaded', () => {
       deliveryState.fee = flash ? flashDeliveryFee : 0;
       deliveryState.note = `${estimate.message}${flash ? ' Con entrega flash.' : ''}`;
       if (!flash && itemsTotal < freeDeliveryMin) {
-        alert(`El envío sin costo aplica a partir de MXN ${freeDeliveryMin}. Agrega algún producto más si quieres cumplir con la cantidad mínima para entrega gratis.`);
+        alert(`El envÃ­o sin costo aplica a partir de MXN ${freeDeliveryMin}. Agrega algÃºn producto mÃ¡s si quieres cumplir con la cantidad mÃ­nima para entrega gratis.`);
       }
     } else {
       deliveryState.type = 'pickup';
@@ -1525,7 +1525,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const total = itemsTotal + deliveryState.fee;
     const deliveryText = deliveryState.type === 'pickup'
       ? 'Recoger en tienda'
-      : `Entrega a domicilio (${deliveryState.postalCode || 'sin código postal'}) ${deliveryState.flash ? 'con entrega flash' : ''}`;
+      : `Entrega a domicilio (${deliveryState.postalCode || 'sin cÃ³digo postal'}) ${deliveryState.flash ? 'con entrega flash' : ''}`;
     alert(`Gracias por tu pedido. Total: ${formatCurrency(total)}. ${deliveryText}. Pronto nos pondremos en contacto.`);
     cart = [];
     saveCart();
@@ -1558,7 +1558,12 @@ window.addEventListener('DOMContentLoaded', () => {
     const card = document.createElement('article');
     card.className = 'product-card reveal';
     card.dataset.productId = product.id;
-    const stars = '★'.repeat(product.rating) + '☆'.repeat(5 - product.rating);
+    const ratingValue = Math.max(0, Math.min(5, Number(product.rating) || 0));
+    const stars = Array.from({ length: 5 }, (_, index) => {
+      const value = index + 1;
+      const isActive = value <= ratingValue ? ' active' : '';
+      return `<button class="rating-star${isActive}" type="button" data-product-id="${product.id}" data-rating="${value}" aria-label="Calificar ${value} de 5">★</button>`;
+    }).join('');
     let imageMarkup = '';
     if (product.category === 'aerosoles' && product.image) {
       imageMarkup = `
@@ -1583,14 +1588,14 @@ window.addEventListener('DOMContentLoaded', () => {
       </div>
     ` : '';
 
-    const initialPriceText = product.sizeOptions ? 'Seleccione tamaño' : formatCurrency(product.price);
+    const initialPriceText = product.sizeOptions ? 'Seleccione tamaÃ±o' : formatCurrency(product.price);
     const selectedColorText = product.selectedPaletteColor ? ` - ${product.selectedPaletteColor.name}` : '';
     const priceMarkup = `<span class="product-price">${initialPriceText}${selectedColorText}</span>`;
     const addButtonText = product.selectedPaletteColor ? `Agregar ${product.selectedPaletteColor.name}` : 'Agregar';
     const volumeMarkup = product.sizeOptions
-      ? '<p class="product-volume">Contenido: Seleccione tamaño</p>'
+      ? '<p class="product-volume">Contenido: Seleccione tamaÃ±o</p>'
       : (product.cantidad ? `<p class="product-volume">Contenido: ${product.cantidad}</p>` : '');
-    const paletteButtonMarkup = product.palette ? `<button class="btn btn-secondary view-palette" type="button" data-palette-id="${product.id}">Ver muestario</button>` : '';
+    const paletteButtonMarkup = product.palette ? `<button class="btn btn-secondary view-palette" type="button" data-palette-id="${product.id}">Ver muestrario</button>` : '';
 
     card.innerHTML = `
       <div class="product-image">${imageMarkup}</div>
@@ -1602,11 +1607,11 @@ window.addEventListener('DOMContentLoaded', () => {
       <p>${product.description}</p>
       ${sizeSelectorMarkup}
       ${volumeMarkup}
-      <div class="product-rating">${stars} <span>(${product.rating}.0)</span></div>
+      <div class="product-rating" aria-label="Calificación actual ${ratingValue} de 5">${stars} <span>(${ratingValue}.0)</span></div>
       <div class="product-footer">
         ${priceMarkup}
         <div class="product-actions">
-          <button class="btn btn-primary view-detail" type="button" data-detail-id="${product.id}">Ver detalle</button>
+          <button class="btn btn-primary view-detail" type="button" data-detail-id="${product.id}">Detalle</button>
           ${paletteButtonMarkup}
           <button class="btn btn-secondary add-to-cart" data-product-id="${product.id}">${addButtonText}</button>
         </div>
@@ -1650,8 +1655,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const popularProducts = filteredProducts.filter((product) => product.popular);
     const recommendedProducts = filteredProducts.filter((product) => product.recommended);
 
-    renderProductGrid(productGeneralListEl, generalProducts, 'No hay productos generales para esta combinación.');
-    renderProductGrid(productPopularListEl, popularProducts, 'No hay productos populares para esta búsqueda.');
+    renderProductGrid(productGeneralListEl, generalProducts, 'No hay productos generales para esta combinaciÃ³n.');
+    renderProductGrid(productPopularListEl, popularProducts, 'No hay productos populares para esta bÃºsqueda.');
     renderProductGrid(productRecommendedListEl, recommendedProducts, 'No hay recomendaciones para esta fecha.');
 
     productCountEl.textContent = `Mostrando ${generalProducts.length} productos generales`;
@@ -1713,13 +1718,13 @@ window.addEventListener('DOMContentLoaded', () => {
     const needsSize = product.sizeOptions && !selectedSize;
     const needsColor = product.palette && !product.selectedPaletteColor;
     if (needsSize && needsColor) {
-      return 'Aún no has agregado nada al carrito. Por favor selecciona color y tamaño que deseas agregar al carrito.';
+      return 'AÃºn no has agregado nada al carrito. Por favor selecciona color y tamaÃ±o que deseas agregar al carrito.';
     }
     if (needsSize) {
-      return 'Aún no has agregado nada al carrito. Por favor selecciona tamaño que deseas agregar al carrito.';
+      return 'AÃºn no has agregado nada al carrito. Por favor selecciona tamaÃ±o que deseas agregar al carrito.';
     }
     if (needsColor) {
-      return 'Aún no has agregado nada al carrito. Por favor selecciona color que deseas agregar al carrito.';
+      return 'AÃºn no has agregado nada al carrito. Por favor selecciona color que deseas agregar al carrito.';
     }
     return '';
   };
@@ -1764,7 +1769,7 @@ window.addEventListener('DOMContentLoaded', () => {
         price = selectedOption.price;
         name = `${product.name} - ${product.selectedPaletteColor ? product.selectedPaletteColor.name + ' ' : ''}(${selectedOption.label})`;
         sizeKey = `-${selectedOption.id}`;
-        description = `${description}${description ? ' · ' : ''}Tamaño: ${selectedOption.label}`;
+        description = `${description}${description ? ' Â· ' : ''}TamaÃ±o: ${selectedOption.label}`;
       }
     }
 
@@ -1794,7 +1799,7 @@ window.addEventListener('DOMContentLoaded', () => {
     cartItemsEl.innerHTML = '';
 
     if (cart.length === 0) {
-      cartItemsEl.innerHTML = '<p>Aún no has agregado nada al carrito. Por favor selecciona color y tamaño que deseas agregar al carrito.</p>';
+      cartItemsEl.innerHTML = '<p>AÃºn no has agregado nada al carrito. Por favor selecciona color y tamaÃ±o que deseas agregar al carrito.</p>';
       cartTotalEl.textContent = formatCurrency(0);
       if (cartDeliverySummaryEl) cartDeliverySummaryEl.classList.add('hidden');
       return;
@@ -1828,7 +1833,7 @@ window.addEventListener('DOMContentLoaded', () => {
         cartDeliverySummaryEl.textContent = 'Recogida en tienda seleccionada. Sin costo adicional.';
         cartDeliverySummaryEl.classList.remove('hidden');
       } else if (deliveryState.type === 'delivery') {
-        cartDeliverySummaryEl.innerHTML = `Entrega a domicilio: ${deliveryState.note}${deliveryState.fee ? ` — Costo adicional: ${formatCurrency(deliveryState.fee)}` : ''}`;
+        cartDeliverySummaryEl.innerHTML = `Entrega a domicilio: ${deliveryState.note}${deliveryState.fee ? ` â€” Costo adicional: ${formatCurrency(deliveryState.fee)}` : ''}`;
         cartDeliverySummaryEl.classList.remove('hidden');
       } else {
         cartDeliverySummaryEl.classList.add('hidden');
@@ -1948,6 +1953,26 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   document.body.addEventListener('click', (event) => {
+    const ratingButton = event.target.closest('.rating-star');
+    if (ratingButton) {
+      const product = products.find((item) => item.id === ratingButton.dataset.productId);
+      if (!product) return;
+      const rating = Number(ratingButton.dataset.rating);
+      product.rating = rating;
+      const ratingEl = ratingButton.closest('.product-rating');
+      if (ratingEl) {
+        ratingEl.setAttribute('aria-label', `Calificación actual ${rating} de 5`);
+        ratingEl.querySelectorAll('.rating-star').forEach((star) => {
+          star.classList.toggle('active', Number(star.dataset.rating) <= rating);
+        });
+        const ratingText = ratingEl.querySelector('span');
+        if (ratingText) {
+          ratingText.textContent = `(${rating}.0)`;
+        }
+      }
+      return;
+    }
+
     const sizeButton = event.target.closest('.size-option');
     if (sizeButton) {
       const card = sizeButton.closest('.product-card');
@@ -1995,24 +2020,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (paletteButton && paletteButton.dataset.paletteId) {
       const product = products.find((item) => item.id === paletteButton.dataset.paletteId);
       if (!product || !product.palette || !detailModal || !detailModalTitle || !detailModalBody) return;
-        const paletteTitle = product.name.toLowerCase().includes('viniplax')
-        ? 'Muestrario Viniplax'
-        : product.name.toLowerCase().includes('alvacolor')
-          ? 'Muestrario Alvacolor'
-          : product.name.toLowerCase().includes('alvaflex')
-            ? 'Muestrario Alvaflex Master'
-            : product.name.toLowerCase().includes('alvacril')
-              ? 'Muestrario Alvacril GOLD'
-              : 'Muestrario de colores';
       detailModal.dataset.activeProductId = product.id;
       detailModal.dataset.view = 'palette';
 
-      detailModalTitle.textContent = `${product.name} - ${paletteTitle}`;
+      detailModalTitle.textContent = 'Colores';
       detailModalBody.innerHTML = `
-        <p>${product.detailText || 'Producto con características especiales.'}</p>
-        <p class="selected-color-label">Color seleccionado: Ninguno</p>
         <div class="palette-section">
-          <h4>${paletteTitle}</h4>
           <div class="palette-grid">
             ${product.palette.map((swatch) => `
               <div class="palette-item" data-name="${swatch.name}" data-color="${swatch.color}">
@@ -2032,36 +2045,11 @@ window.addEventListener('DOMContentLoaded', () => {
     if (detailButton && detailButton.dataset.detailId) {
       const product = products.find((item) => item.id === detailButton.dataset.detailId);
       if (!product || !detailModal || !detailModalTitle || !detailModalBody) return;
-      const paletteSubtitle = product.palette && product.name.toLowerCase().includes('viniplax')
-        ? '<p class="palette-subtitle">Muestrario Viniplax</p>'
-        : product.palette
-          ? '<p class="palette-subtitle">Muestrario de colores</p>'
-          : '';
-
-      const paletteMarkup = product.palette ? `
-        <div class="palette-section">
-          ${paletteSubtitle}
-          <h4>Colores disponibles</h4>
-          <div class="palette-grid">
-            ${product.palette.map((swatch) => `
-              <div class="palette-item" data-name="${swatch.name}" data-color="${swatch.color}">
-                <span class="palette-swatch" style="background:${swatch.color};"></span>
-                <small>${swatch.name}</small>
-                <button class="btn btn-primary add-palette-color" type="button" data-palette-id="${product.id}" data-name="${swatch.name}" data-color="${swatch.color}">Seleccionar</button>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      ` : '';
-
       detailModal.dataset.activeProductId = product.id;
       detailModal.dataset.view = 'detail';
-      detailModalTitle.textContent = product.name;
+      detailModalTitle.textContent = 'Detalle';
       detailModalBody.innerHTML = `
-        <p>${product.detailText || 'Producto con características especiales.'}</p>
-        <p><strong>Precio:</strong> ${formatCurrency(product.price)}</p>
-        ${product.cantidad ? `<p><strong>Contenido:</strong> ${product.cantidad}</p>` : ''}
-        ${paletteMarkup}
+        <p>${product.detailText || product.description || 'Producto con caracteristicas especiales.'}</p>
       `;
       detailModal.classList.remove('hidden');
       return;
@@ -2144,7 +2132,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (checkoutButton) {
     checkoutButton.addEventListener('click', () => {
       if (cart.length === 0) {
-        alert('Tu carrito está vacío. Agrega productos para continuar.');
+        alert('Tu carrito estÃ¡ vacÃ­o. Agrega productos para continuar.');
         return;
       }
       if (deliveryState.type === 'delivery' && !deliveryState.postalCode) {
@@ -2153,7 +2141,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       const itemsTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
       if (deliveryState.type === 'delivery' && !deliveryState.flash && itemsTotal < freeDeliveryMin) {
-        alert(`El envío sin costo aplica a partir de MXN ${freeDeliveryMin}. Agrega algún producto más si quieres cumplir con la cantidad mínima para entrega gratis.`);
+        alert(`El envÃ­o sin costo aplica a partir de MXN ${freeDeliveryMin}. Agrega algÃºn producto mÃ¡s si quieres cumplir con la cantidad mÃ­nima para entrega gratis.`);
       }
       checkoutOrder();
     });
