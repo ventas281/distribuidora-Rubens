@@ -1,0 +1,26 @@
+{
+  "name": "rubens-distribuidora",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo \"Static site ready\""
+  },
+  "dependencies": {
+    "mercadopago": "^2.13.0"
+  },
+  "description": "A professional, fully-functional web application for an online paint store featuring 500+ paint products with easy navigation and shopping capabilities.",
+  "main": "script.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ventas281/distribuidora-Rubens.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ventas281/distribuidora-Rubens/issues"
+  },
+  "homepage": "https://github.com/ventas281/distribuidora-Rubens#readme"
+}
