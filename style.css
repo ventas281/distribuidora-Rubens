@@ -290,16 +290,16 @@ button,
 }
 
 .rain-season-banner.is-hidden {
-  display: none;
+  display: block !important;
 }
 
 .rain-season-popup {
-  position: fixed;
+  position: relative;
   inset: 0;
-  z-index: 1300;
-  display: grid;
+  z-index: 1;
+  display: block;
   place-items: center;
-  padding: 1.5rem;
+  padding: 2rem 1.5rem;
   background: transparent;
 }
 
