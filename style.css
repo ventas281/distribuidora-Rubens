@@ -283,6 +283,199 @@ button,
   gap: 1rem;
 }
 
+.rain-season-banner {
+  padding: 2rem 1.5rem 0;
+  background: var(--bg);
+  animation: rainBannerFade 0.7s ease both;
+}
+
+.rain-season-banner.is-hidden {
+  display: none;
+}
+
+.rain-season-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: transparent;
+}
+
+.rain-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(8px);
+}
+
+.rain-banner-inner {
+  position: relative;
+  max-width: 1200px;
+  min-height: 430px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 26px;
+  color: #fff;
+  background:
+    linear-gradient(90deg, rgba(6, 8, 11, 0.94) 0%, rgba(10, 12, 16, 0.78) 42%, rgba(10, 12, 16, 0.22) 100%),
+    url('season-rain-waterproofing.jpg') center right / cover no-repeat;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.rain-season-popup .rain-banner-inner {
+  width: min(1120px, 100%);
+  max-height: min(760px, calc(100vh - 3rem));
+  overflow-y: auto;
+}
+
+body.rain-popup-open {
+  overflow: hidden;
+}
+
+.rain-banner-inner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(194, 43, 43, 0.36), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.rain-banner-copy {
+  position: relative;
+  z-index: 1;
+  width: min(660px, 100%);
+  padding: clamp(2rem, 5vw, 4.25rem);
+}
+
+.rain-banner-kicker {
+  display: inline-flex;
+  margin-bottom: 1rem;
+  padding: 0.42rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(194, 43, 43, 0.82);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.rain-banner-copy h2 {
+  max-width: 620px;
+  margin-bottom: 1rem;
+  font-size: clamp(2.2rem, 5vw, 4.25rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.rain-banner-subtitle {
+  max-width: 590px;
+  margin-bottom: 0.8rem;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  line-height: 1.65;
+}
+
+.rain-banner-support {
+  max-width: 570px;
+  margin-bottom: 1.4rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.98rem;
+}
+
+.rain-banner-products {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  max-width: 620px;
+  margin-bottom: 1.6rem;
+}
+
+.rain-banner-products span {
+  padding: 0.45rem 0.72rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.rain-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.rain-banner-primary {
+  background: #c22b2b;
+  color: #fff;
+  box-shadow: 0 18px 34px rgba(194, 43, 43, 0.35);
+}
+
+.rain-banner-secondary {
+  background: rgba(255, 255, 255, 0.94);
+  color: #121212;
+}
+
+.rain-banner-visual {
+  position: absolute;
+  right: clamp(1.25rem, 4vw, 3rem);
+  bottom: clamp(1.25rem, 4vw, 3rem);
+  z-index: 1;
+}
+
+.rain-banner-badge {
+  padding: 0.8rem 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #121212;
+  font-size: 0.9rem;
+  font-weight: 800;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+.rain-banner-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.42);
+  color: #fff;
+  font-size: 1.65rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.rain-banner-close:hover {
+  background: rgba(194, 43, 43, 0.88);
+  transform: translateY(-1px);
+}
+
+@keyframes rainBannerFade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -617,6 +810,12 @@ button,
   display: block;
 }
 
+.product-image img.product-image-contain {
+  object-fit: contain;
+  padding: 0.4rem;
+  background: #fff;
+}
+
 .product-card-top {
   display: flex;
   justify-content: space-between;
@@ -719,7 +918,8 @@ button,
   margin-bottom: 0.8rem;
 }
 
-.size-option {
+.size-option,
+.finish-option {
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: transparent;
   color: var(--text);
@@ -731,7 +931,9 @@ button,
 }
 
 .size-option.active,
-.size-option:hover {
+.size-option:hover,
+.finish-option.active,
+.finish-option:hover {
   border-color: var(--accent);
   background: var(--accent);
   color: #fff;
@@ -1505,6 +1707,20 @@ button,
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface-soft);
+  color: var(--text);
+  caret-color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+}
+
+.delivery-postal-row input::placeholder {
+  color: rgba(18, 18, 18, 0.52);
+}
+
+.delivery-postal-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(194, 43, 43, 0.1);
 }
 
 .delivery-note {
@@ -1784,6 +2000,16 @@ button,
   font-size: 0.92rem;
 }
 
+.field-required {
+  justify-self: start;
+  padding: 0.08rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(194, 43, 43, 0.08);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
 .payment-customer-field input,
 .payment-customer-field textarea,
 .payment-grid input {
@@ -1794,6 +2020,45 @@ button,
   background: #fff;
   color: var(--text);
   font: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.payment-customer-field input:focus,
+.payment-customer-field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(194, 43, 43, 0.1);
+}
+
+.payment-customer-field input.field-invalid,
+.payment-customer-field textarea.field-invalid {
+  border-color: rgba(180, 35, 24, 0.78);
+  background: #fff8f7;
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.08);
+}
+
+.field-feedback {
+  min-height: 1rem;
+  color: #b42318;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.payment-form-status {
+  min-height: 1.35rem;
+  margin: -0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.payment-form-status.is-error {
+  padding: 0.75rem 0.9rem;
+  border-radius: 14px;
+  background: rgba(194, 43, 43, 0.08);
+  color: #8f1f26;
+  font-weight: 800;
 }
 
 .payment-customer-field textarea {
@@ -2366,6 +2631,22 @@ button,
     padding: 4.5rem 1.25rem;
   }
 
+  .rain-banner-inner {
+    min-height: 520px;
+    background:
+      linear-gradient(180deg, rgba(6, 8, 11, 0.94) 0%, rgba(10, 12, 16, 0.78) 58%, rgba(10, 12, 16, 0.34) 100%),
+      url('season-rain-waterproofing.jpg') center bottom / cover no-repeat;
+  }
+
+  .rain-banner-copy {
+    padding: 2.5rem;
+  }
+
+  .rain-banner-visual {
+    right: 1.5rem;
+    bottom: 1.5rem;
+  }
+
   .service-grid,
   .confidence-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2516,6 +2797,83 @@ button,
   .hero-actions .btn,
   .contact-grid .btn {
     width: 100%;
+  }
+
+  .rain-season-banner {
+    padding: 1rem;
+  }
+
+  .rain-season-popup {
+    padding: 0.85rem;
+    align-items: start;
+    overflow-y: auto;
+  }
+
+  .rain-banner-inner {
+    min-height: auto;
+    border-radius: 20px;
+    background:
+      linear-gradient(180deg, rgba(6, 8, 11, 0.96) 0%, rgba(10, 12, 16, 0.86) 68%, rgba(10, 12, 16, 0.5) 100%),
+      url('season-rain-waterproofing.jpg') center bottom / cover no-repeat;
+  }
+
+  .rain-banner-copy {
+    padding: 2rem 1.15rem 10rem;
+  }
+
+  .rain-banner-copy h2 {
+    font-size: clamp(2rem, 10vw, 2.75rem);
+    line-height: 1;
+  }
+
+  .rain-banner-subtitle {
+    font-size: 0.98rem;
+    line-height: 1.55;
+  }
+
+  .rain-banner-support {
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .rain-banner-products {
+    gap: 0.45rem;
+  }
+
+  .rain-banner-products span {
+    max-width: 100%;
+    font-size: 0.78rem;
+  }
+
+  .rain-banner-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .rain-banner-actions .btn {
+    width: 100%;
+    min-height: 48px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    text-align: center;
+  }
+
+  .rain-banner-visual {
+    left: 1rem;
+    right: auto;
+    bottom: 1rem;
+  }
+
+  .rain-banner-badge {
+    font-size: 0.78rem;
+    border-radius: 12px;
+  }
+
+  .rain-banner-close {
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 38px;
+    height: 38px;
   }
 
   .section {

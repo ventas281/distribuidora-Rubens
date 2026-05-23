@@ -153,6 +153,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const paymentCustomerPhoneInput = document.getElementById('payment-customer-phone');
   const paymentCustomerEmailInput = document.getElementById('payment-customer-email');
   const paymentCustomerAddressInput = document.getElementById('payment-customer-address');
+  const paymentFormStatusEl = document.getElementById('payment-form-status');
   const paymentMethodButtons = document.querySelectorAll('.payment-method-button');
   const cashPaymentOption = document.getElementById('cash-payment-option');
   const paymentTransferPanel = document.getElementById('payment-transfer-panel');
@@ -168,6 +169,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const orderEmailStatusEl = document.getElementById('order-email-status');
   const mercadoPagoButton = document.getElementById('mercadoPagoBtn');
   const mercadoWhatsappFallbackButton = document.getElementById('mercado-whatsapp-fallback');
+  const rainSeasonBanner = document.getElementById('temporada-lluvias');
+  const closeRainBannerButtons = document.querySelectorAll('[data-close-rain-banner]');
 
   const categoryLabels = {
     vinilica: 'Pintura Vinílica',
@@ -181,11 +184,11 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   const subcategories = {
-    vinilica: ['Económica', 'Media', 'Mediana-Alta', 'Alta'],
+    vinilica: ['Sayer', 'Económica', 'Media', 'Mediana-Alta', 'Alta'],
     esmalte: ['Base Agua', 'Base Solvente', 'Esmalte Industrial'],
     epoxica: ['Fester', 'Pisos', 'Industrial', 'Alto Tráfico'],
     aerosoles: ['Normal', 'Metálico', 'Neón', 'Alta Temperatura'],
-    madera: ['Tintas', 'Barnices entintados', 'Barnices base agua', 'Barnices base esmalte', 'Lacas', 'Nitrocelulosas', 'Selladores', 'Primer para Madera', 'Poliuretanos', 'Resanadores', 'Aditivos'],
+    madera: ['Tintas', 'Barnices entintados', 'Barnices base agua', 'Barnices base esmalte', 'Lacas', 'Nitrocelulosas', 'Selladores', 'Primer para Madera', 'Poliuretanos', 'Polyform', 'Resanadores', 'Aditivos'],
     aplicadores: ['Brochas', 'Rodillos'],
     diluyentes: ['Alberca y Tráfico'],
     primerarios: ['Primarios'],
@@ -250,6 +253,29 @@ window.addEventListener('DOMContentLoaded', () => {
       console.log('[delivery-debug]', ...args);
     }
   };
+
+  if (rainSeasonBanner) {
+    const rainBannerClosed = localStorage.getItem('rubensRainBannerClosed') === 'true';
+    rainSeasonBanner.classList.toggle('is-hidden', rainBannerClosed);
+    document.body.classList.toggle('rain-popup-open', !rainBannerClosed);
+  }
+
+  const closeRainBanner = () => {
+    if (!rainSeasonBanner) return;
+    rainSeasonBanner.classList.add('is-hidden');
+    document.body.classList.remove('rain-popup-open');
+    localStorage.setItem('rubensRainBannerClosed', 'true');
+  };
+
+  closeRainBannerButtons.forEach((button) => {
+    button.addEventListener('click', closeRainBanner);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeRainBanner();
+    }
+  });
 
   const savedCart = localStorage.getItem('rubensCart');
   if (savedCart) {
@@ -414,6 +440,245 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Mandarina Neón', color: '#ff6d00' },
         { name: 'Verde Neón', color: '#00ff00' },
       ],
+    });
+
+    const sayerUltraPalette = [
+      { name: 'Blanco Ostión VU-022', color: '#ece3d4' },
+      { name: 'Marfil VU-077', color: '#f4edc4' },
+      { name: 'Amarillo Colonial VU-0713', color: '#efa429' },
+      { name: 'Amarillo Limón VU-0700', color: '#f4e31e' },
+      { name: 'Amarillo Óxido VU-0775', color: '#b27629' },
+      { name: 'Champagne VU-0511', color: '#f2e3d3' },
+      { name: 'Beige VU-0776', color: '#d7bea1' },
+      { name: 'Mandarina VU-0678', color: '#ed914f' },
+      { name: 'Naranja Fuego VU-0600', color: '#e73520' },
+      { name: 'Rojo Chino VU-0500', color: '#e1211b' },
+      { name: 'Rojo Óxido VU-0555', color: '#7f241d' },
+      { name: 'Rosa Mexicano VU-0504', color: '#d92f62' },
+      { name: 'Violeta Intenso VU-0800', color: '#261071' },
+      { name: 'Azul Infinito VU-0307', color: '#5b88d6' },
+      { name: 'Azul Colonial VU-0333', color: '#0034bb' },
+      { name: 'Azul Trafalgar VU-0300', color: '#0a2f8f' },
+      { name: 'Turmalina VU-0317', color: '#4c9aa3' },
+      { name: 'Verde Limón VU-0415', color: '#8cc95f' },
+      { name: 'Verde Esmeralda VU-0400', color: '#164f2d' },
+      { name: 'Chocolate VU-0582', color: '#1f1714' },
+      { name: 'Negro VU-0100', color: '#050505' },
+      { name: 'Blanco Satinado VU-0200', color: '#f7f7f2' },
+      { name: 'Blanco Mate VU-1200', color: '#f3f1eb' },
+    ];
+
+    const sayerMaximaPalette = [
+      { name: 'Naranja Fuego VX-0600', color: '#ed4c3f' },
+      { name: 'Rojo Chino VX-0500', color: '#dd3328' },
+      { name: 'Rojo Óxido VX-0555', color: '#7d2b28' },
+      { name: 'Café Óxido VX-0527', color: '#5a4542' },
+      { name: 'Negro VX-0100', color: '#272727' },
+      { name: 'Blanco VX-0200', color: '#ffffff' },
+      { name: 'Blanco Semibrillante VX-5200', color: '#f3f3f1' },
+      { name: 'Amarillo Verano VX-0779', color: '#f0ad5f' },
+      { name: 'Blanco Ostión VX-0229', color: '#efe4d6' },
+      { name: 'Manzana Verde VX-0413', color: '#bdd26b' },
+      { name: 'Amarillo Óxido VX-0775', color: '#b78641' },
+      { name: 'Amarillo Limón VX-0700', color: '#f5ee35' },
+      { name: 'Verde Esmeralda VX-0400', color: '#28474d' },
+      { name: 'Azul Trafalgar VX-0300', color: '#2c285e' },
+      { name: 'Violeta Intenso VX-0800', color: '#6d4c91' },
+    ];
+
+    const sayerProMasterPalette = [
+      { name: 'Azul Cielo VP-0304', color: '#b8e7f7' },
+      { name: 'Azul Horizonte VP-0306', color: '#9fb5d8' },
+      { name: 'Azul Trafalgar VP-0300', color: '#073aaf' },
+      { name: 'Verde Pradera VP-0406', color: '#d8ec65' },
+      { name: 'Verde Natural VP-0403', color: '#b7d957' },
+      { name: 'Verde Claro VP-0441', color: '#b9f1ce' },
+      { name: 'Verde Esmeralda VP-0400', color: '#145932' },
+      { name: 'Amarillo Limón VP-0700', color: '#f2f02c' },
+      { name: 'Blanco Ostión VP-0229', color: '#f4f0e2' },
+      { name: 'Arena VP-0703', color: '#f0e7d5' },
+      { name: 'Trigo', color: '#f3efbd' },
+      { name: 'Crema', color: '#f5edaa' },
+      { name: 'Marfil', color: '#f1dd8c' },
+      { name: 'Amarillo Napolitano', color: '#e9c66a' },
+      { name: 'Amarillo Verano', color: '#e79e43' },
+      { name: 'Amarillo Óxido', color: '#a96c27' },
+      { name: 'Melón VP-0603', color: '#f1c29d' },
+      { name: 'Mandarina VP-0678', color: '#e8824b' },
+      { name: 'Naranja Fuego VP-0600', color: '#e42f1e' },
+      { name: 'Rosa Tierno VP-0513', color: '#f1d8df' },
+      { name: 'Rojo Chino VP-0500', color: '#ac1d17' },
+      { name: 'Rojo Óxido VP-0555', color: '#7a2b1f' },
+      { name: 'Orquídea VP-0805', color: '#d6b4f2' },
+      { name: 'Violeta Intenso VP-0800', color: '#2a176d' },
+      { name: 'Negro VP-0100', color: '#050505' },
+      { name: 'Blanco Mate VP-0200', color: '#ffffff' },
+      { name: 'Blanco Satinado VP-3200', color: '#f7f7f4' },
+      { name: 'Blanco Semibrillante VP-5200', color: '#f4f4f2' },
+    ];
+
+    const sayerMagicolorPalette = [
+      { name: 'Rojo Chino VG-0500', color: '#f2383d' },
+      { name: 'Naranja Fuego VG-0600', color: '#f24a2e' },
+      { name: 'Rojo Flamingo VG-0503', color: '#ef6f75' },
+      { name: 'Blanco Ostión VG-0229', color: '#f7f5e5' },
+      { name: 'Magnolia VG-0274', color: '#f7f3d8' },
+      { name: 'Rojo Óxido VG-0555', color: '#7f2118' },
+      { name: 'Mandarina VG-0678', color: '#ef7846' },
+      { name: 'Amarillo Verano VG-0779', color: '#f0b262' },
+      { name: 'Salmón VG-0551', color: '#f4c2a2' },
+      { name: 'Verde Natural VG-0403', color: '#addc5e' },
+      { name: 'Pistache VG-0448', color: '#98ec98' },
+      { name: 'Turquesa VG-0442', color: '#5ccfa5' },
+      { name: 'Verde Esmeralda VG-0400', color: '#125f3d' },
+      { name: 'Violeta Intenso VG-0800', color: '#2e1f8c' },
+      { name: 'Azul Riviera VG-0302', color: '#9fd9ec' },
+      { name: 'Mediterráneo VG-0303', color: '#32a4b4' },
+      { name: 'Azul Paraíso VG-0339', color: '#2d99d2' },
+      { name: 'Azul Trafalgar VG-0300', color: '#04349f' },
+      { name: 'Mango', color: '#f1ce25' },
+      { name: 'Amarillo Limón VG-0700', color: '#eff22d' },
+      { name: 'Amarillo Canario', color: '#f1ef7f' },
+      { name: 'Marfil', color: '#f2edbd' },
+      { name: 'Amarillo Pérsico', color: '#f3e59e' },
+      { name: 'Piñón', color: '#f0c3a7' },
+      { name: 'Amarillo Óxido VG-0775', color: '#c46f25' },
+      { name: 'Blanco VG-0200', color: '#ffffff' },
+      { name: 'Negro VG-0100', color: '#050505' },
+    ];
+
+    const sayerContractorPalette = [
+      { name: 'Blanco Ostión VC-0229', color: '#e8e0d6' },
+      { name: 'Capuchino VC-0567', color: '#a78f7a' },
+      { name: 'Crema VC-0772', color: '#e5d57a' },
+      { name: 'Amarillo Canario', color: '#e7ed62' },
+      { name: 'Amarillo Napolitano VC-0777', color: '#e8ce72' },
+      { name: 'Blanco VC-0200', color: '#ffffff' },
+      { name: 'Salmón VC-0551', color: '#e3a27b' },
+      { name: 'Durazno VC-0566', color: '#de936a' },
+      { name: 'Mandarina VC-0678', color: '#ef6b3f' },
+      { name: 'Rojo Óxido VC-0555', color: '#802318' },
+      { name: 'Violeta VC-0588', color: '#9a6a9f' },
+      { name: 'Turquesa VC-0444', color: '#55bfa4' },
+      { name: 'Fucsia VC-0572', color: '#c65f8a' },
+      { name: 'Azul Celeste VC-0304', color: '#87cfe1' },
+      { name: 'Azul Caribe VC-0318', color: '#0e9cc7' },
+      { name: 'Verde Natural VC-0403', color: '#a9d066' },
+      { name: 'Verde Alpino VC-0401', color: '#a7cfae' },
+    ];
+
+    products.push({
+      id: 'vinilica-ultra-sayer',
+      category: 'vinilica',
+      categoryLabel: categoryLabels['vinilica'],
+      subcategory: 'Sayer',
+      name: 'Ultra Sayer',
+      description: 'Pintura vinílica premium de máxima calidad, con gran cubrimiento, alta durabilidad y excelente resistencia al lavado.',
+      detailText: 'Pintura vinílica premium de máxima calidad, diseñada para ofrecer el mejor cubrimiento, alta durabilidad y excelente resistencia al lavado. Ideal para proyectos residenciales y comerciales donde se busca un acabado superior y de larga duración.',
+      price: 295,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 295 },
+        { id: '4lts', label: '4 Litros', price: 1095 },
+        { id: '19lts', label: '19 Litros', price: 4390 },
+      ],
+      cantidad: '1 litro / 4 litros / 19 litros',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#f4edc4',
+      image: '',
+      palette: sayerUltraPalette,
+    });
+
+    products.push({
+      id: 'vinilica-maxima-sayer',
+      category: 'vinilica',
+      categoryLabel: categoryLabels['vinilica'],
+      subcategory: 'Sayer',
+      name: 'Máxima Sayer',
+      description: 'Pintura vinílica de alta calidad con excelente cubrimiento y gran durabilidad para interiores y exteriores.',
+      detailText: 'Pintura vinílica de alta calidad con excelente cubrimiento y gran durabilidad, ideal para interiores y exteriores. Ofrece uniformidad y gran rendimiento para acabados profesionales.',
+      price: 245,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 245 },
+        { id: '4lts', label: '4 Litros', price: 865 },
+        { id: '19lts', label: '19 Litros', price: 3690 },
+      ],
+      cantidad: '1 litro / 4 litros / 19 litros',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#f0ad5f',
+      image: '',
+      palette: sayerMaximaPalette,
+    });
+
+    products.push({
+      id: 'vinilica-pro-master-sayer',
+      category: 'vinilica',
+      categoryLabel: categoryLabels['vinilica'],
+      subcategory: 'Sayer',
+      name: 'Pro Master Sayer',
+      description: 'Pintura vinílica profesional con excelente rendimiento y cubrimiento para acabados uniformes y duraderos.',
+      detailText: 'Pintura vinílica profesional con excelente rendimiento y cubrimiento. Ideal para hogares, oficinas y proyectos donde se busca un acabado uniforme y duradero a un excelente costo-beneficio.',
+      price: 195,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 195 },
+        { id: '4lts', label: '4 Litros', price: 715 },
+        { id: '19lts', label: '19 Litros', price: 2950 },
+      ],
+      cantidad: '1 litro / 4 litros / 19 litros',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#b8e7f7',
+      image: '',
+      palette: sayerProMasterPalette,
+    });
+
+    products.push({
+      id: 'vinilica-magicolor-sayer',
+      category: 'vinilica',
+      categoryLabel: categoryLabels['vinilica'],
+      subcategory: 'Sayer',
+      name: 'Magicolor Sayer',
+      description: 'Pintura vinílica de gran desempeño y excelente relación calidad-precio para interiores y exteriores.',
+      detailText: 'Pintura vinílica de gran desempeño y excelente relación calidad-precio, ideal para interiores y exteriores con buena adherencia y rendimiento uniforme.',
+      price: 170,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 170 },
+        { id: '4lts', label: '4 Litros', price: 625 },
+        { id: '19lts', label: '19 Litros', price: 2450 },
+      ],
+      cantidad: '1 litro / 4 litros / 19 litros',
+      popular: true,
+      recommended: false,
+      rating: 4,
+      colorSwatch: '#f2383d',
+      image: '',
+      palette: sayerMagicolorPalette,
+    });
+
+    products.push({
+      id: 'vinilica-contractor-sayer',
+      category: 'vinilica',
+      categoryLabel: categoryLabels['vinilica'],
+      subcategory: 'Sayer',
+      name: 'Contractor Sayer',
+      description: 'Pintura vinílica económica para mantenimiento, obra y grandes superficies con precio accesible.',
+      detailText: 'Pintura vinílica económica diseñada para proyectos de mantenimiento, obra y grandes superficies, ofreciendo rendimiento y practicidad a un precio accesible.',
+      price: 425,
+      sizeOptions: [
+        { id: '4lts', label: '4 Litros', price: 425 },
+        { id: '19lts', label: '19 Litros', price: 1695 },
+      ],
+      cantidad: '4 litros / 19 litros',
+      popular: false,
+      recommended: false,
+      rating: 4,
+      colorSwatch: '#e8e0d6',
+      image: '',
+      palette: sayerContractorPalette,
     });
 
     const precioVinilicaGalon = 160;
@@ -1686,6 +1951,158 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     products.push({
+      id: 'madera-polyform-3000',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Polyform',
+      name: 'Polyform 3000',
+      description: 'Acabado profesional para madera ideal para muebles, carpintería y superficies que requieren protección, durabilidad y excelente presentación.',
+      detailText: 'Acabado profesional para madera Polyform 3000 ideal para muebles, carpintería y superficies de madera que requieren protección, durabilidad y excelente presentación. Proporciona una apariencia uniforme, buena adherencia y acabado de alta calidad para proyectos residenciales o profesionales.',
+      price: 185,
+      sizeOptions: [
+        { id: '500ml', label: '500 ml', price: 185 },
+        { id: '1lt', label: '1 Litro', price: 325 },
+        { id: '4lts', label: '4 Litros', price: 1350 },
+      ],
+      finishOptions: ['Brillante', 'Mate', 'Semi Mate'],
+      cantidad: '500 ml / 1 litro / 4 litros',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#d9b26c',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-polyform-11000-brillante',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Polyform',
+      name: 'Polyform 11000 Brillante',
+      description: 'Barniz brillante diseñado para proteger y embellecer superficies de madera, resaltando el color natural con larga duración.',
+      detailText: 'Barniz Polyform 11000 brillante diseñado para proteger y embellecer superficies de madera, resaltando el color natural y proporcionando un acabado brillante de larga duración. Ideal para muebles, carpintería y acabados finos.',
+      price: 550,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 550 },
+        { id: '4lts', label: '4 Litros', price: 1850 },
+      ],
+      finishOptions: ['Brillante'],
+      cantidad: '1 litro / 4 litros',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#e7c987',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-primer-chocolate-polyform',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Polyform',
+      name: 'Primer Chocolate Polyform',
+      description: 'Primer color chocolate para preparación de superficies de madera antes de aplicar lacas o acabados finales.',
+      detailText: 'Primer color chocolate para preparación de superficies de madera antes de aplicar lacas o acabados finales. Mejora la adherencia, uniformidad y apariencia profesional del acabado.',
+      price: 230,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 230 },
+        { id: '4lts', label: '4 Litros', price: 850 },
+      ],
+      cantidad: '1 litro / 4 litros',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#3d2118',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-laca-chocolate-polyform',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Polyform',
+      name: 'Laca Chocolate Polyform',
+      description: 'Laca color chocolate especializada para acabados decorativos sobre madera y muebles.',
+      detailText: 'Laca color chocolate especializada para acabados decorativos sobre madera y muebles. Proporciona uniformidad, buena cobertura y excelente apariencia estética.',
+      price: 230,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 230 },
+        { id: '4lts', label: '4 Litros', price: 850 },
+      ],
+      cantidad: '1 litro / 4 litros',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#4a2519',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-diluyente-pet-polyform',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Polyform',
+      name: 'Diluyente PET Polyform',
+      description: 'Diluyente especializado para productos Polyform, diseñado para mejorar la viscosidad y facilitar la aplicación.',
+      detailText: 'Diluyente especializado para productos Polyform, diseñado para mejorar la viscosidad, facilitar la aplicación y optimizar acabados en sistemas para madera.',
+      price: 95,
+      sizeOptions: [
+        { id: '500ml', label: '500 ml', price: 95 },
+        { id: '1lt', label: '1 Litro', price: 170 },
+        { id: '4lts', label: '4 Litros', price: 680 },
+      ],
+      cantidad: '500 ml / 1 litro / 4 litros',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#e8e1d1',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-pegamento-blanco-polyform',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Polyform',
+      name: 'Pegamento Blanco Polyform',
+      description: 'Pegamento blanco de alto rendimiento para carpintería, ensamblado, MDF y aplicaciones sobre madera.',
+      detailText: 'Pegamento blanco de alto rendimiento para trabajos de carpintería, ensamblado, MDF y aplicaciones sobre madera de uso profesional o doméstico. Ofrece excelente adherencia y resistencia.',
+      price: 70,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 70 },
+        { id: '4lts', label: '4 Litros', price: 240 },
+        { id: 'cubeta', label: 'Cubeta', price: 1075 },
+      ],
+      cantidad: '1 litro / 4 litros / cubeta',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#ffffff',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-s270-polyform',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Polyform',
+      name: 'S270 Polyform',
+      description: 'Sellador para preparación de madera antes del acabado final.',
+      detailText: 'Sellador Polyform S270 para preparación de madera antes del acabado final. Ayuda a sellar poros, mejorar adherencia y optimizar el rendimiento del barniz o laca.',
+      price: 150,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 150 },
+        { id: '4lts', label: '4 Litros', price: 600 },
+      ],
+      cantidad: '1 litro / 4 litros',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#eadcc8',
+      image: '',
+    });
+
+    products.push({
       id: 'esmalte-oro-1lt',
       category: 'esmalte',
       categoryLabel: categoryLabels['esmalte'],
@@ -2381,16 +2798,71 @@ Total final: ${formatCurrency(order.totals.total)}`;
     `Gracias por tu compra. Recibimos tu pedido y en breve confirmaremos disponibilidad y detalles de entrega.\n\n${buildOrderSummaryText('Resumen de pedido')}`
   );
 
+  const setPaymentFieldError = (input, message = '') => {
+    if (!input) return;
+    input.classList.toggle('field-invalid', Boolean(message));
+    input.setAttribute('aria-invalid', message ? 'true' : 'false');
+    const feedback = document.getElementById(`${input.id}-error`);
+    if (feedback) {
+      feedback.textContent = message;
+    }
+  };
+
+  const clearPaymentValidation = () => {
+    [paymentCustomerNameInput, paymentCustomerPhoneInput, paymentCustomerEmailInput, paymentCustomerAddressInput]
+      .forEach((input) => setPaymentFieldError(input));
+    if (paymentFormStatusEl) {
+      paymentFormStatusEl.textContent = '';
+      paymentFormStatusEl.classList.remove('is-error');
+    }
+  };
+
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
+  const getPhoneDigits = (value) => value.replace(/\D/g, '');
+
   const validateOrderCustomerData = () => {
     const customer = getCustomerData();
-    if (!customer.name || !customer.phone || !customer.email) {
-      alert('Por favor completa nombre, teléfono y correo para confirmar tu pedido.');
-      return false;
+    clearPaymentValidation();
+    const validationMessages = [];
+
+    if (!customer.name) {
+      setPaymentFieldError(paymentCustomerNameInput, 'Cuéntanos a nombre de quién preparamos el pedido.');
+      validationMessages.push('nombre');
     }
+
+    if (!customer.phone) {
+      setPaymentFieldError(paymentCustomerPhoneInput, 'Déjanos un teléfono para confirmar disponibilidad y entrega.');
+      validationMessages.push('teléfono');
+    } else if (getPhoneDigits(customer.phone).length < 8) {
+      setPaymentFieldError(paymentCustomerPhoneInput, 'Revisa que el teléfono tenga al menos 8 dígitos.');
+      validationMessages.push('teléfono válido');
+    }
+
+    if (!customer.email) {
+      setPaymentFieldError(paymentCustomerEmailInput, 'Agrega un correo para enviarte la confirmación.');
+      validationMessages.push('correo');
+    } else if (!isValidEmail(customer.email)) {
+      setPaymentFieldError(paymentCustomerEmailInput, 'El correo necesita un formato como nombre@dominio.com.');
+      validationMessages.push('correo válido');
+    }
+
     if (deliveryState.type === 'delivery' && !customer.address && !deliveryState.postalCode) {
-      alert('Por favor escribe la dirección de entrega.');
+      setPaymentFieldError(paymentCustomerAddressInput, 'Comparte tu dirección para calcular y confirmar la entrega.');
+      validationMessages.push('dirección');
+    }
+
+    if (validationMessages.length) {
+      if (paymentFormStatusEl) {
+        paymentFormStatusEl.textContent = 'Solo falta completar estos datos para continuar con tu pago.';
+        paymentFormStatusEl.classList.add('is-error');
+      }
+      const firstInvalidField = [paymentCustomerNameInput, paymentCustomerPhoneInput, paymentCustomerEmailInput, paymentCustomerAddressInput]
+        .find((input) => input?.classList.contains('field-invalid'));
+      firstInvalidField?.focus({ preventScroll: true });
+      firstInvalidField?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return false;
     }
+
     return true;
   };
 
@@ -2776,7 +3248,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
         </div>
       `;
     } else if (product.image) {
-      imageMarkup = `<img src="${product.image}" alt="${product.name}">`;
+      imageMarkup = `<img src="${product.image}" alt="${product.name}" class="${product.imageFit === 'contain' ? 'product-image-contain' : ''}">`;
     } else if (product.colorSwatch) {
       imageMarkup = `<div class="swatch-circle" style="background:${product.colorSwatch};"></div>`;
     } else {
@@ -2791,6 +3263,13 @@ Total final: ${formatCurrency(order.totals.total)}`;
         `).join('')}
       </div>
     ` : '<div class="size-selector size-selector-placeholder" aria-hidden="true"></div>';
+    const finishSelectorMarkup = product.finishOptions ? `
+      <div class="size-selector finish-selector" aria-label="Selecciona acabado">
+        ${product.finishOptions.map((finish) => `
+          <button type="button" class="finish-option" data-finish="${finish}">${finish}</button>
+        `).join('')}
+      </div>
+    ` : '';
 
     const initialPriceText = sizeOptions ? 'Seleccione tamaño' : formatCurrency(product.price);
     const selectedColorText = product.selectedPaletteColor ? ` - ${product.selectedPaletteColor.name}` : '';
@@ -2809,6 +3288,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
       </div>
       <h3>${product.name}</h3>
       <p>${product.description}</p>
+      ${finishSelectorMarkup}
       ${sizeSelectorMarkup}
       ${volumeMarkup}
       <div class="product-rating" aria-label="Calificación actual ${ratingValue} de 5">
@@ -2937,14 +3417,22 @@ Total final: ${formatCurrency(order.totals.total)}`;
     renderProducts();
   };
 
-  const getProductCardError = (product, selectedSize) => {
+  const getProductCardError = (product, selectedSize, selectedFinish) => {
     const needsSize = product.sizeOptions && !selectedSize;
     const needsColor = product.palette && !product.selectedPaletteColor;
-    if (needsSize && needsColor) {
-      return 'Aún no has agregado nada al carrito. Por favor selecciona color y tamaño que deseas agregar al carrito.';
+    const needsFinish = product.finishOptions && product.finishOptions.length > 1 && !selectedFinish;
+    const missing = [];
+    if (needsColor) missing.push('color');
+    if (needsFinish) missing.push('acabado');
+    if (needsSize) missing.push('tamaño');
+    if (missing.length > 1) {
+      return `Aún no has agregado nada al carrito. Por favor selecciona ${missing.join(' y ')} que deseas agregar al carrito.`;
     }
     if (needsSize) {
       return 'Aún no has agregado nada al carrito. Por favor selecciona tamaño que deseas agregar al carrito.';
+    }
+    if (needsFinish) {
+      return 'Aún no has agregado nada al carrito. Por favor selecciona acabado que deseas agregar al carrito.';
     }
     if (needsColor) {
       return 'Aún no has agregado nada al carrito. Por favor selecciona color que deseas agregar al carrito.';
@@ -2964,10 +3452,11 @@ Total final: ${formatCurrency(order.totals.total)}`;
     }, 5000);
   };
 
-  const addProductToCart = (productId, selectedSize = null) => {
+  const addProductToCart = (productId, selectedSize = null, selectedFinish = null) => {
     const product = products.find((item) => item.id === productId);
     if (!product) return;
-    const errorMessage = getProductCardError(product, selectedSize);
+    const finish = selectedFinish || (product.finishOptions && product.finishOptions.length === 1 ? product.finishOptions[0] : null);
+    const errorMessage = getProductCardError(product, selectedSize, finish);
     if (errorMessage) {
       showProductCardError(productId, errorMessage);
       return;
@@ -2977,6 +3466,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
     let name = product.name;
     let sizeKey = '';
     let colorKey = '';
+    let finishKey = '';
     let description = product.detailText || product.description || '';
 
     if (product.selectedPaletteColor) {
@@ -2985,19 +3475,26 @@ Total final: ${formatCurrency(order.totals.total)}`;
       description = product.selectedPaletteColor.description || `Color: ${product.selectedPaletteColor.name}`;
     }
 
+    if (finish) {
+      name = `${name} - ${finish}`;
+      finishKey = `-${finish.replace(/\s+/g, '-')}`;
+      description = `${description}${description ? ' · ' : ''}Acabado: ${finish}`;
+    }
+
     const sizeOptions = getEffectiveSizeOptions(product);
     if (sizeOptions) {
       const option = selectedSize ? sizeOptions.find((opt) => opt.id === selectedSize) : null;
       const selectedOption = option || sizeOptions[0];
       if (selectedOption) {
         price = selectedOption.price;
-        name = `${product.name} - ${product.selectedPaletteColor ? product.selectedPaletteColor.name + ' ' : ''}(${selectedOption.label})`;
+        const selectedVariant = [product.selectedPaletteColor?.name, finish].filter(Boolean).join(' ');
+        name = `${product.name}${selectedVariant ? ` - ${selectedVariant}` : ''} (${selectedOption.label})`;
         sizeKey = `-${selectedOption.id}`;
         description = `${description}${description ? ' · ' : ''}Tamaño: ${selectedOption.label}`;
       }
     }
 
-    const cartId = `${product.id}${colorKey}${sizeKey}`;
+    const cartId = `${product.id}${colorKey}${finishKey}${sizeKey}`;
     const existing = cart.find((item) => item.id === cartId);
     if (existing) {
       existing.quantity += 1;
@@ -3010,6 +3507,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
         color: product.selectedPaletteColor?.color || null,
         quantity: 1,
         size: selectedSize,
+        finish,
       });
     }
 
@@ -3093,8 +3591,24 @@ Total final: ${formatCurrency(order.totals.total)}`;
 
   if (productGeneralListEl) {
     generateProducts();
-    renderSubcategoryOptions('all');
-    renderProducts();
+    const params = new URLSearchParams(window.location.search);
+    const requestedCategory = params.get('categoria') || params.get('category');
+    if (requestedCategory && subcategories[requestedCategory]) {
+      selectedCategory = requestedCategory;
+      categoryItems.forEach((item) => {
+        item.classList.toggle('active', item.dataset.category === requestedCategory);
+      });
+      const requestedButton = document.querySelector(`.category-item[data-category="${requestedCategory}"]`);
+      if (requestedButton && allCategoryButton) {
+        allCategoryButton.textContent = requestedButton.textContent;
+      }
+      renderSubcategoryOptions(requestedCategory);
+      applyFilters();
+      document.querySelector('.catalog-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      renderSubcategoryOptions('all');
+      renderProducts();
+    }
   }
 
   if (categoryFilter) {
@@ -3223,11 +3737,20 @@ Total final: ${formatCurrency(order.totals.total)}`;
       card.querySelectorAll('.size-option').forEach((btn) => btn.classList.toggle('active', btn === sizeButton));
       return;
     }
+    const finishButton = event.target.closest('.finish-option');
+    if (finishButton) {
+      const card = finishButton.closest('.product-card');
+      if (!card) return;
+      card.dataset.selectedFinish = finishButton.dataset.finish;
+      card.querySelectorAll('.finish-option').forEach((btn) => btn.classList.toggle('active', btn === finishButton));
+      return;
+    }
     const addButton = event.target.closest('.add-to-cart');
     if (addButton && addButton.dataset.productId) {
       const card = addButton.closest('.product-card');
       const selectedSize = card ? card.dataset.selectedSize : null;
-      addProductToCart(addButton.dataset.productId, selectedSize);
+      const selectedFinish = card ? card.dataset.selectedFinish : null;
+      addProductToCart(addButton.dataset.productId, selectedSize, selectedFinish);
       return;
     }
     const addPaletteColorButton = event.target.closest('.add-palette-color');
@@ -3469,6 +3992,17 @@ Total final: ${formatCurrency(order.totals.total)}`;
     });
   }
 
+  [paymentCustomerNameInput, paymentCustomerPhoneInput, paymentCustomerEmailInput, paymentCustomerAddressInput].forEach((input) => {
+    if (!input) return;
+    input.addEventListener('input', () => {
+      setPaymentFieldError(input);
+      if (paymentFormStatusEl) {
+        paymentFormStatusEl.textContent = '';
+        paymentFormStatusEl.classList.remove('is-error');
+      }
+    });
+  });
+
   paymentMethodButtons.forEach((button) => {
     button.addEventListener('click', () => {
       selectPaymentMethod(button.dataset.paymentMethod);
@@ -3491,15 +4025,21 @@ Total final: ${formatCurrency(order.totals.total)}`;
       event.preventDefault();
       console.log('Click Mercado Pago detectado');
 
+      if (!validateOrderCustomerData()) return;
+
       try {
         const hasCartItems = Array.isArray(cart) && cart.length > 0;
         const mercadoPagoPayload = hasCartItems ? {
           cart,
           shippingCost: deliveryState.type === 'delivery' ? deliveryState.fee : 0,
+          customer: getCustomerData(),
+          deliveryMethod: getDeliveryMethodLabel(),
         } : {
           title: 'Compra Rubens Distribuidora',
           quantity: 1,
           unit_price: 100,
+          customer: getCustomerData(),
+          deliveryMethod: getDeliveryMethodLabel(),
         };
 
         const res = await fetch('/.netlify/functions/createPreference', {
