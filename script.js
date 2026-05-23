@@ -1,6 +1,60 @@
 ﻿// Script ligero para Ruben's Distribuidora
 
 const MERCADO_PAGO_CHECKOUT_URL = window.MERCADO_PAGO_CHECKOUT_URL || "";
+const MERCADO_PAGO_PUBLIC_KEY_TEST = "APP_USR-1d421fc6-735f-4f5b-ac51-a5912edb29de";
+const MERCADO_PAGO_PREFERENCE_ID_TEST = window.MERCADO_PAGO_PREFERENCE_ID || "PEGAR_AQUI_EL_PREFERENCE_ID_DE_PRUEBA";
+
+const loadMercadoPagoSdkGlobal = () => new Promise((resolve, reject) => {
+  if (window.MercadoPago) {
+    resolve(window.MercadoPago);
+    return;
+  }
+
+  const existingScript = document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]');
+  if (existingScript) {
+    existingScript.addEventListener('load', () => resolve(window.MercadoPago), { once: true });
+    existingScript.addEventListener('error', () => reject(new Error('No se pudo cargar Mercado Pago.')), { once: true });
+    return;
+  }
+
+  const script = document.createElement('script');
+  script.src = 'https://sdk.mercadopago.com/js/v2';
+  script.onload = () => resolve(window.MercadoPago);
+  script.onerror = () => reject(new Error('No se pudo cargar Mercado Pago.'));
+  document.head.appendChild(script);
+});
+
+async function abrirMercadoPago() {
+  const preferenceId = MERCADO_PAGO_PREFERENCE_ID_TEST;
+  const hasPreferenceId = preferenceId && preferenceId !== "PEGAR_AQUI_EL_PREFERENCE_ID_DE_PRUEBA";
+
+  if (!hasPreferenceId) {
+    alert("Mercado Pago de prueba aún no configurado");
+    return false;
+  }
+
+  try {
+    const MercadoPagoSdk = await loadMercadoPagoSdkGlobal();
+    const mp = new MercadoPagoSdk(MERCADO_PAGO_PUBLIC_KEY_TEST, {
+      locale: "es-MX",
+    });
+
+    mp.checkout({
+      preference: {
+        id: preferenceId,
+      },
+      autoOpen: true,
+    });
+    return true;
+  } catch (error) {
+    if (MERCADO_PAGO_CHECKOUT_URL) {
+      window.open(MERCADO_PAGO_CHECKOUT_URL, "_blank");
+      return true;
+    }
+    alert("Mercado Pago de prueba aún no configurado");
+    return false;
+  }
+}
 
 window.addEventListener('DOMContentLoaded', () => {
   const revealElements = document.querySelectorAll('.reveal');
@@ -112,7 +166,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const sendTransferWhatsappButton = document.getElementById('send-transfer-whatsapp');
   const payInStoreWhatsappButton = document.getElementById('pay-in-store-whatsapp');
   const orderEmailStatusEl = document.getElementById('order-email-status');
-  const mercadoPagoButton = document.getElementById('mercado-pago-button');
+  const mercadoPagoButton = document.getElementById('mercadoPagoBtn');
   const mercadoWhatsappFallbackButton = document.getElementById('mercado-whatsapp-fallback');
 
   const categoryLabels = {
@@ -2547,6 +2601,9 @@ Total final: ${formatCurrency(order.totals.total)}`;
   });
 
   const openMercadoPagoCheckout = async (preferenceId) => {
+    if (!preferenceId) {
+      throw new Error('Falta configurar el preferenceId de Mercado Pago.');
+    }
     const MercadoPagoSdk = await loadMercadoPagoSdk();
     const mercadoPago = new MercadoPagoSdk(mercadoPagoPublicKey, { locale: 'es-MX' });
     mercadoPago.checkout({
@@ -2561,14 +2618,34 @@ Total final: ${formatCurrency(order.totals.total)}`;
       La Public Key puede estar en frontend, pero el Access Token NO debe exponerse
       en GitHub Pages ni en ningún archivo público.
 
-      Aquí debe conectarse un endpoint propio, por ejemplo:
-      POST https://tu-backend.com/api/mercado-pago/preference
-
-      Ese backend recibe el resumen del pedido, calcula/valida el total y usa el
-      Access Token sandbox/producción en el servidor para crear la preferencia.
-      La respuesta segura esperada para este frontend es: { preference_id: "..." }.
+      Netlify ejecuta /.netlify/functions/createPreference en servidor.
+      Ahí debe configurarse MERCADO_PAGO_ACCESS_TOKEN como variable de entorno.
     */
-    return null;
+    const order = buildOrderSummaryData();
+    const response = await fetch('/.netlify/functions/createPreference', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        cart,
+        shippingCost: deliveryState.type === 'delivery' ? deliveryState.fee : 0,
+        deliveryMethod: order.deliveryMethod,
+        customer: order.customer,
+        total: order.totals.total,
+      }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.message || data.error || 'No se pudo crear la preferencia de Mercado Pago.');
+    }
+
+    if (data.init_point || data.sandbox_init_point) {
+      window.MERCADO_PAGO_CHECKOUT_URL = data.sandbox_init_point || data.init_point;
+    }
+
+    return data.preference_id || data.id || null;
   };
 
   const buildMercadoPagoValidationMessage = () => (
@@ -2600,19 +2677,29 @@ Total final: ${formatCurrency(order.totals.total)}`;
 
       if (preferenceId) {
         rememberMercadoPagoOrder();
-        await openMercadoPagoCheckout(preferenceId);
+        try {
+          await openMercadoPagoCheckout(preferenceId);
+        } catch (error) {
+          const checkoutUrl = window.MERCADO_PAGO_CHECKOUT_URL || mercadoPagoLink;
+          if (checkoutUrl) {
+            window.open(checkoutUrl, '_blank');
+            return;
+          }
+          throw error;
+        }
         return;
       }
 
-      if (mercadoPagoLink) {
+      const checkoutUrl = window.MERCADO_PAGO_CHECKOUT_URL || mercadoPagoLink;
+      if (checkoutUrl) {
         rememberMercadoPagoOrder();
-        window.open(mercadoPagoLink, '_blank');
+        window.open(checkoutUrl, '_blank');
         return;
       }
 
-      showMercadoPagoSetupMessage();
+      await abrirMercadoPago();
     } catch (error) {
-      showMercadoPagoSetupMessage();
+      await abrirMercadoPago();
     }
   };
 
@@ -3398,11 +3485,12 @@ Total final: ${formatCurrency(order.totals.total)}`;
     });
   }
 
-  if (mercadoPagoButton) {
-    mercadoPagoButton.addEventListener('click', () => {
+  document.addEventListener('click', (event) => {
+    if (event.target && event.target.id === 'mercadoPagoBtn') {
+      event.preventDefault();
       handleMercadoPagoPayment();
-    });
-  }
+    }
+  });
 
   if (mercadoWhatsappFallbackButton) {
     mercadoWhatsappFallbackButton.addEventListener('click', () => {

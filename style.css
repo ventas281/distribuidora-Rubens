@@ -3477,7 +3477,7 @@ button,
   line-height: 1.5;
 }
 
-#mercado-pago-button,
+#mercadoPagoBtn,
 #mercado-whatsapp-fallback,
 #send-transfer-whatsapp,
 #pay-in-store-whatsapp {
@@ -3485,7 +3485,7 @@ button,
   min-height: 50px;
 }
 
-#mercado-pago-button {
+#mercadoPagoBtn {
   box-shadow: 0 14px 28px rgba(194, 43, 43, 0.18);
 }
 
@@ -3591,7 +3591,7 @@ button,
     padding: 0.95rem;
   }
 
-  #mercado-pago-button,
+  #mercadoPagoBtn,
   #mercado-whatsapp-fallback,
   #send-transfer-whatsapp,
   #pay-in-store-whatsapp {
