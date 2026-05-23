@@ -3352,3 +3352,252 @@ button,
     grid-template-columns: 1fr;
   }
 }
+
+/* Premium checkout/header polish */
+@media (min-width: 769px) {
+  .site-header {
+    overflow: visible;
+  }
+
+  .header-inner {
+    width: 100%;
+    max-width: min(1400px, calc(100% - 48px));
+    padding: 1rem clamp(24px, 3vw, 40px);
+    overflow: visible;
+  }
+
+  .brand-logo {
+    max-width: 100%;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .brand-logo > div,
+  .brand-name,
+  .brand-tagline {
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .main-nav {
+    min-width: 0;
+  }
+}
+
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.modal-content {
+  background: #fff;
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
+}
+
+.payment-modal-content {
+  width: min(620px, calc(100% - 32px));
+  max-width: 620px;
+  border-radius: 26px;
+  padding: 1.6rem;
+}
+
+.payment-modal-content .modal-header {
+  margin-bottom: 0.85rem;
+}
+
+.payment-modal-content .modal-header h3 {
+  font-size: clamp(1.35rem, 2vw, 1.7rem);
+  line-height: 1.15;
+}
+
+.payment-body {
+  gap: 0.85rem;
+}
+
+.payment-summary,
+.payment-panel,
+.mercado-card {
+  border-radius: 18px;
+}
+
+.payment-customer-grid,
+.payment-grid {
+  gap: 0.7rem;
+}
+
+.payment-customer-field,
+.payment-grid label {
+  gap: 0.3rem;
+}
+
+.payment-customer-field input,
+.payment-customer-field textarea,
+.payment-grid input,
+.search-panel input,
+.sort-panel select {
+  min-width: 0;
+}
+
+.payment-customer-field textarea {
+  min-height: 76px;
+}
+
+.payment-methods {
+  gap: 0.55rem;
+}
+
+.payment-method-button {
+  min-height: 48px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.payment-panel {
+  gap: 0.85rem;
+}
+
+.mercado-card {
+  gap: 0.7rem;
+  border-color: rgba(0, 114, 206, 0.2);
+  background: linear-gradient(180deg, #f0f8ff 0%, #ffffff 100%);
+}
+
+.mercado-card strong {
+  font-size: 1.08rem;
+}
+
+.mercado-card .payment-note,
+.mercado-card ul,
+.mercado-helper {
+  font-size: 0.95rem;
+}
+
+.mercado-helper {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+#mercado-pago-button,
+#mercado-whatsapp-fallback,
+#send-transfer-whatsapp,
+#pay-in-store-whatsapp {
+  width: 100%;
+  min-height: 50px;
+}
+
+#mercado-pago-button {
+  box-shadow: 0 14px 28px rgba(194, 43, 43, 0.18);
+}
+
+@media (max-width: 768px) {
+  .site-header {
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .header-inner {
+    width: 100%;
+    max-width: 100%;
+    padding: 14px 18px;
+    overflow: visible;
+  }
+
+  .brand-logo {
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .brand-logo > div,
+  .brand-name,
+  .brand-tagline {
+    overflow: visible;
+  }
+
+  .cart-modal,
+  .detail-modal {
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .payment-modal-content,
+  .cart-modal .modal-content {
+    width: calc(100vw - 24px);
+    max-width: 460px;
+    max-height: 88vh;
+    overflow-y: auto;
+    border-radius: 24px;
+    padding: 22px;
+    margin: 0;
+  }
+
+  .payment-modal-content .modal-header h3,
+  .cart-modal .modal-header h3 {
+    font-size: clamp(22px, 6vw, 28px);
+  }
+
+  .payment-body,
+  .payment-panel,
+  .mercado-card {
+    gap: 0.75rem;
+  }
+
+  .payment-summary {
+    padding: 0.85rem;
+  }
+
+  .payment-summary-list,
+  .payment-note,
+  .mercado-card ul,
+  .mercado-helper,
+  .payment-customer-field,
+  .payment-grid label,
+  .order-email-status {
+    font-size: clamp(15px, 4vw, 17px);
+  }
+
+  .payment-customer-grid,
+  .payment-methods,
+  .payment-grid {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .payment-method-button {
+    width: 100%;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.85rem 1rem;
+  }
+
+  .payment-customer-field input,
+  .payment-customer-field textarea,
+  .payment-grid input {
+    padding: 0.78rem 0.85rem;
+  }
+
+  .payment-customer-field textarea {
+    min-height: 72px;
+  }
+
+  .payment-panel {
+    padding: 0.9rem;
+  }
+
+  .mercado-card {
+    padding: 0.95rem;
+  }
+
+  #mercado-pago-button,
+  #mercado-whatsapp-fallback,
+  #send-transfer-whatsapp,
+  #pay-in-store-whatsapp {
+    width: 100%;
+    max-width: 100%;
+    min-height: 52px;
+    text-align: center;
+  }
+}
