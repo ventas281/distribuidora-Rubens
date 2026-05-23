@@ -3485,10 +3485,76 @@ Total final: ${formatCurrency(order.totals.total)}`;
     });
   }
 
-  document.addEventListener('click', (event) => {
-    if (event.target && event.target.id === 'mercadoPagoBtn') {
+  document.addEventListener('click', async (event) => {
+    const mercadoButton = event.target && event.target.closest ? event.target.closest('#mercadoPagoBtn') : null;
+    if (mercadoButton) {
       event.preventDefault();
-      handleMercadoPagoPayment();
+      console.log('Click Mercado Pago detectado');
+
+      try {
+        const hasCartItems = Array.isArray(cart) && cart.length > 0;
+        const mercadoPagoPayload = hasCartItems ? {
+          cart,
+          shippingCost: deliveryState.type === 'delivery' ? deliveryState.fee : 0,
+        } : {
+          title: 'Compra Rubens Distribuidora',
+          quantity: 1,
+          unit_price: 100,
+        };
+
+        const res = await fetch('/.netlify/functions/createPreference', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(mercadoPagoPayload),
+        });
+
+        const data = await res.json();
+        console.log('Respuesta createPreference:', data);
+
+        if (!data.preference_id && !data.id && !data.init_point && !data.sandbox_init_point) {
+          alert('No se pudo crear la preferencia de Mercado Pago');
+          return;
+        }
+
+        const preferenceId = data.preference_id || data.id;
+        const initPoint = data.sandbox_init_point || data.init_point;
+
+        if (preferenceId) {
+          try {
+            const MercadoPagoSdk = window.MercadoPago || await loadMercadoPagoSdkGlobal();
+            const mp = new MercadoPagoSdk('APP_USR-1d421fc6-735f-4f5b-ac51-a5912edb29de', {
+              locale: 'es-MX',
+            });
+
+            mp.checkout({
+              preference: {
+                id: preferenceId,
+              },
+              autoOpen: true,
+            });
+            return;
+          } catch (checkoutError) {
+            console.error('Error abriendo Checkout Pro:', checkoutError);
+            if (initPoint) {
+              window.open(initPoint, '_blank');
+              return;
+            }
+            throw checkoutError;
+          }
+        }
+
+        if (initPoint) {
+          window.open(initPoint, '_blank');
+          return;
+        }
+
+        alert('No se pudo crear la preferencia de Mercado Pago');
+      } catch (error) {
+        console.error('Error Mercado Pago:', error);
+        alert('Error al abrir Mercado Pago. Revisa consola.');
+      }
     }
   });
 

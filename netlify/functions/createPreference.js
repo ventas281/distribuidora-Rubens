@@ -25,21 +25,30 @@ const toPositiveNumber = (value, fallback = 0) => {
   return Number.isFinite(number) && number > 0 ? number : fallback;
 };
 
-const normalizeCartItems = (cart = []) => {
-  if (!Array.isArray(cart) || cart.length === 0) {
-    return [fallbackItem];
-  }
-
-  const items = cart
+const normalizeCartItems = (cart = [], payload = {}) => {
+  const items = Array.isArray(cart) ? cart
     .map((item) => ({
       title: String(item.name || item.title || fallbackItem.title).slice(0, 250),
       quantity: Math.max(1, Math.round(toPositiveNumber(item.quantity, 1))),
       unit_price: toPositiveNumber(item.price || item.unit_price, 0),
       currency_id: 'MXN',
     }))
-    .filter((item) => item.unit_price > 0);
+    .filter((item) => item.unit_price > 0) : [];
 
-  return items.length ? items : [fallbackItem];
+  if (items.length) {
+    return items;
+  }
+
+  if (payload.title || payload.unit_price || payload.price) {
+    return [{
+      title: String(payload.title || fallbackItem.title).slice(0, 250),
+      quantity: Math.max(1, Math.round(toPositiveNumber(payload.quantity, 1))),
+      unit_price: toPositiveNumber(payload.unit_price || payload.price, fallbackItem.unit_price),
+      currency_id: 'MXN',
+    }];
+  }
+
+  return [fallbackItem];
 };
 
 exports.handler = async (event) => {
@@ -66,12 +75,12 @@ exports.handler = async (event) => {
     return jsonResponse(400, { error: 'Invalid JSON body' });
   }
 
-  const items = normalizeCartItems(payload.cart);
+  const items = normalizeCartItems(payload.cart, payload);
   const shippingCost = toPositiveNumber(payload.shippingCost, 0);
 
   if (shippingCost > 0) {
     items.push({
-      title: 'Envío Ruben’s Distribuidora',
+      title: 'Envio Ruben\'s Distribuidora',
       quantity: 1,
       unit_price: shippingCost,
       currency_id: 'MXN',
