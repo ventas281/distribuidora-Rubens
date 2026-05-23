@@ -13,7 +13,7 @@ const jsonResponse = (statusCode, body) => ({
   statusCode,
   headers: {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': siteUrl,
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   },
@@ -109,6 +109,7 @@ exports.handler = async (event) => {
     });
 
     return jsonResponse(200, {
+      id: response.id,
       preference_id: response.id,
       init_point: response.init_point,
       sandbox_init_point: response.sandbox_init_point,
