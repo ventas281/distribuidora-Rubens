@@ -1,5 +1,7 @@
 ﻿// Script ligero para Ruben's Distribuidora
 
+const MERCADO_PAGO_CHECKOUT_URL = window.MERCADO_PAGO_CHECKOUT_URL || "";
+
 window.addEventListener('DOMContentLoaded', () => {
   const revealElements = document.querySelectorAll('.reveal');
   const observer = new IntersectionObserver((entries) => {
@@ -111,6 +113,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const payInStoreWhatsappButton = document.getElementById('pay-in-store-whatsapp');
   const orderEmailStatusEl = document.getElementById('order-email-status');
   const mercadoPagoButton = document.getElementById('mercado-pago-button');
+  const mercadoWhatsappFallbackButton = document.getElementById('mercado-whatsapp-fallback');
 
   const categoryLabels = {
     vinilica: 'Pintura Vinílica',
@@ -172,7 +175,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const paidDeliveryFee = 200;
   const fastDeliveryExtraFee = 150;
   const paymentWhatsappNumber = '525510022372';
-  const mercadoPagoLink = window.MERCADO_PAGO_LINK || '';
+  const mercadoPagoPublicKey = window.MERCADO_PAGO_PUBLIC_KEY || 'APP_USR-1d421fc6-735f-4f5b-ac51-a5912edb29de';
+  const mercadoPagoPreferenceId = window.MERCADO_PAGO_PREFERENCE_ID || '';
+  const mercadoPagoLink = MERCADO_PAGO_CHECKOUT_URL || window.MERCADO_PAGO_LINK || '';
   const mercadoPagoPendingOrderKey = 'rubensMercadoPagoPendingOrder';
   const orderEmailConfig = {
     provider: 'none',
@@ -2480,6 +2485,9 @@ Total final: ${formatCurrency(order.totals.total)}`;
     if (paymentTransferPanel) paymentTransferPanel.classList.toggle('hidden', method !== 'transfer');
     if (paymentMercadoPanel) paymentMercadoPanel.classList.toggle('hidden', method !== 'mercado');
     if (paymentCashPanel) paymentCashPanel.classList.toggle('hidden', method !== 'cash');
+    if (method !== 'mercado' && mercadoWhatsappFallbackButton) {
+      mercadoWhatsappFallbackButton.classList.add('hidden');
+    }
   };
 
   const showPaymentModal = () => {
@@ -2523,6 +2531,89 @@ Total final: ${formatCurrency(order.totals.total)}`;
     if (!validateOrderCustomerData()) return;
     const message = encodeURIComponent(buildTransferWhatsappMessage());
     window.open(`https://wa.me/${paymentWhatsappNumber}?text=${message}`, '_blank');
+  };
+
+  const loadMercadoPagoSdk = () => new Promise((resolve, reject) => {
+    if (window.MercadoPago) {
+      resolve(window.MercadoPago);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://sdk.mercadopago.com/js/v2';
+    script.onload = () => resolve(window.MercadoPago);
+    script.onerror = () => reject(new Error('No se pudo cargar Mercado Pago.'));
+    document.head.appendChild(script);
+  });
+
+  const openMercadoPagoCheckout = async (preferenceId) => {
+    const MercadoPagoSdk = await loadMercadoPagoSdk();
+    const mercadoPago = new MercadoPagoSdk(mercadoPagoPublicKey, { locale: 'es-MX' });
+    mercadoPago.checkout({
+      preference: { id: preferenceId },
+      autoOpen: true,
+    });
+  };
+
+  const createMercadoPagoPreference = async () => {
+    /*
+      Mercado Pago Checkout Pro requiere crear una preference_id en un backend.
+      La Public Key puede estar en frontend, pero el Access Token NO debe exponerse
+      en GitHub Pages ni en ningún archivo público.
+
+      Aquí debe conectarse un endpoint propio, por ejemplo:
+      POST https://tu-backend.com/api/mercado-pago/preference
+
+      Ese backend recibe el resumen del pedido, calcula/valida el total y usa el
+      Access Token sandbox/producción en el servidor para crear la preferencia.
+      La respuesta segura esperada para este frontend es: { preference_id: "..." }.
+    */
+    return null;
+  };
+
+  const buildMercadoPagoValidationMessage = () => (
+    `${buildOrderSummaryText('Hola, quiero pagar con Mercado Pago este pedido en Ruben\'s Distribuidora')}\n\nPago con Mercado Pago en validación.`
+  );
+
+  const openMercadoPagoFallbackWhatsapp = () => {
+    const message = encodeURIComponent(buildMercadoPagoValidationMessage());
+    window.open(`https://wa.me/${paymentWhatsappNumber}?text=${message}`, '_blank');
+    setOrderEmailStatus('Mercado Pago queda en validación por WhatsApp hasta conectar el backend seguro.');
+  };
+
+  const showMercadoPagoSetupMessage = () => {
+    setOrderEmailStatus('Mercado Pago aún está en configuración. Puedes enviar tu pedido por WhatsApp mientras habilitamos el pago en línea.');
+    if (mercadoWhatsappFallbackButton) {
+      mercadoWhatsappFallbackButton.classList.remove('hidden');
+    }
+  };
+
+  const handleMercadoPagoPayment = async () => {
+    if (!validateOrderCustomerData()) return;
+    if (mercadoWhatsappFallbackButton) {
+      mercadoWhatsappFallbackButton.classList.add('hidden');
+    }
+
+    try {
+      const createdPreferenceId = await createMercadoPagoPreference();
+      const preferenceId = createdPreferenceId || mercadoPagoPreferenceId;
+
+      if (preferenceId) {
+        rememberMercadoPagoOrder();
+        await openMercadoPagoCheckout(preferenceId);
+        return;
+      }
+
+      if (mercadoPagoLink) {
+        rememberMercadoPagoOrder();
+        window.open(mercadoPagoLink, '_blank');
+        return;
+      }
+
+      showMercadoPagoSetupMessage();
+    } catch (error) {
+      showMercadoPagoSetupMessage();
+    }
   };
 
   const isMercadoPagoApprovedReturn = () => {
@@ -3309,13 +3400,14 @@ Total final: ${formatCurrency(order.totals.total)}`;
 
   if (mercadoPagoButton) {
     mercadoPagoButton.addEventListener('click', () => {
+      handleMercadoPagoPayment();
+    });
+  }
+
+  if (mercadoWhatsappFallbackButton) {
+    mercadoWhatsappFallbackButton.addEventListener('click', () => {
       if (!validateOrderCustomerData()) return;
-      if (mercadoPagoLink) {
-        rememberMercadoPagoOrder();
-        window.open(mercadoPagoLink, '_blank');
-        return;
-      }
-      alert('Mercado Pago está listo para configurarse. Agrega el link o API en window.MERCADO_PAGO_LINK.');
+      openMercadoPagoFallbackWhatsapp();
     });
   }
 

@@ -243,8 +243,16 @@
         </div>
 
         <div class="payment-panel hidden" id="payment-mercado-panel">
-          <p class="payment-note">La integración queda preparada para agregar el link o API de Mercado Pago.</p>
+          <div class="mercado-card">
+            <strong>Mercado Pago Checkout Pro</strong>
+            <p class="payment-note">Modo prueba preparado. En GitHub Pages no se debe crear la preferencia con Access Token en el navegador.</p>
+            <ul>
+              <li>Se usará el total actual del carrito y envío.</li>
+              <li>Si el pago en línea aún no está habilitado, puedes enviar tu pedido por WhatsApp.</li>
+            </ul>
+          </div>
           <button class="btn btn-primary" id="mercado-pago-button" type="button">Pagar con Mercado Pago</button>
+          <button class="btn btn-secondary hidden" id="mercado-whatsapp-fallback" type="button">Enviar pedido por WhatsApp</button>
         </div>
 
         <div class="payment-panel hidden" id="payment-cash-panel">
@@ -265,6 +273,9 @@
 
   <script>
     window.GOOGLE_MAPS_API_KEY = 'AIzaSyD4TXHgscL3fN-qtLPSkP_g_NJIFpy1dYY';
+    window.MERCADO_PAGO_PUBLIC_KEY = 'APP_USR-1d421fc6-735f-4f5b-ac51-a5912edb29de';
+    window.MERCADO_PAGO_PREFERENCE_ID = '';
+    window.MERCADO_PAGO_CHECKOUT_URL = '';
     window.MERCADO_PAGO_LINK = '';
     window.ORDER_DISCOUNT_AMOUNT = 0;
     window.ORDER_EMAIL_CONFIG = {
