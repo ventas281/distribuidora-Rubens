@@ -290,22 +290,26 @@ button,
 }
 
 .rain-season-banner.is-hidden {
-  display: block !important;
+  display: none !important;
 }
 
 .rain-season-popup {
-  position: relative;
+  position: fixed;
   inset: 0;
-  z-index: 1;
-  display: block;
+  z-index: 1300;
+  display: grid;
   place-items: center;
-  padding: 2rem 1.5rem;
+  width: 100vw;
+  height: 100vh;
+  padding: 1.5rem;
   background: transparent;
+  overflow: hidden;
 }
 
 .rain-banner-overlay {
   position: absolute;
   inset: 0;
+  z-index: 0;
   background: rgba(0, 0, 0, 0.62);
   backdrop-filter: blur(8px);
 }
@@ -329,6 +333,7 @@ button,
   width: min(1120px, 100%);
   max-height: min(760px, calc(100vh - 3rem));
   overflow-y: auto;
+  z-index: 1;
 }
 
 body.rain-popup-open {
@@ -2805,7 +2810,7 @@ body.rain-popup-open {
 
   .rain-season-popup {
     padding: 0.85rem;
-    align-items: start;
+    align-items: center;
     overflow-y: auto;
   }
 

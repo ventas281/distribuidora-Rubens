@@ -255,16 +255,14 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   if (rainSeasonBanner) {
-    const rainBannerClosed = localStorage.getItem('rubensRainBannerClosed') === 'true';
-    rainSeasonBanner.classList.toggle('is-hidden', rainBannerClosed);
-    document.body.classList.toggle('rain-popup-open', !rainBannerClosed);
+    rainSeasonBanner.classList.remove('is-hidden');
+    document.body.classList.add('rain-popup-open');
   }
 
   const closeRainBanner = () => {
     if (!rainSeasonBanner) return;
     rainSeasonBanner.classList.add('is-hidden');
     document.body.classList.remove('rain-popup-open');
-    localStorage.setItem('rubensRainBannerClosed', 'true');
   };
 
   closeRainBannerButtons.forEach((button) => {
