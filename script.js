@@ -99,6 +99,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const productPopularListEl = document.getElementById('product-popular-list');
   const productCheapListEl = document.getElementById('product-cheap-list');
   const productSeasonListEl = document.getElementById('product-season-list');
+  const homeCheapListEl = document.getElementById('home-cheap-list');
+  const homeSeasonListEl = document.getElementById('home-season-list');
+  const homeFeaturedListEl = document.getElementById('home-featured-list');
   const productCountEl = document.getElementById('product-count');
   const cartCountEl = document.getElementById('cart-count');
   const viewCartButton = document.getElementById('view-cart');
@@ -150,11 +153,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const categoryLabels = {
     vinilica: 'Pintura Vinílica',
     esmalte: 'Pintura de Esmalte',
-    epoxica: 'Impermeabilizante',
+    epoxica: 'Impermeabilizantes',
     aerosoles: 'Aerosoles',
-    madera: 'Productos para Madera',
+    madera: 'Maderas',
     aplicadores: 'Aplicadores',
     selladores: 'Selladores y Adhesivos',
+    complementos: 'Complementos',
     diluyentes: 'Diluyentes',
     primerarios: 'Primarios',
   };
@@ -167,6 +171,7 @@ window.addEventListener('DOMContentLoaded', () => {
     madera: ['Tintas', 'Barniz Marino', 'Barnices entintados', 'Barnices base agua', 'Barnices base esmalte', 'Lacas', 'Nitrocelulosas', 'Selladores', 'Primer para Madera', 'Poliuretanos', 'Polyform', 'Protectores para Madera', 'Removedores y Preparación', 'Resanadores', 'Aditivos'],
     aplicadores: ['Brochas', 'Brochas para Madera', 'Cintas', 'Cintas Especializadas', 'Espátulas', 'Rodillos', 'Repuestos para Rodillo'],
     selladores: ['Selladores Elásticos'],
+    complementos: ['Complementos'],
     diluyentes: ['Alberca y Tráfico'],
     primerarios: ['Primarios'],
   }; 
@@ -2403,10 +2408,12 @@ window.addEventListener('DOMContentLoaded', () => {
       impermeabilizante: 'impermeabilizante',
       aerosol: 'aerosol',
       madera: 'madera',
+      maderas: 'madera',
       'productos para madera': 'madera',
       aplicador: 'aplicador',
       sellador: 'selladores y adhesivos',
       'selladores y adhesivos': 'selladores y adhesivos',
+      complemento: 'complemento',
       diluyente: 'diluyente',
       primario: 'primario',
       primerario: 'primario',
@@ -2428,6 +2435,7 @@ window.addEventListener('DOMContentLoaded', () => {
     aplicadores: categoryLabels.aplicadores,
     aplicador: categoryLabels.aplicadores,
     'selladores y adhesivos': categoryLabels.selladores,
+    complemento: categoryLabels.complementos,
     diluyentes: categoryLabels.diluyentes,
     diluyente: categoryLabels.diluyentes,
     primario: categoryLabels.primerarios,
@@ -2441,12 +2449,14 @@ window.addEventListener('DOMContentLoaded', () => {
     madera: 'madera',
     aplicador: 'aplicadores',
     'selladores y adhesivos': 'selladores',
+    complemento: 'complementos',
     diluyente: 'diluyentes',
     primario: 'primerarios',
   }[category] || category);
 
   const normalizeCatalogCategory = (category) => categorySlugFromNormalized(normalizeCategory(category));
-  const catalogProductKey = (product) => `${normalizeCatalogText(product.name)}|${normalizeCategory(product.category || product.categoryLabel)}`;
+  const getProductCategoryValue = (product) => product.categoria || product.category || product.categoryLabel || '';
+  const catalogProductKey = (product) => `${normalizeCatalogText(product.name)}|${normalizeCategory(getProductCategoryValue(product))}`;
   const getDeletedCatalogKeys = () => {
     try {
       return new Set(JSON.parse(localStorage.getItem('rubensDeletedCatalogProducts') || '[]'));
@@ -2472,6 +2482,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return {
       id: row.id,
       category,
+      categoria: category,
       categoryLabel: categoryLabelAliases[normalizedCategory] || category,
       subcategory: row.subcategoria || '',
       name: row.nombre || '',
@@ -2538,9 +2549,11 @@ window.addEventListener('DOMContentLoaded', () => {
       window.RubensCatalogProducts = products.map((product) => ({ ...product }));
       console.log('productos después de fusionar catálogo local + Supabase', products);
       applyFilters();
+      renderHomeHighlights();
     })
     .catch((error) => {
       console.error('No se pudo cargar Supabase; se usa catálogo local', error);
+      renderHomeHighlights();
     });
 
   const updateCartCount = () => {
@@ -3414,19 +3427,30 @@ Total final: ${formatCurrency(order.totals.total)}`;
   };
 
   const createMercadoPagoPreference = async () => {
-    /*
-      Mercado Pago Checkout Pro requiere crear una preference_id en un backend.
-      La Public Key puede estar en frontend, pero el Access Token NO debe exponerse
-      en GitHub Pages ni en ningún archivo público.
+    const order = buildOrderSummaryData();
+    const response = await fetch('/api/createPreference', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cart: cart.map((item) => ({
+          name: item.name,
+          description: item.description || '',
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        shippingCost: order.totals.shipping,
+        customer: order.customer,
+        deliveryMethod: order.deliveryMethod,
+      }),
+    });
 
-      Aquí debe conectarse un endpoint propio, por ejemplo:
-      POST https://tu-backend.com/api/mercado-pago/preference
+    const data = await response.json().catch(() => ({}));
 
-      Ese backend recibe el resumen del pedido, calcula/valida el total y usa el
-      Access Token sandbox/producción en el servidor para crear la preferencia.
-      La respuesta segura esperada para este frontend es: { preference_id: "..." }.
-    */
-    return null;
+    if (!response.ok) {
+      throw new Error(data.message || data.error || 'No se pudo crear la preferencia de Mercado Pago.');
+    }
+
+    return data.preference_id || data.id;
   };
 
   const buildMercadoPagoValidationMessage = () => (
@@ -3662,7 +3686,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
       .sort((a, b) => Number(a.price) - Number(b.price))
       .slice(0, 4);
     const seasonProducts = activeProducts
-      .filter((product) => normalizeCategory(product.category || product.categoryLabel) === normalizeCategory('Impermeabilizante'))
+      .filter((product) => normalizeCategory(getProductCategoryValue(product)) === normalizeCategory('Impermeabilizantes'))
       .slice()
       .sort((a, b) => seasonPriority(a) - seasonPriority(b) || sortByDisplayPriority(a, b))
       .slice(0, 4);
@@ -3691,6 +3715,63 @@ Total final: ${formatCurrency(order.totals.total)}`;
     return a.name.localeCompare(b.name);
   };
 
+  const createHomeHighlightCard = (product) => {
+    const article = document.createElement('article');
+    article.className = 'home-product-card';
+    const imageMarkup = product.image
+      ? `<img src="${product.image}" alt="${product.name}">`
+      : `<div class="home-product-swatch" style="background:${product.colorSwatch || '#d7d7d7'}"></div>`;
+    article.innerHTML = `
+      <a href="productos.html?categoria=${encodeURIComponent(getProductCategoryValue(product) || 'all')}">
+        <div class="home-product-media">${imageMarkup}</div>
+        <div class="home-product-copy">
+          <span>${product.categoryLabel || product.category || 'Producto'}</span>
+          <h4>${product.name}</h4>
+          <p>${formatCurrency(product.price)}</p>
+        </div>
+      </a>
+    `;
+    return article;
+  };
+
+  const renderHomeHighlightList = (container, list, emptyMessage) => {
+    if (!container) return;
+    container.innerHTML = '';
+    if (!list.length) {
+      container.innerHTML = `<p class="no-results">${emptyMessage}</p>`;
+      return;
+    }
+    list.forEach((product) => container.appendChild(createHomeHighlightCard(product)));
+  };
+
+  const renderHomeHighlights = () => {
+    if (!homeCheapListEl && !homeSeasonListEl && !homeFeaturedListEl) return;
+    const activeProducts = products.filter((product) => product.active !== false);
+    const cheapProducts = activeProducts
+      .filter((product) => Number(product.price) > 0)
+      .slice()
+      .sort((a, b) => Number(a.price) - Number(b.price))
+      .slice(0, 3);
+    const seasonProducts = activeProducts
+      .filter((product) => {
+        const text = normalizeCatalogText(`${product.name} ${product.description} ${product.subcategory}`);
+        return normalizeCategory(getProductCategoryValue(product)) === normalizeCategory('Impermeabilizantes')
+          || text.includes('membrana');
+      })
+      .slice()
+      .sort((a, b) => seasonPriority(a) - seasonPriority(b) || sortByDisplayPriority(a, b))
+      .slice(0, 3);
+    const featuredProducts = activeProducts
+      .filter((product) => product.popular || product.featured || product.destacado)
+      .slice()
+      .sort(sortByDisplayPriority)
+      .slice(0, 3);
+
+    renderHomeHighlightList(homeCheapListEl, cheapProducts, 'No hay productos económicos activos.');
+    renderHomeHighlightList(homeSeasonListEl, seasonProducts, 'No hay productos de temporada activos.');
+    renderHomeHighlightList(homeFeaturedListEl, featuredProducts, 'No hay destacados activos.');
+  };
+
   const applyFilters = () => {
     const categoryValue = selectedCategory;
     const subcategoryValue = subcategoryFilter ? subcategoryFilter.value : 'all';
@@ -3700,7 +3781,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
     const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'default';
 
     filteredProducts = products.filter((product) => {
-      const productCategory = normalizeCategory(product.category || product.categoryLabel);
+      const productCategory = normalizeCategory(getProductCategoryValue(product));
       const selectedCategoryNormalized = normalizeCategory(categoryValue);
       const categoryMatch = categoryValue === 'all' || productCategory === selectedCategoryNormalized;
       const subcategoryMatch = subcategoryValue === 'all' || normalizeSubcategory(product.subcategory) === subcategoryValue;
@@ -3713,7 +3794,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
     console.log('Categoría seleccionada:', categoryValue);
     console.log('Productos totales:', products.length);
     console.log('Productos filtrados:', filteredProducts.length, filteredProducts);
-    console.log('Categorías detectadas:', Array.from(new Set(products.map((product) => product.category || product.categoryLabel).filter(Boolean))));
+    console.log('Categorías detectadas:', Array.from(new Set(products.map((product) => getProductCategoryValue(product)).filter(Boolean))));
 
     if (sortOrder === 'price-asc') {
       filteredProducts.sort((a, b) => a.price - b.price);
@@ -3907,8 +3988,14 @@ Total final: ${formatCurrency(order.totals.total)}`;
     refreshCatalogFromSupabase();
   }
 
+  if (!productGeneralListEl && (homeCheapListEl || homeSeasonListEl || homeFeaturedListEl)) {
+    generateProducts();
+    renderHomeHighlights();
+    refreshCatalogFromSupabase();
+  }
+
   window.addEventListener('storage', (event) => {
-    if (event.key === 'rubensCatalogUpdatedAt' && productGeneralListEl) {
+    if (event.key === 'rubensCatalogUpdatedAt' && (productGeneralListEl || homeCheapListEl || homeSeasonListEl || homeFeaturedListEl)) {
       refreshCatalogFromSupabase();
     }
   });

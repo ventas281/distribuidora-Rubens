@@ -89,7 +89,7 @@
     secondary: 'Encuentra productos Fester, Thermotek, membranas y selladores para proteger techos y fachadas.',
     image: 'season-rain-waterproofing.jpg',
     button: 'Ver impermeabilizantes',
-    link: 'productos.html?categoria=Impermeabilizante',
+    link: 'productos.html?categoria=Impermeabilizantes',
     active: true,
     updatedAt: new Date().toISOString(),
   };
@@ -130,20 +130,21 @@
     esmalte: 'Esmalte',
     esmaltes: 'Esmalte',
     'pintura de esmalte': 'Esmalte',
-    epoxica: 'Impermeabilizante',
-    impermeabilizante: 'Impermeabilizante',
-    impermeabilizantes: 'Impermeabilizante',
+    epoxica: 'Impermeabilizantes',
+    impermeabilizante: 'Impermeabilizantes',
+    impermeabilizantes: 'Impermeabilizantes',
     aerosoles: 'Aerosoles',
     aerosol: 'Aerosoles',
-    madera: 'Madera',
-    maderas: 'Madera',
-    'productos para madera': 'Madera',
+    madera: 'Maderas',
+    maderas: 'Maderas',
+    'productos para madera': 'Maderas',
     aplicadores: 'Aplicadores',
     ferreteria: 'Aplicadores',
     selladores: 'Selladores y Adhesivos',
     'selladores y adhesivos': 'Selladores y Adhesivos',
+    complementos: 'Complementos',
+    complemento: 'Complementos',
     diluyentes: 'Diluyentes',
-    complementos: 'Diluyentes',
     primarios: 'Primarios',
     primerarios: 'Primarios',
     industrial: 'Primarios',
@@ -1366,6 +1367,7 @@
           product,
         });
         persistProductsFallback();
+        publishCatalogUpdate();
         resetProductForm();
         renderAll();
         return;
@@ -1386,6 +1388,7 @@
       }
     }
     persistProductsFallback();
+    publishCatalogUpdate();
     resetProductForm();
     renderAll();
   };
@@ -1437,6 +1440,7 @@
         supabaseEnabled = false;
         products = products.filter((item) => item.id !== product.id);
         persistProductsFallback();
+        publishCatalogUpdate();
         setStatus(elements.productStatus, `Error Supabase: ${getSupabaseErrorMessage(error)}. Producto eliminado de localStorage.`, true);
       }
       renderAll();
@@ -1464,6 +1468,7 @@
       });
       supabaseEnabled = false;
       persistProductsFallback();
+      publishCatalogUpdate();
       setStatus(elements.productStatus, `Error Supabase: ${getSupabaseErrorMessage(error)}. Producto actualizado en localStorage.`, true);
     }
     persistProductsFallback();
