@@ -22,7 +22,8 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   opacity: 0.85;
 }
 .product-volume {
@@ -281,6 +282,127 @@ button,
   justify-content: center;
   flex-wrap: wrap;
   gap: 1rem;
+}
+
+.modal-open {
+  overflow: hidden;
+}
+
+.rain-season-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 180ms ease, visibility 180ms ease;
+}
+
+.rain-season-popup.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.rain-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+}
+
+.rain-banner-inner {
+  position: relative;
+  z-index: 1;
+  width: min(920px, 100%);
+  max-height: min(86vh, 720px);
+  overflow: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(220px, 0.7fr);
+  gap: 1.25rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.32);
+}
+
+.rain-banner-close {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 999px;
+  background: #111111;
+  color: #ffffff;
+  font-size: 1.45rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rain-banner-copy {
+  display: grid;
+  gap: 0.85rem;
+  padding-right: 1.5rem;
+}
+
+.rain-banner-kicker {
+  margin: 0;
+  color: var(--brand);
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 0.82rem;
+}
+
+.rain-banner-copy h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+}
+
+.rain-banner-subtitle,
+.rain-banner-support {
+  margin: 0;
+  color: var(--muted);
+}
+
+.rain-banner-products,
+.rain-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.rain-banner-products span {
+  padding: 0.45rem 0.65rem;
+  border-radius: 999px;
+  background: #f7f3ef;
+  color: #111111;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.rain-banner-visual {
+  min-height: 260px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #111111, #c22b2b);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.rain-banner-badge {
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #111111;
+  text-align: center;
+  font-weight: 900;
 }
 
 .btn {
@@ -599,9 +721,10 @@ button,
   width: 100%;
   height: 180px;
   border-radius: 22px;
-  background: linear-gradient(135deg, rgba(194, 43, 43, 0.12), rgba(18, 18, 18, 0.06));
-  display: grid;
-  place-items: center;
+  background: #f7f3ef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: rgba(18, 18, 18, 0.4);
   font-size: 1rem;
   font-weight: 700;
@@ -611,9 +734,12 @@ button,
 }
 
 .product-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 92%;
+  max-height: 92%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
   display: block;
 }
 
@@ -747,6 +873,20 @@ button,
 }
 
 @media (max-width: 880px) {
+  .rain-banner-inner {
+    grid-template-columns: 1fr;
+    max-height: 90vh;
+    border-radius: 16px;
+  }
+
+  .rain-banner-copy {
+    padding-right: 0;
+  }
+
+  .rain-banner-visual {
+    min-height: 150px;
+  }
+
   .product-image {
     height: 160px;
   }
@@ -1161,9 +1301,22 @@ button,
 
 .product-image {
   width: 100%;
+  height: 190px;
   min-height: 190px;
   border-radius: 20px;
-  background: linear-gradient(135deg, rgba(194, 43, 43, 0.12), rgba(18, 18, 18, 0.08));
+  background: #f7f3ef;
+  overflow: hidden;
+}
+
+.product-image-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(18, 18, 18, 0.55);
+  font-size: 0.9rem;
+  font-weight: 900;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .product-sku {

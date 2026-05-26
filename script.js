@@ -55,6 +55,35 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  const rainSeasonPopup = document.getElementById('temporada-lluvias');
+  const showRainSeasonPopup = () => {
+    if (!rainSeasonPopup) return;
+    rainSeasonPopup.classList.add('is-visible');
+    document.body.classList.add('modal-open');
+  };
+  const closeRainSeasonPopup = () => {
+    if (!rainSeasonPopup) return;
+    rainSeasonPopup.classList.remove('is-visible');
+    document.body.classList.remove('modal-open');
+  };
+
+  if (rainSeasonPopup) {
+    window.setTimeout(showRainSeasonPopup, 350);
+    document.querySelectorAll('[data-close-rain-banner]').forEach((button) => {
+      button.addEventListener('click', closeRainSeasonPopup);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && rainSeasonPopup.classList.contains('is-visible')) {
+        closeRainSeasonPopup();
+      }
+    });
+    window.addEventListener('hashchange', () => {
+      if (window.location.hash === '#inicio' || window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
+        showRainSeasonPopup();
+      }
+    });
+  }
+
   const categoryFilter = document.getElementById('category-filter');
   const subcategoryFilter = document.getElementById('subcategory-filter');
   const productSearch = document.getElementById('product-search');
@@ -68,7 +97,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const filterControls = document.getElementById('filter-controls');
   const productGeneralListEl = document.getElementById('product-general-list');
   const productPopularListEl = document.getElementById('product-popular-list');
-  const productRecommendedListEl = document.getElementById('product-recommended-list');
+  const productCheapListEl = document.getElementById('product-cheap-list');
+  const productSeasonListEl = document.getElementById('product-season-list');
   const productCountEl = document.getElementById('product-count');
   const cartCountEl = document.getElementById('cart-count');
   const viewCartButton = document.getElementById('view-cart');
@@ -2430,8 +2460,10 @@ window.addEventListener('DOMContentLoaded', () => {
       price: Number(row.precio_base) || 0,
       sizeOptions: sizeOptions.length ? sizeOptions : undefined,
       cantidad: row.tamanos_precios || '',
-      popular: Boolean(row.promocion),
+      popular: Boolean(row.destacado),
       recommended: Boolean(row.destacado),
+      featured: Boolean(row.destacado),
+      promo: Boolean(row.promocion),
       rating: 4,
       colorSwatch: '#d7d7d7',
       image: row.imagen || '',
@@ -2478,6 +2510,18 @@ window.addEventListener('DOMContentLoaded', () => {
     console.log('productos recibidos desde Supabase', rows);
     return rows.map(productFromSupabaseRow);
   };
+
+  const refreshCatalogFromSupabase = () => loadSupabaseCatalogProducts()
+    .then((remoteProducts) => {
+      products = mergeCatalogProducts(products, remoteProducts);
+      filteredProducts = [...products];
+      window.RubensCatalogProducts = products.map((product) => ({ ...product }));
+      console.log('productos después de fusionar catálogo local + Supabase', products);
+      applyFilters();
+    })
+    .catch((error) => {
+      console.error('No se pudo cargar Supabase; se usa catálogo local', error);
+    });
 
   const updateCartCount = () => {
     if (!cartCountEl) return;
@@ -3578,16 +3622,35 @@ Total final: ${formatCurrency(order.totals.total)}`;
     });
   };
 
-  const renderProducts = () => {
-    if (!productGeneralListEl || !productPopularListEl || !productRecommendedListEl || !productCountEl) return;
+  const seasonPriority = (product) => {
+    const text = normalizeCatalogText(`${product.name} ${product.description} ${product.subcategory}`);
+    const keywords = ['membrana', 'thermotek', 'acriton', 'vaportite', 'plastic cement'];
+    const index = keywords.findIndex((keyword) => text.includes(keyword));
+    return index >= 0 ? index : keywords.length;
+  };
 
-    const generalProducts = filteredProducts;
-    const popularProducts = filteredProducts.filter((product) => product.popular);
-    const recommendedProducts = filteredProducts.filter((product) => product.recommended);
+  const renderProducts = () => {
+    if (!productGeneralListEl || !productPopularListEl || !productCountEl) return;
+
+    const activeProducts = filteredProducts.filter((product) => product.active !== false);
+    const generalProducts = activeProducts;
+    const featuredProducts = activeProducts.filter((product) => product.popular || product.featured || product.destacado);
+    const popularProducts = (featuredProducts.length ? featuredProducts : activeProducts).slice(0, 4);
+    const cheapProducts = activeProducts
+      .filter((product) => Number(product.price) > 0)
+      .slice()
+      .sort((a, b) => Number(a.price) - Number(b.price))
+      .slice(0, 4);
+    const seasonProducts = activeProducts
+      .filter((product) => normalizeCatalogCategory(product.category || product.categoryLabel) === 'epoxica')
+      .slice()
+      .sort((a, b) => seasonPriority(a) - seasonPriority(b) || sortByDisplayPriority(a, b))
+      .slice(0, 4);
 
     renderProductGrid(productGeneralListEl, generalProducts, 'No hay productos generales para esta combinación.');
-    renderProductGrid(productPopularListEl, popularProducts, 'No hay productos populares para esta búsqueda.');
-    renderProductGrid(productRecommendedListEl, recommendedProducts, 'No hay recomendaciones para esta fecha.');
+    renderProductGrid(productPopularListEl, popularProducts, 'No hay productos destacados para esta búsqueda.');
+    renderProductGrid(productCheapListEl, cheapProducts, 'No hay productos económicos para esta búsqueda.');
+    renderProductGrid(productSeasonListEl, seasonProducts, 'No hay impermeabilizantes para esta búsqueda.');
 
     productCountEl.textContent = `Mostrando ${generalProducts.length} productos generales`;
   };
@@ -3613,17 +3676,23 @@ Total final: ${formatCurrency(order.totals.total)}`;
     const subcategoryValue = subcategoryFilter ? subcategoryFilter.value : 'all';
     const priceInput = document.getElementById('price-filter');
     const maxPrice = priceInput && priceInput.value.trim() !== '' ? parseFloat(priceInput.value) : null;
-    const searchTerm = productSearch ? productSearch.value.trim().toLowerCase() : '';
+    const searchTerm = productSearch ? normalizeCatalogText(productSearch.value) : '';
     const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'default';
 
     filteredProducts = products.filter((product) => {
-      const categoryMatch = categoryValue === 'all' || product.category === categoryValue;
+      const productCategory = normalizeCatalogCategory(product.category || product.categoryLabel);
+      const selectedCategoryNormalized = normalizeCatalogCategory(categoryValue);
+      const categoryMatch = categoryValue === 'all' || productCategory === selectedCategoryNormalized;
       const subcategoryMatch = subcategoryValue === 'all' || normalizeSubcategory(product.subcategory) === subcategoryValue;
       const priceMatch = maxPrice === null || product.price <= maxPrice;
       const searchMatch = !searchTerm || [product.name, product.description, product.categoryLabel, product.subcategory]
-        .some((text) => text.toLowerCase().includes(searchTerm));
+        .some((text) => normalizeCatalogText(text).includes(searchTerm));
       return categoryMatch && subcategoryMatch && priceMatch && searchMatch;
     });
+
+    console.log('categoría seleccionada', categoryValue);
+    console.log('productos encontrados', products.length);
+    console.log('productos filtrados', filteredProducts.length, filteredProducts);
 
     if (sortOrder === 'price-asc') {
       filteredProducts.sort((a, b) => a.price - b.price);
@@ -3800,20 +3869,28 @@ Total final: ${formatCurrency(order.totals.total)}`;
 
   if (productGeneralListEl) {
     generateProducts();
-    renderSubcategoryOptions('all');
-    applyFilters();
-    loadSupabaseCatalogProducts()
-      .then((remoteProducts) => {
-        products = mergeCatalogProducts(products, remoteProducts);
-        filteredProducts = [...products];
-        window.RubensCatalogProducts = products.map((product) => ({ ...product }));
-        console.log('productos después de fusionar catálogo local + Supabase', products);
-        applyFilters();
-      })
-      .catch((error) => {
-        console.error('No se pudo cargar Supabase; se usa catálogo local', error);
+    const params = new URLSearchParams(window.location.search);
+    const requestedCategory = params.get('categoria');
+    if (requestedCategory) {
+      selectedCategory = normalizeCatalogCategory(requestedCategory);
+      categoryItems.forEach((button) => {
+        button.classList.toggle('active', normalizeCatalogCategory(button.dataset.category) === selectedCategory);
       });
+      const activeCategoryButton = Array.from(categoryItems).find((button) => button.classList.contains('active'));
+      if (activeCategoryButton && allCategoryButton && activeCategoryButton.dataset.category !== 'all') {
+        allCategoryButton.textContent = activeCategoryButton.textContent;
+      }
+    }
+    renderSubcategoryOptions(selectedCategory);
+    applyFilters();
+    refreshCatalogFromSupabase();
   }
+
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'rubensCatalogUpdatedAt' && productGeneralListEl) {
+      refreshCatalogFromSupabase();
+    }
+  });
 
   if (categoryFilter) {
     categoryFilter.addEventListener('change', () => {

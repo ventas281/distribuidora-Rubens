@@ -89,7 +89,7 @@
     secondary: 'Encuentra productos Fester, Thermotek, membranas y selladores para proteger techos y fachadas.',
     image: 'season-rain-waterproofing.jpg',
     button: 'Ver impermeabilizantes',
-    link: 'productos.html?categoria=epoxica',
+    link: 'productos.html?categoria=Impermeabilizante',
     active: true,
     updatedAt: new Date().toISOString(),
   };
@@ -391,6 +391,7 @@
   let currentProductImageData = '';
   let currentProductImageName = '';
   let currentEditingProductSource = '';
+  let currentEditingOriginalProduct = null;
   let editingProductId = null;
   let supabaseClient = null;
   let supabaseEnabled = false;
@@ -640,6 +641,22 @@
     renderAll();
   };
 
+  const cargarProductosDesdeSupabase = async () => {
+    const remoteProducts = await loadProductsFromSupabase();
+    const catalogProducts = await readCatalogProductsFromIframe();
+    products = adminStore.saveProducts(mergeProductsWithoutDuplicates(remoteProducts, catalogProducts));
+    renderAll();
+    return products;
+  };
+
+  const publishCatalogUpdate = () => {
+    try {
+      localStorage.setItem('rubensCatalogUpdatedAt', String(Date.now()));
+    } catch (error) {
+      console.warn('No se pudo publicar actualización de catálogo', error);
+    }
+  };
+
   const persistProductsFallback = () => {
     products = adminStore.saveProducts(products);
   };
@@ -767,6 +784,7 @@
     currentProductImageData = '';
     currentProductImageName = '';
     currentEditingProductSource = '';
+    currentEditingOriginalProduct = null;
     editingProductId = null;
     if (productFields.imageFile) productFields.imageFile.value = '';
     updateProductImagePreview('', '');
@@ -1237,6 +1255,7 @@
     currentProductImageData = product.imageData || '';
     currentProductImageName = product.imageName || '';
     currentEditingProductSource = product.source || '';
+    currentEditingOriginalProduct = { ...product };
     updateProductImagePreview(product.imageData || product.image || '', product.imageName || '');
     productFields.active.checked = product.active;
     productFields.featured.checked = product.featured;
@@ -1319,6 +1338,9 @@
 
   const guardarProducto = async () => {
     const product = productFromForm();
+    if (currentEditingOriginalProduct?.source === 'catalog') {
+      rememberDeletedCatalogProduct(currentEditingOriginalProduct);
+    }
     forgetDeletedCatalogProduct(product);
     const index = products.findIndex((item) => item.id === product.id);
     let savedToSupabase = false;
@@ -1335,7 +1357,8 @@
         products.unshift(savedProduct);
         setStatus(elements.productStatus, 'Producto guardado en Supabase');
       }
-      products = adminStore.saveProducts(await loadProductsFromSupabase());
+      await cargarProductosDesdeSupabase();
+      publishCatalogUpdate();
       logSupabase('Reload despues de guardar/actualizar', { count: products.length });
     } catch (error) {
       if (savedToSupabase) {
@@ -1406,7 +1429,8 @@
         }
         supabaseEnabled = true;
         setStatus(elements.productStatus, 'Producto eliminado');
-        products = adminStore.saveProducts(mergeProductsWithoutDuplicates(await loadProductsFromSupabase(), catalogProducts));
+        await cargarProductosDesdeSupabase();
+        publishCatalogUpdate();
         logSupabase('Reload despues de eliminar', { count: products.length });
       } catch (error) {
         logSupabaseError('Eliminar fallback a localStorage', error, { product });
@@ -1430,7 +1454,8 @@
       if (index >= 0) products[index] = savedProduct;
       supabaseEnabled = true;
       setStatus(elements.productStatus, 'Producto actualizado');
-      products = adminStore.saveProducts(await loadProductsFromSupabase());
+      await cargarProductosDesdeSupabase();
+      publishCatalogUpdate();
       logSupabase('Reload despues de cambiar estado', { count: products.length });
     } catch (error) {
       logSupabaseError('Cambiar estado fallback a localStorage', error, {
