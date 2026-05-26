@@ -338,6 +338,30 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const normalizeCategoryKey = (category) => categoryAliases[normalizeCategoryText(category)] || normalizeCategoryText(category).replace(/\s+/g, '-');
 
+  const normalizeText = (text) => String(text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/\s+/g, ' ');
+
+  const productMergeKey = (product) => [
+    normalizeText(product.name),
+    normalizeCategoryKey(product.category),
+    normalizeText(product.brand),
+  ].join('|');
+
+  const mergeLocalAndSupabaseProducts = (localProducts, supabaseProducts) => {
+    const merged = new Map();
+    localProducts.forEach((product) => {
+      merged.set(productMergeKey(product), product);
+    });
+    supabaseProducts.forEach((product) => {
+      merged.set(productMergeKey(product), product);
+    });
+    return Array.from(merged.values());
+  };
+
   const SUPABASE_REST_URL = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co/rest/v1/';
   const SUPABASE_KEY = 'sb_publishable_IPQVpAeDJwNh_bZ575tz5w_8hAUzsEL';
   const SUPABASE_PRODUCTS_TABLE = 'productos';
@@ -4309,8 +4333,12 @@ Total final: ${formatCurrency(order.totals.total)}`;
     try {
       const supabaseProducts = await loadProductsFromSupabaseForCatalog();
       if (supabaseProducts.length) {
-        products = supabaseProducts;
+        products = mergeLocalAndSupabaseProducts(products, supabaseProducts);
         filteredProducts = [...products];
+        console.log('catálogo fusionado local + Supabase', {
+          total: products.length,
+          supabase: supabaseProducts.length,
+        });
         renderCurrentCatalog();
       } else {
         console.log('Supabase cargó 0 productos. Usando catálogo local como fallback.');

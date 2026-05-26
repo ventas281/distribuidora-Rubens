@@ -834,7 +834,16 @@
       setStatus(elements.productStatus, 'No se pudo importar el catalogo actual.', true);
       return;
     }
-    const previousProducts = products;
+    let previousProducts = products;
+    if (supabaseEnabled) {
+      try {
+        previousProducts = adminStore.saveProducts(await loadProductsFromSupabase()).concat(
+          products.filter((product) => product.source !== 'supabase')
+        );
+      } catch (error) {
+        logSupabaseError('No se pudo precargar Supabase antes de sincronizar catalogo', error);
+      }
+    }
     const mergedProducts = mergeProductsWithoutDuplicates(previousProducts, catalogProducts);
     const importedCount = mergedProducts.length - previousProducts.length;
     products = mergedProducts;
