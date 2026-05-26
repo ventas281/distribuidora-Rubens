@@ -89,6 +89,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const productSearch = document.getElementById('product-search');
   const sortOrderSelect = document.getElementById('sort-order');
   let selectedCategory = 'all';
+  let selectedVisualCategoryFilter = 'todos los productos';
 
   const categoryItems = document.querySelectorAll('.category-item');
   const allCategoryButton = document.querySelector('.category-item[data-category="all"]');
@@ -2397,39 +2398,37 @@ window.addEventListener('DOMContentLoaded', () => {
     .trim();
 
   const normalizeCategory = (value) => {
-    const normalized = normalizeCatalogText(value).replace(/\s+/g, ' ');
+    const normalized = String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .replace(/s$/, '');
     const aliases = {
+      'todos los producto': 'todos los productos',
       vinilica: 'vinilica',
       'pintura vinilica': 'vinilica',
       esmalte: 'esmalte',
       'pintura de esmalte': 'esmalte',
       epoxica: 'impermeabilizante',
       impermeabilizante: 'impermeabilizante',
-      impermeabilizantes: 'impermeabilizante',
       aerosol: 'aerosol',
-      aerosoles: 'aerosol',
+      aerosole: 'aerosol',
       madera: 'madera',
-      maderas: 'madera',
       'productos para madera': 'madera',
       aplicador: 'aplicador',
-      aplicadores: 'aplicador',
+      aplicadore: 'aplicador',
       sellador: 'selladores y adhesivos',
-      selladores: 'selladores y adhesivos',
+      selladore: 'selladores y adhesivos',
       'selladores y adhesivos': 'selladores y adhesivos',
+      'selladores y adhesivo': 'selladores y adhesivos',
       complemento: 'complemento',
-      complementos: 'complemento',
       diluyente: 'diluyente',
-      diluyentes: 'diluyente',
       primario: 'primario',
-      primarios: 'primario',
       primerario: 'primario',
-      primerarios: 'primario',
     };
-    const singular = normalized
-      .split(' ')
-      .map((word) => word.length > 3 && word.endsWith('s') ? word.slice(0, -1) : word)
-      .join(' ');
-    return aliases[normalized] || aliases[singular] || singular;
+    return aliases[normalized] || normalized;
   };
 
   const categoryLabelAliases = {
@@ -3562,6 +3561,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
     const card = document.createElement('article');
     card.className = 'product-card reveal';
     card.dataset.productId = product.id;
+    card.dataset.category = product.categoryLabel || getProductCategoryValue(product) || '';
     const ratingValue = Math.max(0, Math.min(5, Number(product.rating) || 0));
     const ratingVotes = Number(product.ratingVotes) || 0;
     const stars = Array.from({ length: 5 }, (_, index) => {
@@ -3644,6 +3644,23 @@ Total final: ${formatCurrency(order.totals.total)}`;
     }
 
     products.forEach((product) => container.appendChild(createProductCard(product)));
+  };
+
+  const applyVisualCategoryFilter = (filterValue = selectedVisualCategoryFilter) => {
+    const filter = normalizeCategory(filterValue || 'Todos los productos');
+    let visibleCount = 0;
+    console.log('Filtro seleccionado:', filter);
+
+    document.querySelectorAll('.product-card').forEach((card) => {
+      const category = normalizeCategory(card.dataset.category);
+      const isVisible = filter === 'todos los productos' || category === filter;
+      card.style.display = isVisible ? '' : 'none';
+      if (isVisible) visibleCount += 1;
+      console.log('Categoría de card:', category);
+    });
+
+    console.log('Total visibles:', visibleCount);
+    return visibleCount;
   };
 
   const updateProductCardSelection = (product) => {
@@ -3755,6 +3772,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
     renderProductGrid(productPopularListEl, popularProducts, 'No hay productos destacados para esta búsqueda.');
     renderProductGrid(productCheapListEl, cheapProducts, 'No hay productos económicos para esta búsqueda.');
     renderProductGrid(productSeasonListEl, seasonProducts, 'No hay impermeabilizantes para esta búsqueda.');
+    applyVisualCategoryFilter(selectedVisualCategoryFilter);
 
     productCountEl.textContent = `Mostrando ${generalProducts.length} productos generales`;
   };
@@ -4036,6 +4054,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
         button.classList.toggle('active', categorySlugFromNormalized(normalizeCategory(button.dataset.category)) === selectedCategory);
       });
       const activeCategoryButton = Array.from(categoryItems).find((button) => button.classList.contains('active'));
+      selectedVisualCategoryFilter = normalizeCategory(activeCategoryButton?.dataset.filter || activeCategoryButton?.textContent || requestedCategory);
       if (activeCategoryButton && allCategoryButton && activeCategoryButton.dataset.category !== 'all') {
         allCategoryButton.textContent = activeCategoryButton.textContent;
       }
@@ -4100,6 +4119,8 @@ Total final: ${formatCurrency(order.totals.total)}`;
   if (categoryItems.length > 0) {
     categoryItems.forEach((button) => {
       button.addEventListener('click', () => {
+        const filter = normalizeCategory(button.dataset.filter || button.textContent);
+
         if (button.dataset.category === 'all' && categoryList && selectedCategory !== 'all' && categoryList.classList.contains('is-collapsed')) {
           categoryList.classList.remove('is-collapsed');
           allCategoryButton.textContent = 'Todos los productos';
@@ -4114,8 +4135,9 @@ Total final: ${formatCurrency(order.totals.total)}`;
         categoryItems.forEach((item) => item.classList.remove('active'));
         button.classList.add('active');
         updateCompactCategoryLabel(button);
-        selectedCategory = button.dataset.category;
-        renderSubcategoryOptions(button.dataset.category);
+        selectedVisualCategoryFilter = filter;
+        selectedCategory = filter === 'todos los productos' ? 'all' : categorySlugFromNormalized(filter);
+        renderSubcategoryOptions(selectedCategory);
         if (subcategoryFilter) {
           subcategoryFilter.value = 'all';
         }
