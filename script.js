@@ -2459,6 +2459,10 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     localProducts.forEach((product) => addProduct(product, false));
     remoteProducts.filter((product) => product.active !== false).forEach((product) => addProduct(product, true));
+    if (merged.length === 0 && localProducts.length > 0) {
+      console.warn('La fusion del catalogo quedo vacia; se conserva el catalogo local como respaldo.');
+      return localProducts;
+    }
     return merged;
   };
 
