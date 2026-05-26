@@ -379,7 +379,7 @@
   let currentProductImageData = '';
   let currentProductImageName = '';
   let currentEditingProductSource = '';
-  let editingProductId = '';
+  let editingProductId = null;
   let supabaseClient = null;
   let supabaseEnabled = false;
   let pendingSignedOutMessage = '';
@@ -512,7 +512,7 @@
 
   const saveProductToSupabase = async (product, forcedEditingProductId = editingProductId) => {
     getSupabaseClient();
-    const productIdForUpdate = forcedEditingProductId || '';
+    const productIdForUpdate = forcedEditingProductId || null;
     const normalizedProduct = normalizeProduct(product);
     const payload = productToSupabaseRow(normalizedProduct);
     console.log('[Rubens Admin Supabase] Intentando guardar en Supabase', {
@@ -524,23 +524,29 @@
 
     if (productIdForUpdate) {
       console.log('Modo edición');
-      console.log('editingProductId', productIdForUpdate);
+      console.log('EDITANDO PRODUCTO ID:', productIdForUpdate);
+      console.log('HACIENDO UPDATE, NO INSERT');
       console.log('Payload update', payload);
       logSupabase('UPDATE payload', {
         table: SUPABASE_PRODUCTS_TABLE,
         id: productIdForUpdate,
         payload,
       });
-      const data = await supabaseRestRequest(`${SUPABASE_PRODUCTS_TABLE}?id=eq.${encodeURIComponent(productIdForUpdate)}&select=*`, {
-        method: 'PATCH',
-        headers: { Prefer: 'return=representation' },
-        body: JSON.stringify(payload),
-      });
-      const row = Array.isArray(data) ? data[0] : data;
-      console.log('Update Supabase response', row);
-      if (!row?.id) throw new Error('No se encontro el producto para actualizar en Supabase.');
-      logSupabase('UPDATE success', { id: row?.id, row });
-      return productFromSupabaseRow(row);
+      try {
+        const data = await supabaseRestRequest(`${SUPABASE_PRODUCTS_TABLE}?id=eq.${encodeURIComponent(productIdForUpdate)}&select=*`, {
+          method: 'PATCH',
+          headers: { Prefer: 'return=representation' },
+          body: JSON.stringify(payload),
+        });
+        const row = Array.isArray(data) ? data[0] : data;
+        console.log('UPDATE RESPONSE:', data, null);
+        if (!row?.id) throw new Error('No se encontro el producto para actualizar en Supabase.');
+        logSupabase('UPDATE success', { id: row?.id, row });
+        return productFromSupabaseRow(row);
+      } catch (error) {
+        console.log('UPDATE RESPONSE:', null, error);
+        throw error;
+      }
     }
 
     const existingProducts = await loadProductsFromSupabase();
@@ -561,6 +567,7 @@
       return productFromSupabaseRow(row);
     }
 
+    console.log('HACIENDO INSERT NUEVO');
     logSupabase('INSERT payload', {
       table: SUPABASE_PRODUCTS_TABLE,
       payload,
@@ -739,7 +746,7 @@
     currentProductImageData = '';
     currentProductImageName = '';
     currentEditingProductSource = '';
-    editingProductId = '';
+    editingProductId = null;
     if (productFields.imageFile) productFields.imageFile.value = '';
     updateProductImagePreview('', '');
   };
@@ -1148,7 +1155,7 @@
   const fillProductForm = (product) => {
     editingProductId = product.id;
     console.log('Modo edición');
-    console.log('editingProductId', editingProductId);
+    console.log('EDITANDO PRODUCTO ID:', editingProductId);
     productFields.id.value = product.id;
     productFields.name.value = product.name;
     productFields.brand.value = product.brand;

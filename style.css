@@ -1393,6 +1393,32 @@ body.rain-popup-open {
   font-weight: 700;
 }
 
+.product-image,
+.product-card-image,
+.product-media {
+  width: 100%;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #f7f3ef;
+  border-radius: 18px;
+}
+
+.product-image img,
+.product-card-image img,
+.product-media img,
+.product-card img {
+  max-width: 90%;
+  max-height: 90%;
+  width: auto;
+  height: auto;
+  object-fit: contain !important;
+  object-position: center;
+  display: block;
+}
+
 .cart-panel {
   background: white;
   border-radius: var(--radius);
