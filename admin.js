@@ -116,6 +116,13 @@
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
+  const normalizeText = (text) => String(text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/\s+/g, ' ');
+
   const categoryAliases = {
     vinilica: 'Vinílica',
     'pintura vinilica': 'Vinílica',
@@ -144,9 +151,9 @@
   const normalizeCategoryLabel = (category) => categoryAliases[normalizeCategoryText(category)] || String(category || '').trim();
 
   const duplicateProductKey = (product) => [
-    normalizeCategoryText(product.name),
-    normalizeCategoryText(product.brand),
-    normalizeCategoryText(normalizeCategoryLabel(product.category)),
+    normalizeText(product.name),
+    normalizeText(product.brand),
+    normalizeText(normalizeCategoryLabel(product.category)),
   ].join('|');
 
   const normalizeProduct = (product) => ({
@@ -372,6 +379,7 @@
   let currentProductImageData = '';
   let currentProductImageName = '';
   let currentEditingProductSource = '';
+  let editingProductId = '';
   let supabaseClient = null;
   let supabaseEnabled = false;
   let pendingSignedOutMessage = '';
@@ -502,30 +510,34 @@
     return (data || []).map(productFromSupabaseRow);
   };
 
-  const saveProductToSupabase = async (product) => {
+  const saveProductToSupabase = async (product, forcedEditingProductId = editingProductId) => {
     getSupabaseClient();
-    const editingProductId = product.id ? String(product.id) : '';
+    const productIdForUpdate = forcedEditingProductId || '';
     const normalizedProduct = normalizeProduct(product);
     const payload = productToSupabaseRow(normalizedProduct);
     console.log('[Rubens Admin Supabase] Intentando guardar en Supabase', {
       table: SUPABASE_PRODUCTS_TABLE,
-      operation: editingProductId ? 'UPDATE' : 'INSERT',
-      id: editingProductId || null,
+      operation: productIdForUpdate ? 'UPDATE' : 'INSERT',
+      id: productIdForUpdate || null,
     });
     console.log('[Rubens Admin Supabase] Payload enviado', payload);
 
-    if (editingProductId && normalizedProduct.source === 'supabase') {
+    if (productIdForUpdate) {
+      console.log('Modo edición');
+      console.log('editingProductId', productIdForUpdate);
+      console.log('Payload update', payload);
       logSupabase('UPDATE payload', {
         table: SUPABASE_PRODUCTS_TABLE,
-        id: editingProductId,
+        id: productIdForUpdate,
         payload,
       });
-      const data = await supabaseRestRequest(`${SUPABASE_PRODUCTS_TABLE}?id=eq.${encodeURIComponent(editingProductId)}&select=*`, {
+      const data = await supabaseRestRequest(`${SUPABASE_PRODUCTS_TABLE}?id=eq.${encodeURIComponent(productIdForUpdate)}&select=*`, {
         method: 'PATCH',
         headers: { Prefer: 'return=representation' },
         body: JSON.stringify(payload),
       });
       const row = Array.isArray(data) ? data[0] : data;
+      console.log('Update Supabase response', row);
       if (!row?.id) throw new Error('No se encontro el producto para actualizar en Supabase.');
       logSupabase('UPDATE success', { id: row?.id, row });
       return productFromSupabaseRow(row);
@@ -727,6 +739,7 @@
     currentProductImageData = '';
     currentProductImageName = '';
     currentEditingProductSource = '';
+    editingProductId = '';
     if (productFields.imageFile) productFields.imageFile.value = '';
     updateProductImagePreview('', '');
   };
@@ -822,7 +835,7 @@
             ...catalogProduct,
             id: existing?.source === 'supabase' ? existing.id : '',
             source: existing?.source || catalogProduct.source,
-          });
+          }, existing?.source === 'supabase' ? existing.id : '');
         }
         products = adminStore.saveProducts(await loadProductsFromSupabase());
         setStatus(elements.productStatus, `Catalogo sincronizado: ${catalogProducts.length} productos revisados, ${Math.max(importedCount, 0)} nuevos.`);
@@ -1110,7 +1123,7 @@
 
   const productFromForm = () => {
     const rawProduct = {
-      id: productFields.id.value || '',
+      id: editingProductId || '',
       name: productFields.name.value,
       brand: productFields.brand.value,
       category: productFields.category.value,
@@ -1133,6 +1146,9 @@
   };
 
   const fillProductForm = (product) => {
+    editingProductId = product.id;
+    console.log('Modo edición');
+    console.log('editingProductId', editingProductId);
     productFields.id.value = product.id;
     productFields.name.value = product.name;
     productFields.brand.value = product.brand;
@@ -1232,7 +1248,7 @@
     let savedToSupabase = false;
 
     try {
-      const savedProduct = await saveProductToSupabase(product);
+      const savedProduct = await saveProductToSupabase(product, editingProductId);
       savedToSupabase = true;
       supabaseEnabled = true;
       if (index >= 0) {
@@ -1324,7 +1340,7 @@
     if (button.dataset.productAction === 'toggle-promo') product.promo = !product.promo;
 
     try {
-      const savedProduct = await saveProductToSupabase(product);
+      const savedProduct = await saveProductToSupabase(product, product.id);
       const index = products.findIndex((item) => item.id === product.id);
       if (index >= 0) products[index] = savedProduct;
       supabaseEnabled = true;

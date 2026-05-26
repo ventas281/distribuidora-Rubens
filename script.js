@@ -338,6 +338,61 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const normalizeCategoryKey = (category) => categoryAliases[normalizeCategoryText(category)] || normalizeCategoryText(category).replace(/\s+/g, '-');
 
+  const SUPABASE_REST_URL = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co/rest/v1/';
+  const SUPABASE_KEY = 'sb_publishable_IPQVpAeDJwNh_bZ575tz5w_8hAUzsEL';
+  const SUPABASE_PRODUCTS_TABLE = 'productos';
+
+  const parseAdminSizeOptions = (sizesText) => {
+    const lines = String(sizesText || '').split('\n').map((line) => line.trim()).filter(Boolean);
+    const options = lines.map((line, index) => {
+      const [labelPart, pricePart] = line.split(':');
+      const price = Number(String(pricePart || '').replace(/[^\d.]/g, '')) || 0;
+      return price ? {
+        id: slugify(labelPart || `opcion-${index + 1}`),
+        label: (labelPart || `Opción ${index + 1}`).trim(),
+        price,
+      } : null;
+    }).filter(Boolean);
+    return options.length > 1 ? options : null;
+  };
+
+  const productFromSupabaseRow = (row) => {
+    const category = normalizeCategoryKey(row.categoria);
+    const sizes = String(row.tamanos_precios || '').trim();
+    return {
+      id: String(row.id),
+      category,
+      categoryLabel: categoryLabels[category] || row.categoria || 'Producto',
+      subcategory: String(row.subcategoria || '').trim() || 'General',
+      name: String(row.nombre || '').trim(),
+      brand: String(row.marca || '').trim(),
+      description: String(row.descripcion || '').trim(),
+      detailText: String(row.descripcion || '').trim(),
+      price: Number(row.precio_base) || 0,
+      sizeOptions: parseAdminSizeOptions(sizes),
+      cantidad: sizes || 'Presentación única',
+      popular: Boolean(row.destacado || row.promocion),
+      recommended: Boolean(row.destacado),
+      rating: 4,
+      colorSwatch: '',
+      image: String(row.imagen || '').trim(),
+      imageFit: 'contain',
+      source: 'supabase',
+    };
+  };
+
+  const loadProductsFromSupabaseForCatalog = async () => {
+    const response = await fetch(`${SUPABASE_REST_URL}${SUPABASE_PRODUCTS_TABLE}?select=*&activo=eq.true`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+      },
+    });
+    if (!response.ok) throw new Error(`Supabase productos HTTP ${response.status}`);
+    const data = await response.json();
+    return (data || []).map(productFromSupabaseRow).filter((product) => product.name);
+  };
+
   const normalizeAdminProductForCatalog = (product) => {
     const category = normalizeCategoryKey(product.category);
     const name = String(product.name || '').trim();
@@ -3873,7 +3928,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
     } else if (product.colorSwatch) {
       imageMarkup = `<div class="swatch-circle" style="background:${escapeHtml(product.colorSwatch)};"></div>`;
     } else {
-      imageMarkup = 'Imagen';
+      imageMarkup = 'Sin imagen';
     }
 
     const sizeOptions = getEffectiveSizeOptions(product);
@@ -4212,8 +4267,18 @@ Total final: ${formatCurrency(order.totals.total)}`;
     renderCart();
   };
 
-  if (productGeneralListEl) {
+  const initializeProductCatalog = async () => {
     generateProducts();
+    try {
+      const supabaseProducts = await loadProductsFromSupabaseForCatalog();
+      if (supabaseProducts.length) {
+        products = supabaseProducts;
+        filteredProducts = [...products];
+      }
+    } catch (error) {
+      console.warn('No se pudieron cargar productos desde Supabase. Usando catalogo local.', error);
+    }
+
     const params = new URLSearchParams(window.location.search);
     const requestedCategory = normalizeCategoryKey(params.get('categoria') || params.get('category'));
     if (requestedCategory && subcategories[requestedCategory]) {
@@ -4232,6 +4297,10 @@ Total final: ${formatCurrency(order.totals.total)}`;
       renderSubcategoryOptions('all');
       renderProducts();
     }
+  };
+
+  if (productGeneralListEl) {
+    initializeProductCatalog();
   }
 
   if (categoryFilter) {
