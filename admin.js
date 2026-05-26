@@ -775,32 +775,44 @@
         <td>${statusPills(product)}</td>
         <td>
           <div class="row-actions">
-            <button class="action-button" type="button" data-product-action="edit" data-id="${escapeHtml(product.id)}">Editar</button>
-            <button class="action-button" type="button" data-product-action="toggle-active" data-id="${escapeHtml(product.id)}">${product.active ? 'Desactivar' : 'Activar'}</button>
-            <button class="action-button" type="button" data-product-action="toggle-featured" data-id="${escapeHtml(product.id)}">Destacado</button>
-            <button class="action-button" type="button" data-product-action="toggle-promo" data-id="${escapeHtml(product.id)}">Promo</button>
-            <button class="action-button" type="button" data-product-action="delete" data-id="${escapeHtml(product.id)}">Eliminar</button>
+            <button class="action-button action-primary" type="button" data-product-action="edit" data-id="${escapeHtml(product.id)}">Editar</button>
+            <button class="action-button action-status" type="button" data-product-action="toggle-active" data-id="${escapeHtml(product.id)}">${product.active ? 'Desactivar' : 'Activar'}</button>
+            <button class="action-button action-featured" type="button" data-product-action="toggle-featured" data-id="${escapeHtml(product.id)}">Destacado</button>
+            <button class="action-button action-promo" type="button" data-product-action="toggle-promo" data-id="${escapeHtml(product.id)}">Promo</button>
+            <button class="action-button action-danger" type="button" data-product-action="delete" data-id="${escapeHtml(product.id)}">Eliminar</button>
           </div>
         </td>
       </tr>
     `).join('');
 
     const cards = visible.map((product) => `
-      <article class="mobile-card">
-        <div class="product-cell">
-          ${productThumbMarkup(product)}
-          <div>
-            <strong>${escapeHtml(product.name)}</strong>
-            <small>${escapeHtml(product.brand || 'Sin marca')} / ${escapeHtml(product.category)}</small>
+      <article class="mobile-card product-card">
+        <div class="product-card-head">
+          <div class="product-cell">
+            ${productThumbMarkup(product)}
+            <div>
+              <small>${escapeHtml(product.brand || 'Sin marca')}</small>
+              <strong>${escapeHtml(product.name)}</strong>
+            </div>
           </div>
+          <div class="product-card-status">${statusPills(product)}</div>
         </div>
-        <p class="muted">${escapeHtml(product.sizes)}</p>
-        <p>${product.price ? formatCurrency(product.price) : '<span class="muted">Sin precio</span>'}</p>
-        <div>${statusPills(product)}</div>
-        <div class="row-actions">
-          <button class="action-button" type="button" data-product-action="edit" data-id="${escapeHtml(product.id)}">Editar</button>
-          <button class="action-button" type="button" data-product-action="toggle-active" data-id="${escapeHtml(product.id)}">${product.active ? 'Desactivar' : 'Activar'}</button>
-          <button class="action-button" type="button" data-product-action="delete" data-id="${escapeHtml(product.id)}">Eliminar</button>
+        <div class="product-card-meta">
+          <span><b>Categoria</b>${escapeHtml(product.category || 'Sin categoria')}</span>
+          <span><b>Subcategoria</b>${escapeHtml(product.subcategory || 'Sin subcategoria')}</span>
+          <span><b>Precio base</b>${product.price ? formatCurrency(product.price) : 'Sin precio'}</span>
+        </div>
+        <div class="product-card-section">
+          <b>Tamanos y precios</b>
+          <p>${escapeHtml(product.sizes || 'Sin tamanos registrados')}</p>
+        </div>
+        ${(product.imageName || product.image) ? `<p class="product-card-image-name">${escapeHtml(product.imageName || product.image)}</p>` : ''}
+        <div class="product-card-actions row-actions">
+          <button class="action-button action-primary" type="button" data-product-action="edit" data-id="${escapeHtml(product.id)}">Editar</button>
+          <button class="action-button action-status" type="button" data-product-action="toggle-active" data-id="${escapeHtml(product.id)}">${product.active ? 'Desactivar' : 'Activar'}</button>
+          <button class="action-button action-featured" type="button" data-product-action="toggle-featured" data-id="${escapeHtml(product.id)}">Destacado</button>
+          <button class="action-button action-promo" type="button" data-product-action="toggle-promo" data-id="${escapeHtml(product.id)}">Promo</button>
+          <button class="action-button action-danger" type="button" data-product-action="delete" data-id="${escapeHtml(product.id)}">Eliminar</button>
         </div>
       </article>
     `).join('');
@@ -808,6 +820,16 @@
     if (elements.productTable) elements.productTable.innerHTML = rows;
     if (elements.productMobile) elements.productMobile.innerHTML = cards;
     elements.productEmpty?.classList.toggle('hidden', visible.length > 0);
+  };
+
+  const ensureCategoryOption = (category) => {
+    if (!category || !productFields.category) return;
+    const exists = Array.from(productFields.category.options).some((option) => option.value === category);
+    if (exists) return;
+    const option = document.createElement('option');
+    option.value = category;
+    option.textContent = category;
+    productFields.category.appendChild(option);
   };
 
   const renderOrders = () => {
@@ -942,6 +964,7 @@
     productFields.id.value = product.id;
     productFields.name.value = product.name;
     productFields.brand.value = product.brand;
+    ensureCategoryOption(product.category);
     productFields.category.value = product.category;
     productFields.subcategory.value = product.subcategory;
     productFields.description.value = product.description;

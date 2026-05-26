@@ -114,13 +114,15 @@
                 Categoria
                 <select id="product-category" required>
                   <option value="">Selecciona</option>
-                  <option>Vinilica</option>
+                  <option value="Vin&iacute;lica">Vin&iacute;lica</option>
                   <option>Impermeabilizantes</option>
                   <option>Maderas</option>
                   <option>Industrial</option>
                   <option>Aplicadores</option>
                   <option>Selladores y Adhesivos</option>
                   <option>Complementos</option>
+                  <option>Esmaltes</option>
+                  <option value="Ferreter&iacute;a">Ferreter&iacute;a</option>
                 </select>
               </label>
               <label>Subcategoria<input type="text" id="product-subcategory" required></label>
@@ -164,7 +166,7 @@
                 <input class="search-input" type="search" id="product-search" placeholder="Buscar producto">
               </div>
             </div>
-            <div class="table-wrap">
+            <div class="table-wrap product-table-wrap">
               <table>
                 <thead>
                   <tr>
@@ -179,7 +181,7 @@
                 <tbody id="products-table"></tbody>
               </table>
             </div>
-            <div class="mobile-list" id="products-mobile"></div>
+            <div class="mobile-list product-card-list" id="products-mobile"></div>
             <p class="empty-state hidden" id="products-empty">Aun no hay productos guardados.</p>
           </section>
         </div>
