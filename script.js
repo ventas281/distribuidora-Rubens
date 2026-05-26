@@ -92,7 +92,6 @@ window.addEventListener('DOMContentLoaded', () => {
   let selectedVisualCategoryFilter = 'todos los productos';
 
   const categoryItems = document.querySelectorAll('.category-item');
-  const allCategoryButton = document.querySelector('.category-item[data-category="all"]');
   const categoryList = document.getElementById('category-list');
   const toggleFiltersButton = document.getElementById('toggle-filters');
   const filterControls = document.getElementById('filter-controls');
@@ -4051,9 +4050,6 @@ Total final: ${formatCurrency(order.totals.total)}`;
       });
       const activeCategoryButton = Array.from(categoryItems).find((button) => button.classList.contains('active'));
       selectedVisualCategoryFilter = normalizeCategory(activeCategoryButton?.dataset.filter || activeCategoryButton?.textContent || requestedCategory);
-      if (activeCategoryButton && allCategoryButton && activeCategoryButton.dataset.category !== 'all') {
-        allCategoryButton.textContent = activeCategoryButton.textContent;
-      }
     }
     renderSubcategoryOptions(selectedCategory);
     applyFilters();
@@ -4103,25 +4099,10 @@ Total final: ${formatCurrency(order.totals.total)}`;
     });
   }
 
-  const updateCompactCategoryLabel = (button) => {
-    if (!allCategoryButton) return;
-    if (button.dataset.category !== 'all') {
-      allCategoryButton.textContent = button.textContent;
-    } else {
-      allCategoryButton.textContent = 'Todos los productos';
-    }
-  };
-
   if (categoryItems.length > 0) {
     categoryItems.forEach((button) => {
       button.addEventListener('click', () => {
         const filter = normalizeCategory(button.dataset.filter || button.textContent);
-
-        if (button.dataset.category === 'all' && categoryList && selectedCategory !== 'all' && categoryList.classList.contains('is-collapsed')) {
-          categoryList.classList.remove('is-collapsed');
-          allCategoryButton.textContent = 'Todos los productos';
-          return;
-        }
 
         if (button.dataset.category === 'all' && categoryList) {
           categoryList.classList.toggle('is-collapsed');
@@ -4130,7 +4111,6 @@ Total final: ${formatCurrency(order.totals.total)}`;
         }
         categoryItems.forEach((item) => item.classList.remove('active'));
         button.classList.add('active');
-        updateCompactCategoryLabel(button);
         selectedVisualCategoryFilter = filter;
         selectedCategory = filter === 'todos los productos' ? 'all' : categorySlugFromNormalized(filter);
         renderSubcategoryOptions(selectedCategory);
