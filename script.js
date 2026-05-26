@@ -97,7 +97,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const toggleFiltersButton = document.getElementById('toggle-filters');
   const filterControls = document.getElementById('filter-controls');
   const productGeneralListEl = document.getElementById('product-general-list');
-  const productPopularListEl = document.getElementById('product-popular-list');
   const productCheapListEl = document.getElementById('product-cheap-list');
   const productSeasonListEl = document.getElementById('product-season-list');
   const homeSeasonListEl = document.getElementById('home-season-list');
@@ -3751,12 +3750,10 @@ Total final: ${formatCurrency(order.totals.total)}`;
   };
 
   const renderProducts = () => {
-    if (!productGeneralListEl || !productPopularListEl || !productCountEl) return;
+    if (!productGeneralListEl || !productCountEl) return;
 
     const activeProducts = filteredProducts.filter((product) => product.active !== false);
     const generalProducts = activeProducts;
-    const featuredProducts = activeProducts.filter((product) => product.popular || product.featured || product.destacado);
-    const popularProducts = (featuredProducts.length ? featuredProducts : activeProducts).slice(0, 4);
     const cheapProducts = activeProducts
       .filter((product) => Number(product.price) > 0)
       .slice()
@@ -3769,7 +3766,6 @@ Total final: ${formatCurrency(order.totals.total)}`;
       .slice(0, 4);
 
     renderProductGrid(productGeneralListEl, generalProducts, 'No hay productos generales para esta combinación.');
-    renderProductGrid(productPopularListEl, popularProducts, 'No hay productos destacados para esta búsqueda.');
     renderProductGrid(productCheapListEl, cheapProducts, 'No hay productos económicos para esta búsqueda.');
     renderProductGrid(productSeasonListEl, seasonProducts, 'No hay impermeabilizantes para esta búsqueda.');
     applyVisualCategoryFilter(selectedVisualCategoryFilter);
