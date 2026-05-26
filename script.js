@@ -390,7 +390,10 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     if (!response.ok) throw new Error(`Supabase productos HTTP ${response.status}`);
     const data = await response.json();
-    return (data || []).map(productFromSupabaseRow).filter((product) => product.name);
+    const loadedProducts = (data || []).map(productFromSupabaseRow).filter((product) => product.name);
+    console.log('productos recibidos desde Supabase', loadedProducts);
+    console.log('productos sin imagen detectados', loadedProducts.filter((product) => !product.image));
+    return loadedProducts;
   };
 
   const normalizeAdminProductForCatalog = (product) => {
@@ -4033,6 +4036,8 @@ Total final: ${formatCurrency(order.totals.total)}`;
     const generalProducts = filteredProducts;
     const popularProducts = filteredProducts.filter((product) => product.popular);
     const recommendedProducts = filteredProducts.filter((product) => product.recommended);
+    console.log('productos después de filtros', generalProducts);
+    console.log('productos sin imagen detectados', generalProducts.filter((product) => !product.image));
 
     renderProductGrid(productGeneralListEl, generalProducts, 'No hay productos generales para esta combinación.');
     renderProductGrid(productPopularListEl, popularProducts, 'No hay productos populares para esta búsqueda.');
@@ -4269,17 +4274,20 @@ Total final: ${formatCurrency(order.totals.total)}`;
 
   const initializeProductCatalog = async () => {
     generateProducts();
+    const params = new URLSearchParams(window.location.search);
+    const useLocalCatalog = params.get('catalogoLocal') === '1';
     try {
-      const supabaseProducts = await loadProductsFromSupabaseForCatalog();
-      if (supabaseProducts.length) {
+      const supabaseProducts = useLocalCatalog ? [] : await loadProductsFromSupabaseForCatalog();
+      if (!useLocalCatalog && supabaseProducts.length) {
         products = supabaseProducts;
         filteredProducts = [...products];
+      } else if (!useLocalCatalog) {
+        console.log('Supabase cargó 0 productos. Usando catálogo local como fallback.');
       }
     } catch (error) {
       console.warn('No se pudieron cargar productos desde Supabase. Usando catalogo local.', error);
     }
 
-    const params = new URLSearchParams(window.location.search);
     const requestedCategory = normalizeCategoryKey(params.get('categoria') || params.get('category'));
     if (requestedCategory && subcategories[requestedCategory]) {
       selectedCategory = requestedCategory;

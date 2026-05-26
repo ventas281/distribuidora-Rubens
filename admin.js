@@ -507,7 +507,10 @@
     });
     const data = await supabaseRestRequest(`${SUPABASE_PRODUCTS_TABLE}?select=*`);
     logSupabase('SELECT success', { count: data?.length || 0 });
-    return (data || []).map(productFromSupabaseRow);
+    const loadedProducts = (data || []).map(productFromSupabaseRow);
+    console.log('productos recibidos desde Supabase', loadedProducts);
+    console.log('productos sin imagen detectados', loadedProducts.filter((product) => !getProductImageSource(product)));
+    return loadedProducts;
   };
 
   const saveProductToSupabase = async (product, forcedEditingProductId = editingProductId) => {
@@ -768,7 +771,7 @@
 
   const readCatalogProductsFromIframe = async () => {
     const iframe = document.createElement('iframe');
-    iframe.src = 'productos.html';
+    iframe.src = 'productos.html?catalogoLocal=1';
     iframe.title = 'Catalogo temporal para admin';
     iframe.setAttribute('aria-hidden', 'true');
     iframe.style.position = 'fixed';
@@ -825,6 +828,8 @@
   const syncProductsFromCatalog = async () => {
     setStatus(elements.productStatus, 'Importando catalogo actual...');
     const catalogProducts = await readCatalogProductsFromIframe();
+    console.log('productos recibidos desde catálogo local', catalogProducts);
+    console.log('productos sin imagen detectados', catalogProducts.filter((product) => !getProductImageSource(product)));
     if (!catalogProducts.length) {
       setStatus(elements.productStatus, 'No se pudo importar el catalogo actual.', true);
       return;
@@ -845,6 +850,11 @@
           }, existing?.source === 'supabase' ? existing.id : '');
         }
         products = adminStore.saveProducts(await loadProductsFromSupabase());
+        console.log('resultado de sincronizar catálogo', {
+          revisados: catalogProducts.length,
+          nuevos: Math.max(importedCount, 0),
+          totalSupabase: products.length,
+        });
         setStatus(elements.productStatus, `Catalogo sincronizado: ${catalogProducts.length} productos revisados, ${Math.max(importedCount, 0)} nuevos.`);
       } catch (error) {
         logSupabaseError('Sincronizar catalogo fallback a localStorage', error);
@@ -853,6 +863,11 @@
       }
     } else {
       setStatus(elements.productStatus, `Catalogo actual importado: ${importedCount} productos.`);
+      console.log('resultado de sincronizar catálogo', {
+        revisados: catalogProducts.length,
+        nuevos: Math.max(importedCount, 0),
+        totalLocal: products.length,
+      });
     }
     renderAll();
   };
@@ -944,6 +959,8 @@
 
   const renderProducts = () => {
     const visible = getFilteredProducts();
+    console.log('productos después de filtros', visible);
+    console.log('productos sin imagen detectados', visible.filter((product) => !getProductImageSource(product)));
     const rows = visible.map((product) => `
       <tr>
         <td>
