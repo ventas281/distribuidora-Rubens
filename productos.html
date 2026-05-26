@@ -51,11 +51,10 @@
             <li><button type="button" class="category-item active" data-category="all">Todos los productos</button></li>
             <li class="category-extra"><button type="button" class="category-item" data-category="vinilica">Vinílica</button></li>
             <li class="category-extra"><button type="button" class="category-item" data-category="esmalte">Esmalte</button></li>
-            <li class="category-extra"><button type="button" class="category-item" data-category="impermeabilizante">Impermeabilizante</button></li>
+            <li class="category-extra"><button type="button" class="category-item" data-category="epoxica">Impermeabilizante</button></li>
             <li class="category-extra"><button type="button" class="category-item" data-category="aerosoles">Aerosoles</button></li>
             <li class="category-extra"><button type="button" class="category-item" data-category="madera">Madera</button></li>
             <li class="category-extra"><button type="button" class="category-item" data-category="aplicadores">Aplicadores</button></li>
-            <li class="category-extra"><button type="button" class="category-item" data-category="selladores">Selladores y Adhesivos</button></li>
             <li class="category-extra"><button type="button" class="category-item" data-category="diluyentes">Diluyentes</button></li>
             <li class="category-extra"><button type="button" class="category-item" data-category="primerarios">Primarios</button></li>
           </ul>
@@ -206,28 +205,23 @@
       </div>
       <div class="payment-body">
         <div class="payment-summary" id="payment-summary"></div>
-        <p class="payment-form-status" id="payment-form-status" aria-live="polite"></p>
 
         <div class="payment-customer-grid">
           <label class="payment-customer-field" for="payment-customer-name">
             Nombre del cliente
-            <input type="text" id="payment-customer-name" placeholder="Escribe tu nombre" autocomplete="name" required aria-describedby="payment-customer-name-error">
-            <small class="field-feedback" id="payment-customer-name-error"></small>
+            <input type="text" id="payment-customer-name" placeholder="Escribe tu nombre" autocomplete="name">
           </label>
           <label class="payment-customer-field" for="payment-customer-phone">
             Teléfono
-            <input type="tel" id="payment-customer-phone" placeholder="5512345678" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" required aria-describedby="payment-customer-phone-error">
-            <small class="field-feedback" id="payment-customer-phone-error"></small>
+            <input type="tel" id="payment-customer-phone" placeholder="55 0000 0000" autocomplete="tel">
           </label>
           <label class="payment-customer-field" for="payment-customer-email">
             Correo
-            <input type="email" id="payment-customer-email" placeholder="correo@ejemplo.com" autocomplete="email" required aria-describedby="payment-customer-email-error">
-            <small class="field-feedback" id="payment-customer-email-error"></small>
+            <input type="email" id="payment-customer-email" placeholder="correo@ejemplo.com" autocomplete="email">
           </label>
           <label class="payment-customer-field payment-customer-field-wide" for="payment-customer-address">
             Dirección
-            <textarea id="payment-customer-address" rows="3" placeholder="Calle, número, colonia, alcaldía o referencias" autocomplete="street-address" aria-describedby="payment-customer-address-error"></textarea>
-            <small class="field-feedback" id="payment-customer-address-error"></small>
+            <textarea id="payment-customer-address" rows="3" placeholder="Calle, número, colonia, alcaldía o referencias" autocomplete="street-address"></textarea>
           </label>
         </div>
 
@@ -238,43 +232,11 @@
         </div>
 
         <div class="payment-panel" id="payment-transfer-panel">
-          <div class="spei-card">
-            <div class="spei-card-header">
-              <div class="spei-bank-icon" aria-hidden="true">
-                <span></span>
-              </div>
-              <div>
-                <strong>Transferencia Bancaria SPEI</strong>
-                <p>Realiza tu pago mediante transferencia bancaria. Una vez realizado el pago, envíanos tu comprobante por WhatsApp para procesar tu pedido.</p>
-              </div>
-            </div>
-
-            <div class="spei-details" aria-label="Datos bancarios">
-              <div class="spei-detail-row">
-                <span>Beneficiario</span>
-                <strong>Maria Cruz Cardenas Velazquez</strong>
-                <button class="spei-copy-button" type="button" data-copy-value="Maria Cruz Cardenas Velazquez">Copiar beneficiario</button>
-              </div>
-              <div class="spei-detail-row">
-                <span>Banco</span>
-                <strong>Santander</strong>
-              </div>
-              <div class="spei-detail-row spei-detail-row-wide">
-                <span>CLABE</span>
-                <strong class="spei-clabe">014180605210667968</strong>
-                <button class="spei-copy-button" type="button" data-copy-value="014180605210667968">Copiar CLABE</button>
-              </div>
-            </div>
-
-            <p class="spei-important">Importante: Tu pedido comenzará a procesarse una vez confirmado el pago.</p>
-            <p class="spei-copy-status" id="spei-copy-status" aria-live="polite"></p>
-          </div>
-
-          <div class="payment-grid spei-hidden-bank-fields">
-            <label>Banco:<input type="text" id="payment-bank" value="Santander" readonly></label>
-            <label>Beneficiario:<input type="text" id="payment-beneficiary" value="Maria Cruz Cardenas Velazquez" readonly></label>
+          <div class="payment-grid">
+            <label>Banco:<input type="text" id="payment-bank" placeholder="Banco"></label>
+            <label>Beneficiario:<input type="text" id="payment-beneficiary" placeholder="Beneficiario"></label>
             <label>Cuenta:<input type="text" id="payment-account" placeholder="Cuenta"></label>
-            <label>CLABE:<input type="text" id="payment-clabe" value="014180605210667968" readonly></label>
+            <label>CLABE:<input type="text" id="payment-clabe" placeholder="CLABE"></label>
             <label class="payment-grid-wide">Concepto:<input type="text" id="payment-concept" placeholder="Pedido Ruben's Distribuidora"></label>
           </div>
           <button class="btn btn-primary" id="send-transfer-whatsapp" type="button">Enviar comprobante por WhatsApp</button>
@@ -282,16 +244,14 @@
 
         <div class="payment-panel hidden" id="payment-mercado-panel">
           <div class="mercado-card">
-            <strong>Pago seguro con Mercado Pago</strong>
-            <p class="payment-note">Realiza tu pago de forma segura con tarjeta de crédito, débito o saldo disponible en Mercado Pago.</p>
+            <strong>Mercado Pago Checkout Pro</strong>
+            <p class="payment-note">Modo prueba preparado. En GitHub Pages no se debe crear la preferencia con Access Token en el navegador.</p>
             <ul>
-              <li>Se usará el total actual de tu carrito.</li>
-              <li>Al finalizar, recibirás la confirmación de tu pedido.</li>
-              <li>También puedes enviar tu pedido por WhatsApp si prefieres atención personalizada.</li>
+              <li>Se usará el total actual del carrito y envío.</li>
+              <li>Si el pago en línea aún no está habilitado, puedes enviar tu pedido por WhatsApp.</li>
             </ul>
-            <p class="mercado-helper">Si el pago en línea no está disponible, envíanos tu pedido por WhatsApp y te ayudamos a finalizar la compra.</p>
           </div>
-          <button class="btn btn-primary" id="mercadoPagoBtn" type="button">Pagar con Mercado Pago</button>
+          <button class="btn btn-primary" id="mercado-pago-button" type="button">Pagar con Mercado Pago</button>
           <button class="btn btn-secondary hidden" id="mercado-whatsapp-fallback" type="button">Enviar pedido por WhatsApp</button>
         </div>
 
@@ -328,7 +288,6 @@
       storeEmail: 'ventas@rubensdistribuidora.com'
     };
   </script>
-  <script src="https://sdk.mercadopago.com/js/v2"></script>
   <script src="script.js"></script>
 </body>
 </html>
