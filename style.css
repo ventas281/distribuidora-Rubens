@@ -811,7 +811,9 @@ body.rain-popup-open {
 .product-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  padding: 0.4rem;
+  background: #fff;
   display: block;
 }
 
@@ -819,6 +821,11 @@ body.rain-popup-open {
   object-fit: contain;
   padding: 0.4rem;
   background: #fff;
+}
+
+.product-image .aerosol-bg-image {
+  object-fit: cover;
+  padding: 0;
 }
 
 .product-card-top {
@@ -1369,6 +1376,7 @@ body.rain-popup-open {
 .product-image {
   width: 100%;
   min-height: 190px;
+  max-height: 220px;
   border-radius: 20px;
   background: linear-gradient(135deg, rgba(194, 43, 43, 0.12), rgba(18, 18, 18, 0.08));
 }

@@ -289,6 +289,76 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   const formatCurrency = (value) => `MXN ${Number(value || 0).toFixed(2)}`;
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+  const slugify = (value) => String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  const normalizeAdminProductForCatalog = (product) => {
+    const category = String(product.category || '').trim();
+    const name = String(product.name || '').trim();
+    const image = String(product.imageData || product.image || '').trim();
+    const sizes = String(product.sizes || '').trim();
+    return {
+      id: String(product.id || `${slugify(category)}-${slugify(name)}` || `admin-${Date.now()}`),
+      category,
+      categoryLabel: categoryLabels[category] || category || 'Producto',
+      subcategory: String(product.subcategory || '').trim() || 'General',
+      name,
+      description: String(product.description || '').trim(),
+      detailText: String(product.description || '').trim(),
+      price: Number(product.price) || 0,
+      cantidad: sizes || 'Presentacion unica',
+      popular: Boolean(product.featured || product.promo),
+      recommended: Boolean(product.featured),
+      rating: 4,
+      colorSwatch: '',
+      image,
+      imageFit: 'contain',
+    };
+  };
+
+  const mergeAdminProductsIntoCatalog = () => {
+    let adminProducts = [];
+    try {
+      adminProducts = JSON.parse(localStorage.getItem('rubensAdminProducts') || '[]');
+    } catch (error) {
+      adminProducts = [];
+    }
+    if (!Array.isArray(adminProducts) || !adminProducts.length) return;
+
+    adminProducts
+      .filter((product) => product && product.active !== false)
+      .map(normalizeAdminProductForCatalog)
+      .filter((product) => product.name && product.category)
+      .forEach((product) => {
+        const existingIndex = products.findIndex((item) => (
+          item.name.trim().toLowerCase() === product.name.trim().toLowerCase()
+          && item.category.trim().toLowerCase() === product.category.trim().toLowerCase()
+        ));
+        if (existingIndex >= 0) {
+          products[existingIndex] = {
+            ...products[existingIndex],
+            ...product,
+            id: products[existingIndex].id,
+            popular: product.popular || products[existingIndex].popular,
+            recommended: product.recommended || products[existingIndex].recommended,
+          };
+        } else {
+          products.push(product);
+        }
+      });
+  };
+
   const formatDeliveryFee = (value) => Number(value || 0) === 0 ? 'GRATIS' : formatCurrency(value);
   const getShippingSummaryRows = () => {
     if (deliveryState.type !== 'delivery') {
@@ -2580,6 +2650,7 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     });
 
+    mergeAdminProductsIntoCatalog();
     filteredProducts = [...products];
   };
 
@@ -3757,14 +3828,14 @@ Total final: ${formatCurrency(order.totals.total)}`;
     if (product.category === 'aerosoles' && product.image) {
       imageMarkup = `
         <div class="aerosol-image-wrapper">
-          <img src="${product.image}" alt="${product.name}" class="aerosol-bg-image">
-          <div class="swatch-circle" style="background:${product.colorSwatch};"></div>
+          <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" class="aerosol-bg-image">
+          <div class="swatch-circle" style="background:${escapeHtml(product.colorSwatch)};"></div>
         </div>
       `;
     } else if (product.image) {
-      imageMarkup = `<img src="${product.image}" alt="${product.name}" class="${product.imageFit === 'contain' ? 'product-image-contain' : ''}">`;
+      imageMarkup = `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" class="${product.imageFit === 'contain' ? 'product-image-contain' : ''}">`;
     } else if (product.colorSwatch) {
-      imageMarkup = `<div class="swatch-circle" style="background:${product.colorSwatch};"></div>`;
+      imageMarkup = `<div class="swatch-circle" style="background:${escapeHtml(product.colorSwatch)};"></div>`;
     } else {
       imageMarkup = 'Imagen';
     }

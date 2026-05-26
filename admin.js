@@ -4,15 +4,14 @@
     banners: 'rubensAdminBanners',
     settings: 'rubensAdminSettings',
     metrics: 'rubensAdminMetrics',
-    session: 'rubensAdminSession',
   };
 
-  const LOGIN_USER = 'admin';
-  const LOGIN_PASSWORD = 'rubens2026';
   const SUPABASE_REST_URL = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co/rest/v1/';
   const SUPABASE_URL = SUPABASE_REST_URL.replace(/\/rest\/v1\/?$/, '');
   const SUPABASE_KEY = 'sb_publishable_IPQVpAeDJwNh_bZ575tz5w_8hAUzsEL';
   const SUPABASE_PRODUCTS_TABLE = 'productos';
+  const AUTHORIZED_ADMIN_EMAIL = 'ventas@rubensdistribuidora.com';
+  const ADMIN_AUTH_REDIRECT_TO = 'https://rubensdistribuidora.com/admin.html';
 
   const createId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
@@ -137,7 +136,7 @@
     description: row.descripcion,
     sizes: row.tamanos_precios,
     price: row.precio_base,
-    image: row.imagen,
+    image: String(row.imagen || '').startsWith('data:image/') ? '' : row.imagen,
     imageData: String(row.imagen || '').startsWith('data:image/') ? row.imagen : '',
     imageName: '',
     active: row.activo,
@@ -208,7 +207,6 @@
   });
 
   const getLocalStorage = () => window.localStorage;
-  const getSessionStorage = () => window.sessionStorage;
 
   const adminStore = {
     KEYS,
@@ -239,19 +237,6 @@
     loadMetrics(storage = getLocalStorage()) {
       return { ...defaultMetrics, ...readJson(KEYS.metrics, {}, storage) };
     },
-    login(user, password, sessionStorageRef = getSessionStorage()) {
-      const ok = user === LOGIN_USER && password === LOGIN_PASSWORD;
-      if (ok) {
-        sessionStorageRef.setItem(KEYS.session, JSON.stringify({ loggedIn: true, at: new Date().toISOString() }));
-      }
-      return ok;
-    },
-    logout(sessionStorageRef = getSessionStorage()) {
-      sessionStorageRef.removeItem(KEYS.session);
-    },
-    isLoggedIn(sessionStorageRef = getSessionStorage()) {
-      return Boolean(readJson(KEYS.session, null, sessionStorageRef)?.loggedIn);
-    },
     normalizeProduct,
     productFromSupabaseRow,
     productToSupabaseRow,
@@ -270,9 +255,7 @@
   const elements = {
     loginScreen: $('#login-screen'),
     adminApp: $('#admin-app'),
-    loginForm: $('#login-form'),
-    loginUser: $('#login-user'),
-    loginPassword: $('#login-password'),
+    googleLoginButton: $('#google-login-button'),
     loginStatus: $('#login-status'),
     logoutButton: $('#logout-button'),
     menuToggle: $('#menu-toggle'),
@@ -349,6 +332,7 @@
   let currentProductImageName = '';
   let supabaseClient = null;
   let supabaseEnabled = false;
+  let pendingSignedOutMessage = '';
 
   const escapeHtml = (value) => String(value)
     .replace(/&/g, '&amp;')
@@ -368,16 +352,26 @@
     return Number(numeric) || 0;
   };
 
-  const productKey = (product) => product.id || `${product.name}|${product.category}|${product.subcategory}`;
+  const isDataImage = (value) => String(value || '').trim().startsWith('data:image');
+  const productCatalogKey = (product) => `${String(product.name || '').trim().toLowerCase()}|${String(product.category || '').trim().toLowerCase()}`;
 
   const mergeProductsWithoutDuplicates = (baseProducts, incomingProducts) => {
     const merged = [...baseProducts.map(normalizeProduct)];
-    const existingKeys = new Set(merged.map(productKey));
     incomingProducts.map(normalizeProduct).forEach((product) => {
-      const key = productKey(product);
-      if (!existingKeys.has(key)) {
+      const key = productCatalogKey(product);
+      const existingIndex = merged.findIndex((item) => productCatalogKey(item) === key);
+      if (existingIndex >= 0) {
+        merged[existingIndex] = normalizeProduct({
+          ...merged[existingIndex],
+          ...product,
+          id: merged[existingIndex].id,
+          source: merged[existingIndex].source || product.source,
+          active: merged[existingIndex].active,
+          featured: merged[existingIndex].featured,
+          promo: merged[existingIndex].promo,
+        });
+      } else {
         merged.push(product);
-        existingKeys.add(key);
       }
     });
     return merged;
@@ -400,9 +394,9 @@
     });
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
       },
     });
     return supabaseClient;
@@ -547,24 +541,99 @@
     products = adminStore.saveProducts(products);
   };
 
-  const setStatus = (element, message, isError = false) => {
+  const setStatus = (element, message, isError = false, autoClear = true) => {
     if (!element) return;
     element.textContent = message;
     element.classList.toggle('error', isError);
-    if (message) {
+    if (message && autoClear) {
       window.setTimeout(() => {
         if (element.textContent === message) element.textContent = '';
       }, 3000);
     }
   };
 
+  const isAuthorizedAdminEmail = (email) => String(email || '').trim().toLowerCase() === AUTHORIZED_ADMIN_EMAIL;
+
+  // Iniciar sesión con Google mediante Supabase Auth OAuth.
+  const signInWithGoogle = async () => {
+    const client = getSupabaseClient();
+    if (!client) {
+      setStatus(elements.loginStatus, 'No se pudo iniciar Supabase Auth.', true, false);
+      return;
+    }
+    elements.googleLoginButton.disabled = true;
+    setStatus(elements.loginStatus, 'Abriendo Google...', false, false);
+    const { error } = await client.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: ADMIN_AUTH_REDIRECT_TO,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account',
+        },
+      },
+    });
+    if (error) {
+      elements.googleLoginButton.disabled = false;
+      setStatus(elements.loginStatus, `Error al iniciar sesion: ${getSupabaseErrorMessage(error)}`, true, false);
+    }
+  };
+
+  // Cerrar sesión en Supabase Auth y mantener oculto el dashboard.
+  const signOutAdmin = async (message = '') => {
+    const client = getSupabaseClient();
+    pendingSignedOutMessage = message;
+    if (client) await client.auth.signOut();
+    showLogin(message);
+  };
+
+  // Validar correo autorizado antes de permitir acceso al panel.
+  const validateAdminSession = async (session) => {
+    const email = session?.user?.email || '';
+    if (!session?.user) {
+      showLogin();
+      return false;
+    }
+    if (!isAuthorizedAdminEmail(email)) {
+      await signOutAdmin('No tienes permisos para acceder al panel administrativo.');
+      return false;
+    }
+    showApp();
+    return true;
+  };
+
+  // Obtener sesión actual al abrir admin.html y proteger el dashboard.
+  const initializeAdminAuth = async () => {
+    const client = getSupabaseClient();
+    if (!client) {
+      showLogin('No se pudo cargar Supabase Auth.');
+      return;
+    }
+    elements.adminApp?.classList.add('hidden');
+    elements.loginScreen?.classList.remove('hidden');
+    setStatus(elements.loginStatus, 'Validando sesion...', false, false);
+    const { data, error } = await client.auth.getSession();
+    if (error) {
+      showLogin(`Error al validar sesion: ${getSupabaseErrorMessage(error)}`);
+      return;
+    }
+    setStatus(elements.loginStatus, '', false);
+    await validateAdminSession(data.session);
+  };
+
   const getProductImageSource = (product) => product.imageData || product.image || '';
+
+  const getProductImageLabel = (product) => {
+    if (product.imageName) return product.imageName;
+    if (getProductImageSource(product)) return 'Imagen cargada';
+    return 'Sin imagen';
+  };
 
   const productThumbMarkup = (product) => {
     const source = getProductImageSource(product);
     return source
       ? `<span class="product-thumb"><img src="${escapeHtml(source)}" alt="${escapeHtml(product.name)}"></span>`
-      : '<span class="product-thumb-placeholder">IMG</span>';
+      : '<span class="product-thumb-placeholder">Sin imagen</span>';
   };
 
   const updateProductImagePreview = (source = '', fileName = '') => {
@@ -693,6 +762,7 @@
     return `<span class="pill ${classMap[status] || ''}">${escapeHtml(status)}</span>`;
   };
 
+  // Proteger dashboard: solo se muestra despues de validar el correo autorizado.
   const showApp = () => {
     elements.loginScreen?.classList.add('hidden');
     elements.adminApp?.classList.remove('hidden');
@@ -700,10 +770,14 @@
     loadProductsWithFallback().then(() => seedProductsFromCatalogIfNeeded());
   };
 
-  const showLogin = () => {
+  const showLogin = (message = '') => {
     elements.adminApp?.classList.add('hidden');
     elements.loginScreen?.classList.remove('hidden');
-    elements.loginUser?.focus();
+    if (elements.googleLoginButton) {
+      elements.googleLoginButton.disabled = false;
+      elements.googleLoginButton.focus();
+    }
+    setStatus(elements.loginStatus, message, Boolean(message), !message);
   };
 
   const switchSection = (section) => {
@@ -765,7 +839,7 @@
             ${productThumbMarkup(product)}
             <div>
               <strong>${escapeHtml(product.name)}</strong>
-              <small>${escapeHtml(product.brand || 'Sin marca')}${product.imageName ? ` / ${escapeHtml(product.imageName)}` : product.image ? ` / ${escapeHtml(product.image)}` : ''}</small>
+              <small>${escapeHtml(product.brand || 'Sin marca')} / ${escapeHtml(getProductImageLabel(product))}</small>
             </div>
           </div>
         </td>
@@ -806,7 +880,7 @@
           <b>Tamanos y precios</b>
           <p>${escapeHtml(product.sizes || 'Sin tamanos registrados')}</p>
         </div>
-        ${(product.imageName || product.image) ? `<p class="product-card-image-name">${escapeHtml(product.imageName || product.image)}</p>` : ''}
+        <p class="product-card-image-name">${escapeHtml(getProductImageLabel(product))}</p>
         <div class="product-card-actions row-actions">
           <button class="action-button action-primary" type="button" data-product-action="edit" data-id="${escapeHtml(product.id)}">Editar</button>
           <button class="action-button action-status" type="button" data-product-action="toggle-active" data-id="${escapeHtml(product.id)}">${product.active ? 'Desactivar' : 'Activar'}</button>
@@ -970,7 +1044,7 @@
     productFields.description.value = product.description;
     productFields.sizes.value = product.sizes;
     productFields.price.value = product.price || '';
-    productFields.image.value = product.image;
+    productFields.image.value = isDataImage(product.image) ? '' : product.image;
     currentProductImageData = product.imageData || '';
     currentProductImageName = product.imageName || '';
     updateProductImagePreview(product.imageData || product.image || '', product.imageName || '');
@@ -1009,20 +1083,12 @@
     bannerFields.title.focus();
   };
 
-  elements.loginForm?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const ok = adminStore.login(elements.loginUser.value.trim(), elements.loginPassword.value);
-    if (!ok) {
-      setStatus(elements.loginStatus, 'Usuario o contrasena incorrectos.', true);
-      return;
-    }
-    elements.loginPassword.value = '';
-    showApp();
+  elements.googleLoginButton?.addEventListener('click', () => {
+    signInWithGoogle();
   });
 
   elements.logoutButton?.addEventListener('click', () => {
-    adminStore.logout();
-    showLogin();
+    signOutAdmin();
   });
 
   elements.menuToggle?.addEventListener('click', () => {
@@ -1250,9 +1316,15 @@
     renderDashboard();
   });
 
-  if (adminStore.isLoggedIn()) {
-    showApp();
-  } else {
-    showLogin();
-  }
+  const authClient = getSupabaseClient();
+  authClient?.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      validateAdminSession(session);
+    }
+    if (event === 'SIGNED_OUT') {
+      showLogin(pendingSignedOutMessage);
+      pendingSignedOutMessage = '';
+    }
+  });
+  initializeAdminAuth();
 }());
