@@ -159,7 +159,10 @@
                 <p class="eyebrow">Tabla</p>
                 <h2>Productos del admin</h2>
               </div>
-              <input class="search-input" type="search" id="product-search" placeholder="Buscar producto">
+              <div class="list-actions">
+                <button class="secondary-button" type="button" id="sync-catalog-products">Sincronizar catalogo actual</button>
+                <input class="search-input" type="search" id="product-search" placeholder="Buscar producto">
+              </div>
             </div>
             <div class="table-wrap">
               <table>
@@ -292,6 +295,7 @@
     </main>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="admin.js"></script>
 </body>
 </html>

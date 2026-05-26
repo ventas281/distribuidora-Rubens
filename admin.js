@@ -9,6 +9,10 @@
 
   const LOGIN_USER = 'admin';
   const LOGIN_PASSWORD = 'rubens2026';
+  const SUPABASE_REST_URL = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co/rest/v1/';
+  const SUPABASE_URL = SUPABASE_REST_URL.replace(/\/rest\/v1\/?$/, '');
+  const SUPABASE_KEY = 'sb_publishable_IPQVpAeDJwNh_bZ575tz5w_8hAUzsEL';
+  const SUPABASE_PRODUCTS_TABLE = 'productos';
 
   const createId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
@@ -106,7 +110,7 @@
   };
 
   const normalizeProduct = (product) => ({
-    id: product.id || createId('product'),
+    id: product.id ? String(product.id) : createId('product'),
     name: String(product.name || '').trim(),
     brand: String(product.brand || '').trim(),
     category: String(product.category || '').trim(),
@@ -117,11 +121,68 @@
     image: String(product.image || '').trim(),
     imageData: String(product.imageData || '').trim(),
     imageName: String(product.imageName || '').trim(),
+    source: String(product.source || 'admin').trim(),
     active: product.active !== false,
     featured: Boolean(product.featured),
     promo: Boolean(product.promo),
     updatedAt: product.updatedAt || new Date().toISOString(),
   });
+
+  const productFromSupabaseRow = (row) => normalizeProduct({
+    id: row.id,
+    name: row.nombre,
+    brand: row.marca,
+    category: row.categoria,
+    subcategory: row.subcategoria,
+    description: row.descripcion,
+    sizes: row.tamanos_precios,
+    price: row.precio_base,
+    image: row.imagen,
+    imageData: String(row.imagen || '').startsWith('data:image/') ? row.imagen : '',
+    imageName: '',
+    active: row.activo,
+    featured: row.destacado,
+    promo: row.promocion,
+    source: 'supabase',
+    updatedAt: row.updated_at || row.created_at || new Date().toISOString(),
+  });
+
+  const productToSupabaseRow = (product) => {
+    const normalized = normalizeProduct(product);
+    return {
+      nombre: normalized.name,
+      marca: normalized.brand,
+      categoria: normalized.category,
+      subcategoria: normalized.subcategory,
+      descripcion: normalized.description,
+      tamanos_precios: normalized.sizes,
+      precio_base: normalized.price,
+      imagen: normalized.imageData || normalized.image,
+      activo: normalized.active,
+      destacado: normalized.featured,
+      promocion: normalized.promo,
+    };
+  };
+
+  const serializeSupabaseError = (error) => ({
+    message: error?.message || String(error),
+    details: error?.details || null,
+    hint: error?.hint || null,
+    code: error?.code || null,
+    status: error?.status || null,
+    name: error?.name || null,
+  });
+
+  const logSupabase = (label, payload = {}) => {
+    console.log(`[Rubens Admin Supabase] ${label}`, payload);
+  };
+
+  const logSupabaseError = (label, error, payload = {}) => {
+    console.error(`[Rubens Admin Supabase] ${label}`, {
+      ...payload,
+      error: serializeSupabaseError(error),
+    });
+  };
 
   const normalizeBanner = (banner) => ({
     id: banner.id || createId('banner'),
@@ -181,6 +242,8 @@
       return Boolean(readJson(KEYS.session, null, sessionStorageRef)?.loggedIn);
     },
     normalizeProduct,
+    productFromSupabaseRow,
+    productToSupabaseRow,
     normalizeBanner,
   };
 
@@ -211,6 +274,7 @@
     productMobile: $('#products-mobile'),
     productEmpty: $('#products-empty'),
     productSearch: $('#product-search'),
+    syncCatalogProducts: $('#sync-catalog-products'),
     productFormTitle: $('#product-form-title'),
     productSubmitButton: $('#product-submit-button'),
     cancelProductEdit: $('#cancel-product-edit'),
@@ -272,6 +336,8 @@
   let productQuery = '';
   let currentProductImageData = '';
   let currentProductImageName = '';
+  let supabaseClient = null;
+  let supabaseEnabled = false;
 
   const escapeHtml = (value) => String(value)
     .replace(/&/g, '&amp;')
@@ -285,6 +351,177 @@
     currency: 'MXN',
     maximumFractionDigits: 0,
   }).format(Number(value) || 0);
+
+  const parseCurrencyValue = (value) => {
+    const numeric = String(value || '').replace(/[^\d.]/g, '');
+    return Number(numeric) || 0;
+  };
+
+  const productKey = (product) => product.id || `${product.name}|${product.category}|${product.subcategory}`;
+
+  const mergeProductsWithoutDuplicates = (baseProducts, incomingProducts) => {
+    const merged = [...baseProducts.map(normalizeProduct)];
+    const existingKeys = new Set(merged.map(productKey));
+    incomingProducts.map(normalizeProduct).forEach((product) => {
+      const key = productKey(product);
+      if (!existingKeys.has(key)) {
+        merged.push(product);
+        existingKeys.add(key);
+      }
+    });
+    return merged;
+  };
+
+  const getSupabaseClient = () => {
+    if (supabaseClient) return supabaseClient;
+    if (!window.supabase?.createClient) {
+      logSupabaseError('createClient no disponible', new Error('Supabase CDN no cargo window.supabase.createClient'), {
+        supabaseUrl: SUPABASE_URL,
+        table: SUPABASE_PRODUCTS_TABLE,
+      });
+      return null;
+    }
+    logSupabase('Inicializando cliente', {
+      supabaseUrl: SUPABASE_URL,
+      table: SUPABASE_PRODUCTS_TABLE,
+      hasPublishableKey: Boolean(SUPABASE_KEY),
+      createClientAvailable: Boolean(window.supabase?.createClient),
+    });
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    });
+    return supabaseClient;
+  };
+
+  const supabaseRestRequest = async (pathAndQuery, options = {}) => {
+    const url = `${SUPABASE_REST_URL}${pathAndQuery}`;
+    const headers = {
+      apikey: SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    };
+    logSupabase('REST request', {
+      method: options.method || 'GET',
+      url,
+      headers: { ...headers, apikey: '[publishable key]' },
+      body: options.body ? JSON.parse(options.body) : null,
+    });
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+    const responseText = await response.text();
+    let responseData = null;
+    try {
+      responseData = responseText ? JSON.parse(responseText) : null;
+    } catch (error) {
+      responseData = responseText;
+    }
+    if (!response.ok) {
+      const error = new Error(responseData?.message || response.statusText || 'Supabase REST error');
+      error.status = response.status;
+      error.details = responseData?.details || responseText;
+      error.hint = responseData?.hint || null;
+      error.code = responseData?.code || null;
+      logSupabaseError('REST error response', error, {
+        method: options.method || 'GET',
+        url,
+        response: responseData,
+      });
+      throw error;
+    }
+    logSupabase('REST success', {
+      method: options.method || 'GET',
+      url,
+      response: responseData,
+    });
+    return responseData;
+  };
+
+  const loadProductsFromSupabase = async () => {
+    getSupabaseClient();
+    logSupabase('SELECT productos', {
+      table: SUPABASE_PRODUCTS_TABLE,
+      columns: ['id', 'nombre', 'marca', 'categoria', 'subcategoria', 'descripcion', 'tamanos_precios', 'precio_base', 'imagen', 'activo', 'destacado', 'promocion', 'created_at'],
+    });
+    const data = await supabaseRestRequest(`${SUPABASE_PRODUCTS_TABLE}?select=*`);
+    logSupabase('SELECT success', { count: data?.length || 0 });
+    return (data || []).map(productFromSupabaseRow);
+  };
+
+  const saveProductToSupabase = async (product) => {
+    getSupabaseClient();
+    const payload = productToSupabaseRow(product);
+
+    if (product.id && product.source === 'supabase') {
+      logSupabase('UPDATE payload', {
+        table: SUPABASE_PRODUCTS_TABLE,
+        id: product.id,
+        payload,
+      });
+      const data = await supabaseRestRequest(`${SUPABASE_PRODUCTS_TABLE}?id=eq.${encodeURIComponent(product.id)}&select=*`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify(payload),
+      });
+      const row = Array.isArray(data) ? data[0] : data;
+      logSupabase('UPDATE success', { id: row?.id, row });
+      return productFromSupabaseRow(row);
+    }
+
+    logSupabase('INSERT payload', {
+      table: SUPABASE_PRODUCTS_TABLE,
+      payload,
+    });
+    const data = await supabaseRestRequest(`${SUPABASE_PRODUCTS_TABLE}?select=*`, {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify(payload),
+    });
+    const row = Array.isArray(data) ? data[0] : data;
+    logSupabase('INSERT success', { id: row?.id, row });
+    return productFromSupabaseRow(row);
+  };
+
+  const deleteProductFromSupabase = async (product) => {
+    getSupabaseClient();
+    if (!product.id || product.source !== 'supabase') {
+      logSupabase('DELETE omitido: producto local sin id remoto', { product });
+      return;
+    }
+    logSupabase('DELETE payload', {
+      table: SUPABASE_PRODUCTS_TABLE,
+      id: product.id,
+    });
+    await supabaseRestRequest(`${SUPABASE_PRODUCTS_TABLE}?id=eq.${encodeURIComponent(product.id)}`, {
+      method: 'DELETE',
+      headers: { Prefer: 'return=minimal' },
+    });
+    logSupabase('DELETE success', { id: product.id });
+  };
+
+  const loadProductsWithFallback = async () => {
+    try {
+      const remoteProducts = await loadProductsFromSupabase();
+      supabaseEnabled = true;
+      products = adminStore.saveProducts(remoteProducts);
+      setStatus(elements.productStatus, 'Productos cargados desde Supabase.');
+    } catch (error) {
+      logSupabaseError('SELECT fallback a localStorage', error, { table: SUPABASE_PRODUCTS_TABLE });
+      supabaseEnabled = false;
+      products = adminStore.loadProducts();
+      setStatus(elements.productStatus, 'Supabase no disponible. Usando localStorage temporal.', true);
+    }
+    renderAll();
+  };
+
+  const persistProductsFallback = () => {
+    products = adminStore.saveProducts(products);
+  };
 
   const setStatus = (element, message, isError = false) => {
     if (!element) return;
@@ -329,6 +566,92 @@
     updateProductImagePreview('', '');
   };
 
+  const waitForCatalogCards = (iframe) => new Promise((resolve) => {
+    let attempts = 0;
+    const check = () => {
+      attempts += 1;
+      const doc = iframe.contentDocument;
+      const cards = doc ? Array.from(doc.querySelectorAll('.product-card')) : [];
+      if (cards.length || attempts > 80) {
+        resolve(cards);
+        return;
+      }
+      window.setTimeout(check, 100);
+    };
+    check();
+  });
+
+  const readCatalogProductsFromIframe = async () => {
+    const iframe = document.createElement('iframe');
+    iframe.src = 'productos.html';
+    iframe.title = 'Catalogo temporal para admin';
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.position = 'fixed';
+    iframe.style.width = '1px';
+    iframe.style.height = '1px';
+    iframe.style.opacity = '0';
+    iframe.style.pointerEvents = 'none';
+    iframe.style.left = '-9999px';
+    document.body.appendChild(iframe);
+
+    try {
+      await new Promise((resolve, reject) => {
+        iframe.onload = resolve;
+        iframe.onerror = reject;
+      });
+      const cards = await waitForCatalogCards(iframe);
+      return cards.map((card) => {
+        const sizeButtons = Array.from(card.querySelectorAll('.size-option'));
+        const sizeText = sizeButtons.length
+          ? sizeButtons.map((button) => `${button.textContent.trim()}: ${formatCurrency(button.dataset.price)}`).join('\n')
+          : (card.querySelector('.product-volume')?.textContent || '').replace(/^Contenido:\s*/i, '').trim();
+        const priceText = card.querySelector('.product-price')?.textContent || '';
+        const imageEl = card.querySelector('.product-image img');
+        return normalizeProduct({
+          id: card.dataset.productId || undefined,
+          name: card.querySelector('h3')?.textContent || '',
+          brand: '',
+          category: card.querySelector('.product-tag')?.textContent || '',
+          subcategory: card.querySelector('.product-subtag')?.textContent || '',
+          description: card.querySelector('h3 + p')?.textContent || '',
+          sizes: sizeText || 'Presentacion unica',
+          price: sizeButtons.length
+            ? Math.min(...sizeButtons.map((button) => Number(button.dataset.price) || 0).filter(Boolean))
+            : parseCurrencyValue(priceText),
+          image: imageEl?.getAttribute('src') || '',
+          active: true,
+          featured: false,
+          promo: false,
+          source: 'catalog',
+        });
+      }).filter((product) => product.name);
+    } catch (error) {
+      return [];
+    } finally {
+      iframe.remove();
+    }
+  };
+
+  const seedProductsFromCatalogIfNeeded = async () => {
+    if (products.length > 0) return;
+    await syncProductsFromCatalog();
+  };
+
+  const syncProductsFromCatalog = async () => {
+    setStatus(elements.productStatus, 'Importando catalogo actual...');
+    const catalogProducts = await readCatalogProductsFromIframe();
+    if (!catalogProducts.length) {
+      setStatus(elements.productStatus, 'No se pudo importar el catalogo actual.', true);
+      return;
+    }
+    const mergedProducts = mergeProductsWithoutDuplicates(products, catalogProducts);
+    const importedCount = mergedProducts.length - products.length;
+    products = mergedProducts;
+    persistProductsFallback();
+    setStatus(elements.productStatus, `Catalogo actual importado: ${importedCount} productos.`);
+    renderAll();
+  };
+
   const statusPills = (item) => `
     <span class="pill ${item.active ? 'active' : 'inactive'}">${item.active ? 'Activo' : 'Inactivo'}</span>
     ${item.featured ? '<span class="pill featured">Destacado</span>' : ''}
@@ -350,6 +673,7 @@
     elements.loginScreen?.classList.add('hidden');
     elements.adminApp?.classList.remove('hidden');
     renderAll();
+    loadProductsWithFallback().then(() => seedProductsFromCatalogIfNeeded());
   };
 
   const showLogin = () => {
@@ -689,7 +1013,7 @@
     }
   });
 
-  elements.productForm?.addEventListener('submit', (event) => {
+  elements.productForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!elements.productForm.checkValidity()) {
       elements.productForm.reportValidity();
@@ -697,14 +1021,45 @@
     }
     const product = productFromForm();
     const index = products.findIndex((item) => item.id === product.id);
-    if (index >= 0) {
-      products[index] = product;
-      setStatus(elements.productStatus, 'Producto actualizado correctamente');
-    } else {
-      products.unshift(product);
-      setStatus(elements.productStatus, 'Producto guardado correctamente');
+    let savedToSupabase = false;
+
+    try {
+      const savedProduct = await saveProductToSupabase(product);
+      savedToSupabase = true;
+      supabaseEnabled = true;
+      if (index >= 0) {
+        products[index] = savedProduct;
+        setStatus(elements.productStatus, 'Producto actualizado');
+      } else {
+        products.unshift(savedProduct);
+        setStatus(elements.productStatus, 'Producto guardado');
+      }
+      products = adminStore.saveProducts(await loadProductsFromSupabase());
+      logSupabase('Reload despues de guardar/actualizar', { count: products.length });
+    } catch (error) {
+      if (savedToSupabase) {
+        logSupabaseError('Reload despues de guardar/actualizar fallo; se conserva fila guardada', error, {
+          product,
+        });
+        persistProductsFallback();
+        resetProductForm();
+        renderAll();
+        return;
+      }
+      logSupabaseError('Guardar/actualizar fallback a localStorage', error, {
+        product,
+        payload: productToSupabaseRow(product),
+      });
+      supabaseEnabled = false;
+      if (index >= 0) {
+        products[index] = product;
+        setStatus(elements.productStatus, 'Producto actualizado en localStorage.');
+      } else {
+        products.unshift(product);
+        setStatus(elements.productStatus, 'Producto guardado en localStorage.');
+      }
     }
-    products = adminStore.saveProducts(products);
+    persistProductsFallback();
     resetProductForm();
     renderAll();
   });
@@ -715,7 +1070,7 @@
 
   elements.cancelProductEdit?.addEventListener('click', () => resetProductForm());
 
-  const handleProductAction = (event) => {
+  const handleProductAction = async (event) => {
     const button = event.target.closest('[data-product-action]');
     if (!button) return;
     const product = products.find((item) => item.id === button.dataset.id);
@@ -728,15 +1083,45 @@
 
     if (button.dataset.productAction === 'delete') {
       if (!window.confirm(`Eliminar "${product.name}" del admin local?`)) return;
-      products = products.filter((item) => item.id !== product.id);
-      setStatus(elements.productStatus, 'Producto eliminado correctamente');
+      try {
+        await deleteProductFromSupabase(product);
+        supabaseEnabled = true;
+        setStatus(elements.productStatus, 'Producto eliminado');
+        products = adminStore.saveProducts(await loadProductsFromSupabase());
+        logSupabase('Reload despues de eliminar', { count: products.length });
+      } catch (error) {
+        logSupabaseError('Eliminar fallback a localStorage', error, { product });
+        supabaseEnabled = false;
+        products = products.filter((item) => item.id !== product.id);
+        persistProductsFallback();
+        setStatus(elements.productStatus, 'Producto eliminado de localStorage.');
+      }
+      renderAll();
+      return;
     }
 
     if (button.dataset.productAction === 'toggle-active') product.active = !product.active;
     if (button.dataset.productAction === 'toggle-featured') product.featured = !product.featured;
     if (button.dataset.productAction === 'toggle-promo') product.promo = !product.promo;
 
-    products = adminStore.saveProducts(products);
+    try {
+      const savedProduct = await saveProductToSupabase(product);
+      const index = products.findIndex((item) => item.id === product.id);
+      if (index >= 0) products[index] = savedProduct;
+      supabaseEnabled = true;
+      setStatus(elements.productStatus, 'Producto actualizado');
+      products = adminStore.saveProducts(await loadProductsFromSupabase());
+      logSupabase('Reload despues de cambiar estado', { count: products.length });
+    } catch (error) {
+      logSupabaseError('Cambiar estado fallback a localStorage', error, {
+        product,
+        payload: productToSupabaseRow(product),
+      });
+      supabaseEnabled = false;
+      persistProductsFallback();
+      setStatus(elements.productStatus, 'Producto actualizado en localStorage.');
+    }
+    persistProductsFallback();
     renderAll();
   };
 
@@ -746,6 +1131,10 @@
   elements.productSearch?.addEventListener('input', () => {
     productQuery = elements.productSearch.value;
     renderProducts();
+  });
+
+  elements.syncCatalogProducts?.addEventListener('click', () => {
+    syncProductsFromCatalog();
   });
 
   elements.bannerForm?.addEventListener('submit', (event) => {

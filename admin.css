@@ -496,6 +496,14 @@ textarea:focus,
   align-items: end;
 }
 
+.list-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .search-input {
   max-width: 260px;
 }
@@ -702,6 +710,11 @@ td small,
   .panel-heading,
   .list-heading,
   .topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .list-actions {
     align-items: stretch;
     flex-direction: column;
   }
