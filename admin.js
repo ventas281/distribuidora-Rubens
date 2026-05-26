@@ -26,10 +26,10 @@
       { name: 'Pasta Texturizada', value: 51 },
     ],
     topCategories: [
-      { name: 'Impermeabilizantes', value: 94 },
-      { name: 'Maderas', value: 72 },
+      { name: 'Impermeabilizante', value: 94 },
+      { name: 'Madera', value: 72 },
       { name: 'Aplicadores', value: 58 },
-      { name: 'Vinilica', value: 45 },
+      { name: 'Vinílica', value: 45 },
     ],
   };
 
@@ -108,11 +108,52 @@
     return value;
   };
 
+  const normalizeCategoryText = (value) => String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+  const categoryAliases = {
+    vinilica: 'Vinílica',
+    'pintura vinilica': 'Vinílica',
+    esmalte: 'Esmalte',
+    esmaltes: 'Esmalte',
+    'pintura de esmalte': 'Esmalte',
+    epoxica: 'Impermeabilizante',
+    impermeabilizante: 'Impermeabilizante',
+    impermeabilizantes: 'Impermeabilizante',
+    aerosoles: 'Aerosoles',
+    aerosol: 'Aerosoles',
+    madera: 'Madera',
+    maderas: 'Madera',
+    'productos para madera': 'Madera',
+    aplicadores: 'Aplicadores',
+    ferreteria: 'Aplicadores',
+    selladores: 'Selladores y Adhesivos',
+    'selladores y adhesivos': 'Selladores y Adhesivos',
+    diluyentes: 'Diluyentes',
+    complementos: 'Diluyentes',
+    primarios: 'Primarios',
+    primerarios: 'Primarios',
+    industrial: 'Primarios',
+  };
+
+  const normalizeCategoryLabel = (category) => categoryAliases[normalizeCategoryText(category)] || String(category || '').trim();
+
+  const duplicateProductKey = (product) => [
+    normalizeCategoryText(product.name),
+    normalizeCategoryText(product.brand),
+    normalizeCategoryText(normalizeCategoryLabel(product.category)),
+  ].join('|');
+
   const normalizeProduct = (product) => ({
     id: product.id ? String(product.id) : createId('product'),
     name: String(product.name || '').trim(),
     brand: String(product.brand || '').trim(),
-    category: String(product.category || '').trim(),
+    category: normalizeCategoryLabel(product.category),
     subcategory: String(product.subcategory || '').trim(),
     description: String(product.description || '').trim(),
     sizes: String(product.sizes || product.size || '').trim(),
@@ -330,6 +371,7 @@
   let productQuery = '';
   let currentProductImageData = '';
   let currentProductImageName = '';
+  let currentEditingProductSource = '';
   let supabaseClient = null;
   let supabaseEnabled = false;
   let pendingSignedOutMessage = '';
@@ -353,7 +395,7 @@
   };
 
   const isDataImage = (value) => String(value || '').trim().startsWith('data:image');
-  const productCatalogKey = (product) => `${String(product.name || '').trim().toLowerCase()}|${String(product.category || '').trim().toLowerCase()}`;
+  const productCatalogKey = (product) => `${normalizeCategoryText(product.name)}|${normalizeCategoryText(normalizeCategoryLabel(product.category))}`;
 
   const mergeProductsWithoutDuplicates = (baseProducts, incomingProducts) => {
     const merged = [...baseProducts.map(normalizeProduct)];
@@ -462,27 +504,48 @@
 
   const saveProductToSupabase = async (product) => {
     getSupabaseClient();
-    const payload = productToSupabaseRow(product);
+    const editingProductId = product.id ? String(product.id) : '';
+    const normalizedProduct = normalizeProduct(product);
+    const payload = productToSupabaseRow(normalizedProduct);
     console.log('[Rubens Admin Supabase] Intentando guardar en Supabase', {
       table: SUPABASE_PRODUCTS_TABLE,
-      operation: product.id && product.source === 'supabase' ? 'UPDATE' : 'INSERT',
-      id: product.id || null,
+      operation: editingProductId ? 'UPDATE' : 'INSERT',
+      id: editingProductId || null,
     });
     console.log('[Rubens Admin Supabase] Payload enviado', payload);
 
-    if (product.id && product.source === 'supabase') {
+    if (editingProductId && normalizedProduct.source === 'supabase') {
       logSupabase('UPDATE payload', {
         table: SUPABASE_PRODUCTS_TABLE,
-        id: product.id,
+        id: editingProductId,
         payload,
       });
-      const data = await supabaseRestRequest(`${SUPABASE_PRODUCTS_TABLE}?id=eq.${encodeURIComponent(product.id)}&select=*`, {
+      const data = await supabaseRestRequest(`${SUPABASE_PRODUCTS_TABLE}?id=eq.${encodeURIComponent(editingProductId)}&select=*`, {
         method: 'PATCH',
         headers: { Prefer: 'return=representation' },
         body: JSON.stringify(payload),
       });
       const row = Array.isArray(data) ? data[0] : data;
+      if (!row?.id) throw new Error('No se encontro el producto para actualizar en Supabase.');
       logSupabase('UPDATE success', { id: row?.id, row });
+      return productFromSupabaseRow(row);
+    }
+
+    const existingProducts = await loadProductsFromSupabase();
+    const duplicate = existingProducts.find((item) => duplicateProductKey(item) === duplicateProductKey(normalizedProduct));
+    if (duplicate?.id) {
+      logSupabase('UPDATE por duplicado nombre/marca/categoria', {
+        table: SUPABASE_PRODUCTS_TABLE,
+        id: duplicate.id,
+        payload,
+      });
+      const data = await supabaseRestRequest(`${SUPABASE_PRODUCTS_TABLE}?id=eq.${encodeURIComponent(duplicate.id)}&select=*`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify(payload),
+      });
+      const row = Array.isArray(data) ? data[0] : data;
+      logSupabase('UPDATE duplicate success', { id: row?.id, row });
       return productFromSupabaseRow(row);
     }
 
@@ -663,6 +726,7 @@
   const clearProductImagePreview = () => {
     currentProductImageData = '';
     currentProductImageName = '';
+    currentEditingProductSource = '';
     if (productFields.imageFile) productFields.imageFile.value = '';
     updateProductImagePreview('', '');
   };
@@ -745,11 +809,31 @@
       setStatus(elements.productStatus, 'No se pudo importar el catalogo actual.', true);
       return;
     }
-    const mergedProducts = mergeProductsWithoutDuplicates(products, catalogProducts);
-    const importedCount = mergedProducts.length - products.length;
+    const previousProducts = products;
+    const mergedProducts = mergeProductsWithoutDuplicates(previousProducts, catalogProducts);
+    const importedCount = mergedProducts.length - previousProducts.length;
     products = mergedProducts;
     persistProductsFallback();
-    setStatus(elements.productStatus, `Catalogo actual importado: ${importedCount} productos.`);
+    if (supabaseEnabled) {
+      try {
+        for (const catalogProduct of catalogProducts) {
+          const existing = previousProducts.find((item) => productCatalogKey(item) === productCatalogKey(catalogProduct));
+          await saveProductToSupabase({
+            ...catalogProduct,
+            id: existing?.source === 'supabase' ? existing.id : '',
+            source: existing?.source || catalogProduct.source,
+          });
+        }
+        products = adminStore.saveProducts(await loadProductsFromSupabase());
+        setStatus(elements.productStatus, `Catalogo sincronizado: ${catalogProducts.length} productos revisados, ${Math.max(importedCount, 0)} nuevos.`);
+      } catch (error) {
+        logSupabaseError('Sincronizar catalogo fallback a localStorage', error);
+        supabaseEnabled = false;
+        setStatus(elements.productStatus, `Catalogo importado localmente. Error Supabase: ${getSupabaseErrorMessage(error)}`, true);
+      }
+    } else {
+      setStatus(elements.productStatus, `Catalogo actual importado: ${importedCount} productos.`);
+    }
     renderAll();
   };
 
@@ -1024,23 +1108,29 @@
     elements.cancelBannerEdit.classList.add('hidden');
   };
 
-  const productFromForm = () => normalizeProduct({
-    id: productFields.id.value || undefined,
-    name: productFields.name.value,
-    brand: productFields.brand.value,
-    category: productFields.category.value,
-    subcategory: productFields.subcategory.value,
-    description: productFields.description.value,
-    sizes: productFields.sizes.value,
-    price: productFields.price.value,
-    image: productFields.image.value,
-    imageData: currentProductImageData,
-    imageName: currentProductImageName,
-    active: productFields.active.checked,
-    featured: productFields.featured.checked,
-    promo: productFields.promo.checked,
-    updatedAt: new Date().toISOString(),
-  });
+  const productFromForm = () => {
+    const rawProduct = {
+      id: productFields.id.value || '',
+      name: productFields.name.value,
+      brand: productFields.brand.value,
+      category: productFields.category.value,
+      subcategory: productFields.subcategory.value,
+      description: productFields.description.value,
+      sizes: productFields.sizes.value,
+      price: productFields.price.value,
+      image: productFields.image.value,
+      imageData: currentProductImageData,
+      imageName: currentProductImageName,
+      source: currentEditingProductSource || 'admin',
+      active: productFields.active.checked,
+      featured: productFields.featured.checked,
+      promo: productFields.promo.checked,
+      updatedAt: new Date().toISOString(),
+    };
+    const normalized = normalizeProduct(rawProduct);
+    if (!rawProduct.id) normalized.id = '';
+    return normalized;
+  };
 
   const fillProductForm = (product) => {
     productFields.id.value = product.id;
@@ -1055,6 +1145,7 @@
     productFields.image.value = isDataImage(product.image) ? '' : product.image;
     currentProductImageData = product.imageData || '';
     currentProductImageName = product.imageName || '';
+    currentEditingProductSource = product.source || '';
     updateProductImagePreview(product.imageData || product.image || '', product.imageName || '');
     productFields.active.checked = product.active;
     productFields.featured.checked = product.featured;
@@ -1173,6 +1264,7 @@
         products[index] = product;
         setStatus(elements.productStatus, `Error Supabase: ${exactError}. Producto actualizado en localStorage.`, true);
       } else {
+        if (!product.id) product.id = createId('product');
         products.unshift(product);
         setStatus(elements.productStatus, `Error Supabase: ${exactError}. Producto guardado en localStorage.`, true);
       }

@@ -175,11 +175,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const closeRainBannerButtons = document.querySelectorAll('[data-close-rain-banner]');
 
   const categoryLabels = {
-    vinilica: 'Pintura Vinílica',
-    esmalte: 'Pintura de Esmalte',
+    vinilica: 'Vinílica',
+    esmalte: 'Esmalte',
     epoxica: 'Impermeabilizante',
     aerosoles: 'Aerosoles',
-    madera: 'Productos para Madera',
+    madera: 'Madera',
     aplicadores: 'Aplicadores',
     selladores: 'Selladores y Adhesivos',
     diluyentes: 'Diluyentes',
@@ -189,10 +189,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const subcategories = {
     vinilica: ['Sayer', 'Económica', 'Media', 'Mediana-Alta', 'Alta', 'Texturizados'],
     esmalte: ['Base Agua', 'Base Solvente', 'Esmalte Industrial'],
-    epoxica: ['Fester', 'Acrílico', 'Membranas', 'Complementos', 'Pisos', 'Industrial', 'Alto Tráfico'],
+    epoxica: ['Fester', 'Acrílico', 'Membranas', 'Vaportite', 'Plastic Cement', 'Espuma Poliuretano', 'Complementos', 'Pisos', 'Industrial', 'Alto Tráfico'],
     aerosoles: ['Normal', 'Metálico', 'Neón', 'Alta Temperatura'],
-    madera: ['Tintas', 'Barniz Marino', 'Barnices entintados', 'Barnices base agua', 'Barnices base esmalte', 'Lacas', 'Nitrocelulosas', 'Selladores', 'Primer para Madera', 'Poliuretanos', 'Polyform', 'Protectores para Madera', 'Removedores y Preparación', 'Resanadores', 'Aditivos'],
-    aplicadores: ['Brochas', 'Brochas para Madera', 'Cintas', 'Cintas Especializadas', 'Espátulas', 'Rodillos', 'Repuestos para Rodillo'],
+    madera: ['Tintas', 'Barniz Marino', 'Barnices entintados', 'Barnices base agua', 'Barnices base esmalte', 'Lacas', 'Nitrocelulosas', 'Selladores', 'Primer para Madera', 'Poliuretanos', 'Polyform', 'Protectores para Madera', 'Antiparásitos', 'Removedores y Preparación', 'Resanadores', 'Aditivos'],
+    aplicadores: ['Brochas', 'Brochas para Madera', 'Rodillos', 'Repuestos para Rodillo', 'Charolas', 'Masking', 'Cintas', 'Cintas Especializadas', 'Espátulas', 'Aplicadores'],
     selladores: ['Selladores Elásticos'],
     diluyentes: ['Alberca y Tráfico'],
     primerarios: ['Primarios'],
@@ -303,8 +303,43 @@ window.addEventListener('DOMContentLoaded', () => {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
+  const normalizeCategoryText = (value) => String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+  const categoryAliases = {
+    vinilica: 'vinilica',
+    'pintura vinilica': 'vinilica',
+    esmalte: 'esmalte',
+    esmaltes: 'esmalte',
+    'pintura de esmalte': 'esmalte',
+    epoxica: 'epoxica',
+    impermeabilizante: 'epoxica',
+    impermeabilizantes: 'epoxica',
+    aerosoles: 'aerosoles',
+    aerosol: 'aerosoles',
+    madera: 'madera',
+    maderas: 'madera',
+    'productos para madera': 'madera',
+    aplicadores: 'aplicadores',
+    ferreteria: 'aplicadores',
+    selladores: 'selladores',
+    'selladores y adhesivos': 'selladores',
+    diluyentes: 'diluyentes',
+    complementos: 'diluyentes',
+    primarios: 'primerarios',
+    primerarios: 'primerarios',
+    industrial: 'primerarios',
+  };
+
+  const normalizeCategoryKey = (category) => categoryAliases[normalizeCategoryText(category)] || normalizeCategoryText(category).replace(/\s+/g, '-');
+
   const normalizeAdminProductForCatalog = (product) => {
-    const category = String(product.category || '').trim();
+    const category = normalizeCategoryKey(product.category);
     const name = String(product.name || '').trim();
     const image = String(product.imageData || product.image || '').trim();
     const sizes = String(product.sizes || '').trim();
@@ -343,7 +378,7 @@ window.addEventListener('DOMContentLoaded', () => {
       .forEach((product) => {
         const existingIndex = products.findIndex((item) => (
           item.name.trim().toLowerCase() === product.name.trim().toLowerCase()
-          && item.category.trim().toLowerCase() === product.category.trim().toLowerCase()
+          && normalizeCategoryKey(item.category) === normalizeCategoryKey(product.category)
         ));
         if (existingIndex >= 0) {
           products[existingIndex] = {
@@ -3795,13 +3830,14 @@ Total final: ${formatCurrency(order.totals.total)}`;
   const renderSubcategoryOptions = (category) => {
     if (!subcategoryFilter) return;
     subcategoryFilter.innerHTML = '<option value="all">Todas</option>';
+    const categoryKey = normalizeCategoryKey(category);
 
-    if (!category || category === 'all') {
+    if (!categoryKey || categoryKey === 'all' || !subcategories[categoryKey]) {
       subcategoryFilter.disabled = true;
       return;
     }
 
-    subcategories[category].forEach((sub) => {
+    subcategories[categoryKey].forEach((sub) => {
       const option = document.createElement('option');
       option.value = sub.toLowerCase().replace(/\s+/g, '-');
       option.textContent = sub;
@@ -3810,7 +3846,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
     subcategoryFilter.disabled = false;
   };
 
-  const normalizeSubcategory = (value) => value.toLowerCase().replace(/\s+/g, '-');
+  const normalizeSubcategory = (value) => normalizeCategoryText(value).replace(/\s+/g, '-');
   const getEffectiveSizeOptions = (product) => product.selectedPaletteColor?.sizeOptions || product.sizeOptions;
 
   const createProductCard = (product) => {
@@ -3967,7 +4003,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
   };
 
   const applyFilters = () => {
-    const categoryValue = selectedCategory;
+    const categoryValue = normalizeCategoryKey(selectedCategory);
     const subcategoryValue = subcategoryFilter ? subcategoryFilter.value : 'all';
     const priceInput = document.getElementById('price-filter');
     const maxPrice = priceInput && priceInput.value.trim() !== '' ? parseFloat(priceInput.value) : null;
@@ -3975,11 +4011,13 @@ Total final: ${formatCurrency(order.totals.total)}`;
     const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'default';
 
     filteredProducts = products.filter((product) => {
-      const categoryMatch = categoryValue === 'all' || product.category === categoryValue;
+      const productCategory = normalizeCategoryKey(product.category);
+      const categoryMatch = categoryValue === 'all' || productCategory === categoryValue;
       const subcategoryMatch = subcategoryValue === 'all' || normalizeSubcategory(product.subcategory) === subcategoryValue;
       const priceMatch = maxPrice === null || product.price <= maxPrice;
+      const normalizedSearchTerm = normalizeCategoryText(searchTerm);
       const searchMatch = !searchTerm || [product.name, product.description, product.categoryLabel, product.subcategory]
-        .some((text) => text.toLowerCase().includes(searchTerm));
+        .some((text) => normalizeCategoryText(text).includes(normalizedSearchTerm));
       return categoryMatch && subcategoryMatch && priceMatch && searchMatch;
     });
 
@@ -4177,13 +4215,13 @@ Total final: ${formatCurrency(order.totals.total)}`;
   if (productGeneralListEl) {
     generateProducts();
     const params = new URLSearchParams(window.location.search);
-    const requestedCategory = params.get('categoria') || params.get('category');
+    const requestedCategory = normalizeCategoryKey(params.get('categoria') || params.get('category'));
     if (requestedCategory && subcategories[requestedCategory]) {
       selectedCategory = requestedCategory;
       categoryItems.forEach((item) => {
-        item.classList.toggle('active', item.dataset.category === requestedCategory);
+        item.classList.toggle('active', normalizeCategoryKey(item.dataset.category) === requestedCategory);
       });
-      const requestedButton = document.querySelector(`.category-item[data-category="${requestedCategory}"]`);
+      const requestedButton = Array.from(categoryItems).find((item) => normalizeCategoryKey(item.dataset.category) === requestedCategory);
       if (requestedButton && allCategoryButton) {
         allCategoryButton.textContent = requestedButton.textContent;
       }
