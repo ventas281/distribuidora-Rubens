@@ -184,6 +184,17 @@
     });
   };
 
+  const getSupabaseErrorMessage = (error) => {
+    const serialized = serializeSupabaseError(error);
+    return [
+      serialized.message,
+      serialized.details,
+      serialized.hint,
+      serialized.code ? `Codigo: ${serialized.code}` : '',
+      serialized.status ? `HTTP: ${serialized.status}` : '',
+    ].filter(Boolean).join(' | ');
+  };
+
   const normalizeBanner = (banner) => ({
     id: banner.id || createId('banner'),
     title: String(banner.title || '').trim(),
@@ -432,8 +443,10 @@
         url,
         response: responseData,
       });
+      console.error('[Rubens Admin Supabase] Error Supabase', serializeSupabaseError(error));
       throw error;
     }
+    console.log('[Rubens Admin Supabase] Respuesta Supabase', responseData);
     logSupabase('REST success', {
       method: options.method || 'GET',
       url,
@@ -456,6 +469,12 @@
   const saveProductToSupabase = async (product) => {
     getSupabaseClient();
     const payload = productToSupabaseRow(product);
+    console.log('[Rubens Admin Supabase] Intentando guardar en Supabase', {
+      table: SUPABASE_PRODUCTS_TABLE,
+      operation: product.id && product.source === 'supabase' ? 'UPDATE' : 'INSERT',
+      id: product.id || null,
+    });
+    console.log('[Rubens Admin Supabase] Payload enviado', payload);
 
     if (product.id && product.source === 'supabase') {
       logSupabase('UPDATE payload', {
@@ -496,6 +515,11 @@
     logSupabase('DELETE payload', {
       table: SUPABASE_PRODUCTS_TABLE,
       id: product.id,
+    });
+    console.log('[Rubens Admin Supabase] Payload enviado', {
+      id: product.id,
+      table: SUPABASE_PRODUCTS_TABLE,
+      operation: 'DELETE',
     });
     await supabaseRestRequest(`${SUPABASE_PRODUCTS_TABLE}?id=eq.${encodeURIComponent(product.id)}`, {
       method: 'DELETE',
@@ -1013,12 +1037,7 @@
     }
   });
 
-  elements.productForm?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    if (!elements.productForm.checkValidity()) {
-      elements.productForm.reportValidity();
-      return;
-    }
+  const guardarProducto = async () => {
     const product = productFromForm();
     const index = products.findIndex((item) => item.id === product.id);
     let savedToSupabase = false;
@@ -1032,7 +1051,7 @@
         setStatus(elements.productStatus, 'Producto actualizado');
       } else {
         products.unshift(savedProduct);
-        setStatus(elements.productStatus, 'Producto guardado');
+        setStatus(elements.productStatus, 'Producto guardado en Supabase');
       }
       products = adminStore.saveProducts(await loadProductsFromSupabase());
       logSupabase('Reload despues de guardar/actualizar', { count: products.length });
@@ -1051,17 +1070,27 @@
         payload: productToSupabaseRow(product),
       });
       supabaseEnabled = false;
+      const exactError = getSupabaseErrorMessage(error);
       if (index >= 0) {
         products[index] = product;
-        setStatus(elements.productStatus, 'Producto actualizado en localStorage.');
+        setStatus(elements.productStatus, `Error Supabase: ${exactError}. Producto actualizado en localStorage.`, true);
       } else {
         products.unshift(product);
-        setStatus(elements.productStatus, 'Producto guardado en localStorage.');
+        setStatus(elements.productStatus, `Error Supabase: ${exactError}. Producto guardado en localStorage.`, true);
       }
     }
     persistProductsFallback();
     resetProductForm();
     renderAll();
+  };
+
+  elements.productForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!elements.productForm.checkValidity()) {
+      elements.productForm.reportValidity();
+      return;
+    }
+    await guardarProducto();
   });
 
   elements.productForm?.addEventListener('reset', () => {
@@ -1094,7 +1123,7 @@
         supabaseEnabled = false;
         products = products.filter((item) => item.id !== product.id);
         persistProductsFallback();
-        setStatus(elements.productStatus, 'Producto eliminado de localStorage.');
+        setStatus(elements.productStatus, `Error Supabase: ${getSupabaseErrorMessage(error)}. Producto eliminado de localStorage.`, true);
       }
       renderAll();
       return;
@@ -1119,7 +1148,7 @@
       });
       supabaseEnabled = false;
       persistProductsFallback();
-      setStatus(elements.productStatus, 'Producto actualizado en localStorage.');
+      setStatus(elements.productStatus, `Error Supabase: ${getSupabaseErrorMessage(error)}. Producto actualizado en localStorage.`, true);
     }
     persistProductsFallback();
     renderAll();
