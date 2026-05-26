@@ -1,6 +1,8 @@
 ﻿// Script ligero para Ruben's Distribuidora
 
 const MERCADO_PAGO_CHECKOUT_URL = window.MERCADO_PAGO_CHECKOUT_URL || "";
+const RUBENS_SUPABASE_REST_URL = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co/rest/v1/';
+const RUBENS_SUPABASE_KEY = 'sb_publishable_IPQVpAeDJwNh_bZ575tz5w_8hAUzsEL';
 
 window.addEventListener('DOMContentLoaded', () => {
   const revealElements = document.querySelectorAll('.reveal');
@@ -122,17 +124,19 @@ window.addEventListener('DOMContentLoaded', () => {
     aerosoles: 'Aerosoles',
     madera: 'Productos para Madera',
     aplicadores: 'Aplicadores',
+    selladores: 'Selladores y Adhesivos',
     diluyentes: 'Diluyentes',
     primerarios: 'Primarios',
   };
 
   const subcategories = {
-    vinilica: ['Económica', 'Media', 'Mediana-Alta', 'Alta'],
+    vinilica: ['Económica', 'Media', 'Mediana-Alta', 'Alta', 'Sayer', 'Texturizados'],
     esmalte: ['Base Agua', 'Base Solvente', 'Esmalte Industrial'],
-    epoxica: ['Fester', 'Pisos', 'Industrial', 'Alto Tráfico'],
+    epoxica: ['Fester', 'Acrílico', 'Membranas', 'Complementos', 'Pisos', 'Industrial', 'Alto Tráfico'],
     aerosoles: ['Normal', 'Metálico', 'Neón', 'Alta Temperatura'],
-    madera: ['Tintas', 'Barnices entintados', 'Barnices base agua', 'Barnices base esmalte', 'Lacas', 'Nitrocelulosas', 'Selladores', 'Primer para Madera', 'Poliuretanos', 'Resanadores', 'Aditivos'],
-    aplicadores: ['Brochas', 'Rodillos'],
+    madera: ['Tintas', 'Barniz Marino', 'Barnices entintados', 'Barnices base agua', 'Barnices base esmalte', 'Lacas', 'Nitrocelulosas', 'Selladores', 'Primer para Madera', 'Poliuretanos', 'Polyform', 'Protectores para Madera', 'Removedores y Preparación', 'Resanadores', 'Aditivos'],
+    aplicadores: ['Brochas', 'Brochas para Madera', 'Cintas', 'Cintas Especializadas', 'Espátulas', 'Rodillos', 'Repuestos para Rodillo'],
+    selladores: ['Selladores Elásticos'],
     diluyentes: ['Alberca y Tráfico'],
     primerarios: ['Primarios'],
   }; 
@@ -1158,6 +1162,339 @@ window.addEventListener('DOMContentLoaded', () => {
         colorSwatch: '#e5dfd2',
         image: '',
       },
+      {
+        id: 'madera-antiparasitos-sayer-lack',
+        category: 'madera',
+        categoryLabel: categoryLabels['madera'],
+        subcategory: 'Protectores para Madera',
+        name: 'Antiparásitos para Madera Sayer Lack',
+        description: 'Antiparásitos para madera Sayer Lack diseñado para proteger contra plagas, hongos, termitas y humedad.',
+        detailText: 'Clave: AD-0051. Antiparásitos para madera Sayer Lack diseñado para proteger superficies de madera contra plagas, hongos, termitas y deterioro causado por humedad o agentes biológicos. Ideal para preparación y mantenimiento de madera en interiores y exteriores.',
+        price: 270,
+        sizeOptions: [
+          { id: '1lt', label: '1 Litro', price: 270 },
+          { id: '4lts', label: '4 Litros', price: 1055 },
+          { id: '19lts', label: '19 Litros', price: 4301 },
+        ],
+        cantidad: '1 litro / 4 litros / 19 litros',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#cfa46b',
+        image: '',
+      },
+      {
+        id: 'madera-barniz-marino-transparente-brillante',
+        category: 'madera',
+        categoryLabel: categoryLabels['madera'],
+        subcategory: 'Barniz Marino',
+        name: 'Barniz Marino Transparente Brillante',
+        description: 'Barniz marino transparente brillante para proteger y embellecer superficies de madera expuestas a humedad, sol y exteriores.',
+        detailText: 'Clave: HI-0900. Barniz marino transparente brillante diseñado para proteger y embellecer superficies de madera expuestas a humedad, sol y condiciones exteriores. Ideal para muebles de exterior, puertas, ventanas, embarcaciones y proyectos de carpintería donde se requiere alta resistencia y acabado brillante.',
+        price: 489,
+        sizeOptions: [
+          { id: '1lt', label: '1 Litro', price: 489 },
+          { id: '4lts', label: '4 Litros', price: 1915 },
+          { id: '19lts', label: '19 Litros', price: 7817 },
+        ],
+        cantidad: '1 litro / 4 litros / 19 litros',
+        popular: true,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#f1dfb8',
+        image: '',
+      },
+      {
+        id: 'madera-barniz-marino-transparente-semi-mate',
+        category: 'madera',
+        categoryLabel: categoryLabels['madera'],
+        subcategory: 'Barniz Marino',
+        name: 'Barniz Marino Transparente Semi Mate',
+        description: 'Barniz marino transparente semi mate para proteger madera expuesta al exterior con acabado elegante de bajo brillo.',
+        detailText: 'Clave: HI-0940. Barniz marino transparente semi mate ideal para proteger superficies de madera expuestas al exterior, proporcionando resistencia a humedad y desgaste con un acabado elegante de bajo brillo.',
+        price: 489,
+        sizeOptions: [
+          { id: '1lt', label: '1 Litro', price: 489 },
+          { id: '4lts', label: '4 Litros', price: 1915 },
+          { id: '19lts', label: '19 Litros', price: 7817 },
+        ],
+        cantidad: '1 litro / 4 litros / 19 litros',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#e6d3aa',
+        image: '',
+      },
+      {
+        id: 'madera-diluyente-pet-polyform',
+        category: 'madera',
+        categoryLabel: categoryLabels['madera'],
+        subcategory: 'Polyform',
+        name: 'Diluyente PET Polyform',
+        description: 'Diluyente especializado para productos Polyform, diseñado para mejorar la viscosidad y facilitar la aplicación.',
+        detailText: 'Diluyente especializado para productos Polyform, diseñado para mejorar la viscosidad, facilitar la aplicación y optimizar acabados en sistemas para madera.',
+        price: 95,
+        sizeOptions: [
+          { id: '500ml', label: '500 ml', price: 95 },
+          { id: '1lt', label: '1 Litro', price: 170 },
+          { id: '4lts', label: '4 Litros', price: 680 },
+        ],
+        cantidad: '500 ml / 1 litro / 4 litros',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#e8e1d1',
+        image: '',
+      },
+      {
+        id: 'madera-laca-chocolate-polyform',
+        category: 'madera',
+        categoryLabel: categoryLabels['madera'],
+        subcategory: 'Polyform',
+        name: 'Laca Chocolate Polyform',
+        description: 'Laca color chocolate especializada para acabados decorativos sobre madera y muebles.',
+        detailText: 'Laca color chocolate especializada para acabados decorativos sobre madera y muebles. Proporciona uniformidad, buena cobertura y excelente apariencia estética.',
+        price: 230,
+        sizeOptions: [
+          { id: '1lt', label: '1 Litro', price: 230 },
+          { id: '4lts', label: '4 Litros', price: 850 },
+        ],
+        cantidad: '1 litro / 4 litros',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#4a2519',
+        image: '',
+      },
+      {
+        id: 'madera-pegamento-blanco-polyform',
+        category: 'madera',
+        categoryLabel: categoryLabels['madera'],
+        subcategory: 'Polyform',
+        name: 'Pegamento Blanco Polyform',
+        description: 'Pegamento blanco de alto rendimiento para carpintería, ensamblado, MDF y aplicaciones sobre madera.',
+        detailText: 'Pegamento blanco de alto rendimiento para trabajos de carpintería, ensamblado, MDF y aplicaciones sobre madera de uso profesional o doméstico. Ofrece excelente adherencia y resistencia.',
+        price: 70,
+        sizeOptions: [
+          { id: '1lt', label: '1 Litro', price: 70 },
+          { id: '4lts', label: '4 Litros', price: 240 },
+          { id: 'cubeta', label: 'Cubeta', price: 1075 },
+        ],
+        cantidad: '1 litro / 4 litros / cubeta',
+        popular: true,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#ffffff',
+        image: '',
+      },
+      {
+        id: 'madera-polyform-11000-brillante',
+        category: 'madera',
+        categoryLabel: categoryLabels['madera'],
+        subcategory: 'Polyform',
+        name: 'Polyform 11000 Brillante',
+        description: 'Barniz brillante diseñado para proteger y embellecer superficies de madera, resaltando el color natural con larga duración.',
+        detailText: 'Barniz Polyform 11000 brillante diseñado para proteger y embellecer superficies de madera, resaltando el color natural y proporcionando un acabado brillante de larga duración. Ideal para muebles, carpintería y acabados finos.',
+        price: 550,
+        sizeOptions: [
+          { id: '1lt', label: '1 Litro', price: 550 },
+          { id: '4lts', label: '4 Litros', price: 1850 },
+        ],
+        finishOptions: ['Brillante'],
+        cantidad: '1 litro / 4 litros',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#e7c987',
+        image: '',
+      },
+      {
+        id: 'madera-polyform-3000',
+        category: 'madera',
+        categoryLabel: categoryLabels['madera'],
+        subcategory: 'Polyform',
+        name: 'Polyform 3000',
+        description: 'Acabado profesional para madera ideal para muebles, carpintería y superficies que requieren protección, durabilidad y excelente presentación.',
+        detailText: 'Acabado profesional para madera Polyform 3000 ideal para muebles, carpintería y superficies de madera que requieren protección, durabilidad y excelente presentación. Proporciona una apariencia uniforme, buena adherencia y acabado de alta calidad para proyectos residenciales o profesionales.',
+        price: 185,
+        sizeOptions: [
+          { id: '500ml', label: '500 ml', price: 185 },
+          { id: '1lt', label: '1 Litro', price: 325 },
+          { id: '4lts', label: '4 Litros', price: 1350 },
+        ],
+        finishOptions: ['Brillante', 'Mate', 'Semi Mate'],
+        cantidad: '500 ml / 1 litro / 4 litros',
+        popular: true,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#d9b26c',
+        image: '',
+      },
+      {
+        id: 'madera-primer-chocolate-polyform',
+        category: 'madera',
+        categoryLabel: categoryLabels['madera'],
+        subcategory: 'Polyform',
+        name: 'Primer Chocolate Polyform',
+        description: 'Primer color chocolate para preparación de superficies de madera antes de aplicar lacas o acabados finales.',
+        detailText: 'Primer color chocolate para preparación de superficies de madera antes de aplicar lacas o acabados finales. Mejora la adherencia, uniformidad y apariencia profesional del acabado.',
+        price: 230,
+        sizeOptions: [
+          { id: '1lt', label: '1 Litro', price: 230 },
+          { id: '4lts', label: '4 Litros', price: 850 },
+        ],
+        cantidad: '1 litro / 4 litros',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#3d2118',
+        image: '',
+      },
+      {
+        id: 'madera-removedor-pintura',
+        category: 'madera',
+        categoryLabel: categoryLabels['madera'],
+        subcategory: 'Removedores y Preparación',
+        name: 'Removedor de Pintura',
+        description: 'Removedor de pintura de alto desempeño para eliminar recubrimientos viejos, esmaltes, barnices y acabados deteriorados.',
+        detailText: 'Clave: AR-0001. Removedor de pintura de alto desempeño ideal para eliminar recubrimientos viejos, esmaltes, barnices y acabados deteriorados sobre distintas superficies. Facilita trabajos de restauración y preparación antes de volver a pintar.',
+        price: 271,
+        sizeOptions: [
+          { id: '1lt', label: '1 Litro', price: 271 },
+          { id: '4lts', label: '4 Litros', price: 1062 },
+          { id: '19lts', label: '19 Litros', price: 4336 },
+        ],
+        cantidad: '1 litro / 4 litros / 19 litros',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#b98a45',
+        image: '',
+      },
+      {
+        id: 'madera-s270-polyform',
+        category: 'madera',
+        categoryLabel: categoryLabels['madera'],
+        subcategory: 'Polyform',
+        name: 'S270 Polyform',
+        description: 'Sellador para preparación de madera antes del acabado final.',
+        detailText: 'Sellador Polyform S270 para preparación de madera antes del acabado final. Ayuda a sellar poros, mejorar adherencia y optimizar el rendimiento del barniz o laca.',
+        price: 150,
+        sizeOptions: [
+          { id: '1lt', label: '1 Litro', price: 150 },
+          { id: '4lts', label: '4 Litros', price: 600 },
+        ],
+        cantidad: '1 litro / 4 litros',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#eadcc8',
+        image: '',
+      },
+      {
+        id: 'vinilica-contractor-sayer',
+        category: 'vinilica',
+        categoryLabel: categoryLabels['vinilica'],
+        subcategory: 'Sayer',
+        name: 'Contractor Sayer',
+        description: 'Pintura vinílica económica para mantenimiento, obra y grandes superficies con precio accesible.',
+        detailText: 'Pintura vinílica económica diseñada para proyectos de mantenimiento, obra y grandes superficies, ofreciendo rendimiento y practicidad a un precio accesible.',
+        price: 425,
+        sizeOptions: [
+          { id: '4lts', label: '4 Litros', price: 425 },
+          { id: '19lts', label: '19 Litros', price: 1695 },
+        ],
+        cantidad: '4 litros / 19 litros',
+        popular: false,
+        recommended: false,
+        rating: 4,
+        colorSwatch: '#e8e0d6',
+        image: '',
+      },
+      {
+        id: 'vinilica-magicolor-sayer',
+        category: 'vinilica',
+        categoryLabel: categoryLabels['vinilica'],
+        subcategory: 'Sayer',
+        name: 'Magicolor Sayer',
+        description: 'Pintura vinílica de gran desempeño y excelente relación calidad-precio para interiores y exteriores.',
+        detailText: 'Pintura vinílica de gran desempeño y excelente relación calidad-precio, ideal para interiores y exteriores con buena adherencia y rendimiento uniforme.',
+        price: 170,
+        sizeOptions: [
+          { id: '1lt', label: '1 Litro', price: 170 },
+          { id: '4lts', label: '4 Litros', price: 625 },
+          { id: '19lts', label: '19 Litros', price: 2450 },
+        ],
+        cantidad: '1 litro / 4 litros / 19 litros',
+        popular: true,
+        recommended: false,
+        rating: 4,
+        colorSwatch: '#f2383d',
+        image: '',
+      },
+      {
+        id: 'vinilica-maxima-sayer',
+        category: 'vinilica',
+        categoryLabel: categoryLabels['vinilica'],
+        subcategory: 'Sayer',
+        name: 'Máxima Sayer',
+        description: 'Pintura vinílica de alta calidad con excelente cubrimiento y gran durabilidad para interiores y exteriores.',
+        detailText: 'Pintura vinílica de alta calidad con excelente cubrimiento y gran durabilidad, ideal para interiores y exteriores. Ofrece uniformidad y gran rendimiento para acabados profesionales.',
+        price: 245,
+        sizeOptions: [
+          { id: '1lt', label: '1 Litro', price: 245 },
+          { id: '4lts', label: '4 Litros', price: 865 },
+          { id: '19lts', label: '19 Litros', price: 3690 },
+        ],
+        cantidad: '1 litro / 4 litros / 19 litros',
+        popular: true,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#f0ad5f',
+        image: '',
+      },
+      {
+        id: 'vinilica-pro-master-sayer',
+        category: 'vinilica',
+        categoryLabel: categoryLabels['vinilica'],
+        subcategory: 'Sayer',
+        name: 'Pro Master Sayer',
+        description: 'Pintura vinílica profesional con excelente rendimiento y cubrimiento para acabados uniformes y duraderos.',
+        detailText: 'Pintura vinílica profesional con excelente rendimiento y cubrimiento. Ideal para hogares, oficinas y proyectos donde se busca un acabado uniforme y duradero a un excelente costo-beneficio.',
+        price: 195,
+        sizeOptions: [
+          { id: '1lt', label: '1 Litro', price: 195 },
+          { id: '4lts', label: '4 Litros', price: 715 },
+          { id: '19lts', label: '19 Litros', price: 2950 },
+        ],
+        cantidad: '1 litro / 4 litros / 19 litros',
+        popular: true,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#b8e7f7',
+        image: '',
+      },
+      {
+        id: 'vinilica-ultra-sayer',
+        category: 'vinilica',
+        categoryLabel: categoryLabels['vinilica'],
+        subcategory: 'Sayer',
+        name: 'Ultra Sayer',
+        description: 'Pintura vinílica premium de máxima calidad, con gran cubrimiento, alta durabilidad y excelente resistencia al lavado.',
+        detailText: 'Pintura vinílica premium de máxima calidad, diseñada para ofrecer el mejor cubrimiento, alta durabilidad y excelente resistencia al lavado. Ideal para proyectos residenciales y comerciales donde se busca un acabado superior y de larga duración.',
+        price: 295,
+        sizeOptions: [
+          { id: '1lt', label: '1 Litro', price: 295 },
+          { id: '4lts', label: '4 Litros', price: 1095 },
+          { id: '19lts', label: '19 Litros', price: 4390 },
+        ],
+        cantidad: '1 litro / 4 litros / 19 litros',
+        popular: true,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#f4edc4',
+        image: '',
+      },
     ];
 
     recoveredCatalogProducts.forEach((product) => products.push(product));
@@ -2014,6 +2351,128 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     filteredProducts = [...products];
+    window.RubensCatalogProducts = products.map((product) => ({ ...product }));
+  };
+
+  const normalizeCatalogText = (value) => String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+  const categorySlugAliases = {
+    vinilica: 'vinilica',
+    'pintura vinilica': 'vinilica',
+    esmalte: 'esmalte',
+    esmaltes: 'esmalte',
+    'pintura de esmalte': 'esmalte',
+    epoxica: 'epoxica',
+    impermeabilizante: 'epoxica',
+    impermeabilizantes: 'epoxica',
+    aerosoles: 'aerosoles',
+    aerosol: 'aerosoles',
+    madera: 'madera',
+    maderas: 'madera',
+    'productos para madera': 'madera',
+    aplicadores: 'aplicadores',
+    selladores: 'selladores',
+    'selladores y adhesivos': 'selladores',
+    diluyentes: 'diluyentes',
+    primarios: 'primerarios',
+    primerarios: 'primerarios',
+  };
+
+  const categoryLabelAliases = {
+    vinilica: categoryLabels.vinilica,
+    esmalte: categoryLabels.esmalte,
+    epoxica: categoryLabels.epoxica,
+    aerosoles: categoryLabels.aerosoles,
+    madera: categoryLabels.madera,
+    aplicadores: categoryLabels.aplicadores,
+    selladores: categoryLabels.selladores,
+    diluyentes: categoryLabels.diluyentes,
+    primerarios: categoryLabels.primerarios,
+  };
+
+  const normalizeCatalogCategory = (category) => categorySlugAliases[normalizeCatalogText(category)] || String(category || '').trim();
+  const catalogProductKey = (product) => `${normalizeCatalogText(product.name)}|${normalizeCatalogText(normalizeCatalogCategory(product.category || product.categoryLabel))}`;
+  const getDeletedCatalogKeys = () => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem('rubensDeletedCatalogProducts') || '[]'));
+    } catch (error) {
+      return new Set();
+    }
+  };
+
+  const parseSupabaseSizes = (sizes) => String(sizes || '')
+    .split(/\n+/)
+    .map((line) => {
+      const [labelPart, pricePart] = line.split(':');
+      const price = Number(String(pricePart || '').replace(/[^\d.]/g, '')) || 0;
+      const label = String(labelPart || '').trim();
+      return label && price ? { id: label.toLowerCase().replace(/[^a-z0-9]+/g, '-'), label, price } : null;
+    })
+    .filter(Boolean);
+
+  const productFromSupabaseRow = (row) => {
+    const category = normalizeCatalogCategory(row.categoria);
+    const sizeOptions = parseSupabaseSizes(row.tamanos_precios);
+    return {
+      id: row.id,
+      category,
+      categoryLabel: categoryLabelAliases[category] || row.categoria || category,
+      subcategory: row.subcategoria || '',
+      name: row.nombre || '',
+      description: row.descripcion || '',
+      detailText: row.descripcion || '',
+      price: Number(row.precio_base) || 0,
+      sizeOptions: sizeOptions.length ? sizeOptions : undefined,
+      cantidad: row.tamanos_precios || '',
+      popular: Boolean(row.promocion),
+      recommended: Boolean(row.destacado),
+      rating: 4,
+      colorSwatch: '#d7d7d7',
+      image: row.imagen || '',
+      active: row.activo !== false,
+      source: 'supabase',
+    };
+  };
+
+  const mergeCatalogProducts = (localProducts, remoteProducts) => {
+    const deletedKeys = getDeletedCatalogKeys();
+    const inactiveRemoteKeys = new Set(
+      remoteProducts.filter((product) => product.active === false).map(catalogProductKey)
+    );
+    const merged = [];
+    const addProduct = (product, preferIncoming = false) => {
+      const key = catalogProductKey(product);
+      if (inactiveRemoteKeys.has(key)) return;
+      if (product.source !== 'supabase' && deletedKeys.has(key)) return;
+      const existingIndex = merged.findIndex((item) => catalogProductKey(item) === key);
+      if (existingIndex >= 0) {
+        if (preferIncoming) merged[existingIndex] = { ...merged[existingIndex], ...product };
+      } else {
+        merged.push(product);
+      }
+    };
+    localProducts.forEach((product) => addProduct(product, false));
+    remoteProducts.filter((product) => product.active !== false).forEach((product) => addProduct(product, true));
+    return merged;
+  };
+
+  const loadSupabaseCatalogProducts = async () => {
+    const response = await fetch(`${RUBENS_SUPABASE_REST_URL}productos?select=*`, {
+      headers: {
+        apikey: RUBENS_SUPABASE_KEY,
+        Authorization: `Bearer ${RUBENS_SUPABASE_KEY}`,
+      },
+    });
+    if (!response.ok) throw new Error(`Supabase productos ${response.status}`);
+    const rows = await response.json();
+    console.log('productos recibidos desde Supabase', rows);
+    return rows.map(productFromSupabaseRow);
   };
 
   const updateCartCount = () => {
@@ -2988,7 +3447,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
       return;
     }
 
-    subcategories[category].forEach((sub) => {
+    (subcategories[category] || []).forEach((sub) => {
       const option = document.createElement('option');
       option.value = sub.toLowerCase().replace(/\s+/g, '-');
       option.textContent = sub;
@@ -3024,7 +3483,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
     } else if (product.colorSwatch) {
       imageMarkup = `<div class="swatch-circle" style="background:${product.colorSwatch};"></div>`;
     } else {
-      imageMarkup = 'Imagen';
+      imageMarkup = '<span class="product-image-placeholder">Sin imagen</span>';
     }
 
     const sizeOptions = getEffectiveSizeOptions(product);
@@ -3338,7 +3797,18 @@ Total final: ${formatCurrency(order.totals.total)}`;
   if (productGeneralListEl) {
     generateProducts();
     renderSubcategoryOptions('all');
-    renderProducts();
+    applyFilters();
+    loadSupabaseCatalogProducts()
+      .then((remoteProducts) => {
+        products = mergeCatalogProducts(products, remoteProducts);
+        filteredProducts = [...products];
+        window.RubensCatalogProducts = products.map((product) => ({ ...product }));
+        console.log('productos después de fusionar catálogo local + Supabase', products);
+        applyFilters();
+      })
+      .catch((error) => {
+        console.error('No se pudo cargar Supabase; se usa catálogo local', error);
+      });
   }
 
   if (categoryFilter) {

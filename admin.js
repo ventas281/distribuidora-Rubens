@@ -1,6 +1,7 @@
 (function () {
   const KEYS = {
     products: 'rubensAdminProducts',
+    deletedCatalogProducts: 'rubensDeletedCatalogProducts',
     banners: 'rubensAdminBanners',
     settings: 'rubensAdminSettings',
     metrics: 'rubensAdminMetrics',
@@ -155,6 +156,17 @@
     normalizeText(product.brand),
     normalizeText(normalizeCategoryLabel(product.category)),
   ].join('|');
+  const deletedCatalogProductKeys = () => readJson(KEYS.deletedCatalogProducts, [], getLocalStorage());
+  const saveDeletedCatalogProductKeys = (keys) => writeJson(KEYS.deletedCatalogProducts, Array.from(new Set(keys)), getLocalStorage());
+  const rememberDeletedCatalogProduct = (product) => {
+    const keys = deletedCatalogProductKeys();
+    keys.push(productCatalogKey(product));
+    saveDeletedCatalogProductKeys(keys);
+  };
+  const forgetDeletedCatalogProduct = (product) => {
+    const key = productCatalogKey(product);
+    saveDeletedCatalogProductKeys(deletedCatalogProductKeys().filter((item) => item !== key));
+  };
 
   const normalizeProduct = (product) => ({
     id: product.id ? String(product.id) : createId('product'),
@@ -406,9 +418,13 @@
   const productCatalogKey = (product) => `${normalizeCategoryText(product.name)}|${normalizeCategoryText(normalizeCategoryLabel(product.category))}`;
 
   const mergeProductsWithoutDuplicates = (baseProducts, incomingProducts) => {
-    const merged = [...baseProducts.map(normalizeProduct)];
+    const deletedKeys = new Set(deletedCatalogProductKeys());
+    const merged = baseProducts
+      .map(normalizeProduct)
+      .filter((product) => !deletedKeys.has(productCatalogKey(product)));
     incomingProducts.map(normalizeProduct).forEach((product) => {
       const key = productCatalogKey(product);
+      if (deletedKeys.has(key)) return;
       const existingIndex = merged.findIndex((item) => productCatalogKey(item) === key);
       if (existingIndex >= 0) {
         merged[existingIndex] = normalizeProduct({
@@ -610,13 +626,15 @@
   const loadProductsWithFallback = async () => {
     try {
       const remoteProducts = await loadProductsFromSupabase();
+      const catalogProducts = await readCatalogProductsFromIframe();
       supabaseEnabled = true;
-      products = adminStore.saveProducts(remoteProducts);
-      setStatus(elements.productStatus, 'Productos cargados desde Supabase.');
+      products = adminStore.saveProducts(mergeProductsWithoutDuplicates(remoteProducts, catalogProducts));
+      setStatus(elements.productStatus, `Productos cargados desde Supabase + catalogo local (${products.length}).`);
     } catch (error) {
       logSupabaseError('SELECT fallback a localStorage', error, { table: SUPABASE_PRODUCTS_TABLE });
       supabaseEnabled = false;
-      products = adminStore.loadProducts();
+      const catalogProducts = await readCatalogProductsFromIframe();
+      products = adminStore.saveProducts(mergeProductsWithoutDuplicates(adminStore.loadProducts(), catalogProducts));
       setStatus(elements.productStatus, 'Supabase no disponible. Usando localStorage temporal.', true);
     }
     renderAll();
@@ -787,6 +805,30 @@
         iframe.onload = resolve;
         iframe.onerror = reject;
       });
+      const catalogWindowProducts = iframe.contentWindow?.RubensCatalogProducts;
+      if (Array.isArray(catalogWindowProducts) && catalogWindowProducts.length) {
+        return catalogWindowProducts.map((product) => {
+          const sizeOptions = Array.isArray(product.sizeOptions) ? product.sizeOptions : [];
+          const sizeText = sizeOptions.length
+            ? sizeOptions.map((option) => `${option.label}: ${formatCurrency(option.price)}`).join('\n')
+            : product.cantidad || 'Presentacion unica';
+          return normalizeProduct({
+            id: product.id,
+            name: product.name,
+            brand: product.brand || '',
+            category: product.categoryLabel || product.category,
+            subcategory: product.subcategory || '',
+            description: product.description || product.detailText || '',
+            sizes: sizeText,
+            price: product.price,
+            image: product.image || '',
+            active: true,
+            featured: Boolean(product.recommended),
+            promo: false,
+            source: 'catalog',
+          });
+        }).filter((product) => product.name);
+      }
       const cards = await waitForCatalogCards(iframe);
       return cards.map((card) => {
         const sizeButtons = Array.from(card.querySelectorAll('.size-option'));
@@ -1277,11 +1319,13 @@
 
   const guardarProducto = async () => {
     const product = productFromForm();
+    forgetDeletedCatalogProduct(product);
     const index = products.findIndex((item) => item.id === product.id);
     let savedToSupabase = false;
 
     try {
-      const savedProduct = await saveProductToSupabase(product, editingProductId);
+      const updateId = currentEditingProductSource === 'supabase' ? editingProductId : '';
+      const savedProduct = await saveProductToSupabase(product, updateId);
       savedToSupabase = true;
       supabaseEnabled = true;
       if (index >= 0) {
@@ -1351,11 +1395,18 @@
 
     if (button.dataset.productAction === 'delete') {
       if (!window.confirm(`Eliminar "${product.name}" del admin local?`)) return;
+      rememberDeletedCatalogProduct(product);
       try {
-        await deleteProductFromSupabase(product);
+        const catalogProducts = await readCatalogProductsFromIframe();
+        const hasCatalogMatch = catalogProducts.some((item) => productCatalogKey(item) === productCatalogKey(product));
+        if (hasCatalogMatch) {
+          await saveProductToSupabase({ ...product, active: false }, product.source === 'supabase' ? product.id : '');
+        } else {
+          await deleteProductFromSupabase(product);
+        }
         supabaseEnabled = true;
         setStatus(elements.productStatus, 'Producto eliminado');
-        products = adminStore.saveProducts(await loadProductsFromSupabase());
+        products = adminStore.saveProducts(mergeProductsWithoutDuplicates(await loadProductsFromSupabase(), catalogProducts));
         logSupabase('Reload despues de eliminar', { count: products.length });
       } catch (error) {
         logSupabaseError('Eliminar fallback a localStorage', error, { product });
@@ -1373,7 +1424,8 @@
     if (button.dataset.productAction === 'toggle-promo') product.promo = !product.promo;
 
     try {
-      const savedProduct = await saveProductToSupabase(product, product.id);
+      const updateId = product.source === 'supabase' ? product.id : '';
+      const savedProduct = await saveProductToSupabase(product, updateId);
       const index = products.findIndex((item) => item.id === product.id);
       if (index >= 0) products[index] = savedProduct;
       supabaseEnabled = true;
