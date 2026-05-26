@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin | Ruben's Distribuidora</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <section class="login-screen" id="login-screen">
+    <div class="login-card">
+      <img src="logo.png.png" alt="Ruben's Distribuidora" class="login-logo">
+      <p class="eyebrow">Acceso temporal V1</p>
+      <h1>Panel de Administracion</h1>
+      <p class="login-copy">Ingresa con las credenciales temporales para administrar datos locales de prueba.</p>
+      <form id="login-form" class="login-form">
+        <label>
+          Usuario
+          <input type="text" id="login-user" autocomplete="username" required>
+        </label>
+        <label>
+          Contrasena
+          <input type="password" id="login-password" autocomplete="current-password" required>
+        </label>
+        <button class="primary-button" type="submit">Entrar al panel</button>
+        <p class="form-status error" id="login-status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+  <div class="admin-app hidden" id="admin-app">
+    <aside class="sidebar">
+      <a class="brand" href="admin.html" aria-label="Panel admin Rubens">
+        <img src="logo.png.png" alt="Ruben's Distribuidora">
+        <span>
+          <strong>Ruben's</strong>
+          <small>Administracion</small>
+        </span>
+      </a>
+
+      <nav class="sidebar-nav" aria-label="Secciones del panel">
+        <button class="nav-item active" type="button" data-section="dashboard">Dashboard</button>
+        <button class="nav-item" type="button" data-section="products">Productos</button>
+        <button class="nav-item" type="button" data-section="orders">Pedidos</button>
+        <button class="nav-item" type="button" data-section="banners">Banners</button>
+        <button class="nav-item" type="button" data-section="metrics">Metricas</button>
+        <button class="nav-item" type="button" data-section="settings">Configuracion</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="productos.html">Ver catalogo</a>
+        <a href="index.html">Ver sitio</a>
+        <button class="ghost-button" id="logout-button" type="button">Cerrar sesion</button>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Rubens Distribuidora</p>
+          <h1 id="page-title">Dashboard</h1>
+        </div>
+        <button class="menu-button" id="menu-toggle" type="button" aria-expanded="false">Menu</button>
+      </header>
+
+      <section class="section-view active" id="section-dashboard">
+        <div class="stats-grid">
+          <article class="stat-card"><span>Productos activos</span><strong id="stat-active-products">0</strong></article>
+          <article class="stat-card"><span>Pedidos recibidos</span><strong id="stat-orders">0</strong></article>
+          <article class="stat-card"><span>Clicks a WhatsApp</span><strong id="stat-whatsapp">0</strong></article>
+          <article class="stat-card"><span>Visitas simuladas</span><strong id="stat-visits">0</strong></article>
+          <article class="stat-card"><span>Productos destacados</span><strong id="stat-featured">0</strong></article>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Operacion</p>
+                <h2>Resumen rapido</h2>
+              </div>
+            </div>
+            <div class="activity-list" id="dashboard-summary"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Productos</p>
+                <h2>Ultimos agregados</h2>
+              </div>
+            </div>
+            <div class="compact-list" id="recent-products"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="section-view" id="section-products">
+        <div class="two-column">
+          <form class="panel form-panel" id="product-form">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Inventario local</p>
+                <h2 id="product-form-title">Agregar producto</h2>
+              </div>
+              <button class="ghost-button hidden" id="cancel-product-edit" type="button">Cancelar</button>
+            </div>
+
+            <input type="hidden" id="product-id">
+            <label>Nombre del producto<input type="text" id="product-name" required></label>
+            <label>Marca<input type="text" id="product-brand"></label>
+            <div class="form-grid">
+              <label>
+                Categoria
+                <select id="product-category" required>
+                  <option value="">Selecciona</option>
+                  <option>Vinilica</option>
+                  <option>Impermeabilizantes</option>
+                  <option>Maderas</option>
+                  <option>Industrial</option>
+                  <option>Aplicadores</option>
+                  <option>Selladores y Adhesivos</option>
+                  <option>Complementos</option>
+                </select>
+              </label>
+              <label>Subcategoria<input type="text" id="product-subcategory" required></label>
+            </div>
+            <label>Descripcion<textarea id="product-description" rows="5" required></textarea></label>
+            <div class="form-grid">
+              <label>Tamanos y precios<textarea id="product-sizes" rows="4" placeholder="Ej. 4 Litros: $400&#10;19 Litros: $1,150" required></textarea></label>
+              <label>Precio base<input type="number" id="product-price" min="0" step="0.01" placeholder="0.00"></label>
+            </div>
+            <div class="image-upload-field">
+              <label>Imagen URL o nombre de archivo<input type="text" id="product-image" placeholder="producto.jpg o https://..."></label>
+              <div class="image-upload-actions">
+                <label class="upload-button" for="product-image-file">Subir imagen</label>
+                <input class="file-input" type="file" id="product-image-file" accept="image/*">
+                <span id="product-image-file-name">Sin archivo seleccionado</span>
+              </div>
+              <div class="image-preview hidden" id="product-image-preview-wrap">
+                <img id="product-image-preview" alt="Vista previa del producto">
+              </div>
+            </div>
+            <div class="switch-row">
+              <label class="switch"><input type="checkbox" id="product-active" checked><span>Activo</span></label>
+              <label class="switch"><input type="checkbox" id="product-featured"><span>Destacado</span></label>
+              <label class="switch"><input type="checkbox" id="product-promo"><span>Promocion</span></label>
+            </div>
+            <div class="form-actions">
+              <button class="primary-button" type="submit" id="product-submit-button">Guardar producto</button>
+              <button class="secondary-button" type="reset">Limpiar</button>
+            </div>
+            <p class="form-status" id="product-status" aria-live="polite"></p>
+          </form>
+
+          <section class="panel">
+            <div class="panel-heading list-heading">
+              <div>
+                <p class="eyebrow">Tabla</p>
+                <h2>Productos del admin</h2>
+              </div>
+              <input class="search-input" type="search" id="product-search" placeholder="Buscar producto">
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Categoria</th>
+                    <th>Tamanos y precios</th>
+                    <th>Precio</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="products-table"></tbody>
+              </table>
+            </div>
+            <div class="mobile-list" id="products-mobile"></div>
+            <p class="empty-state hidden" id="products-empty">Aun no hay productos guardados.</p>
+          </section>
+        </div>
+      </section>
+
+      <section class="section-view" id="section-orders">
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Simulado</p>
+              <h2>Pedidos recibidos</h2>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Pedido</th>
+                  <th>Cliente</th>
+                  <th>Telefono</th>
+                  <th>Productos</th>
+                  <th>Total</th>
+                  <th>Pago</th>
+                  <th>Estado</th>
+                  <th>WhatsApp</th>
+                </tr>
+              </thead>
+              <tbody id="orders-table"></tbody>
+            </table>
+          </div>
+          <div class="mobile-list" id="orders-mobile"></div>
+        </section>
+      </section>
+
+      <section class="section-view" id="section-banners">
+        <div class="two-column">
+          <form class="panel form-panel" id="banner-form">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Promociones</p>
+                <h2 id="banner-form-title">Agregar banner</h2>
+              </div>
+              <button class="ghost-button hidden" id="cancel-banner-edit" type="button">Cancelar</button>
+            </div>
+            <input type="hidden" id="banner-id">
+            <label>Titulo<input type="text" id="banner-title" required></label>
+            <label>Subtitulo<input type="text" id="banner-subtitle"></label>
+            <label>Texto secundario<textarea id="banner-secondary" rows="4"></textarea></label>
+            <label>Imagen<input type="text" id="banner-image"></label>
+            <label>Boton principal<input type="text" id="banner-button"></label>
+            <label>Link del boton<input type="text" id="banner-link"></label>
+            <label class="switch"><input type="checkbox" id="banner-active" checked><span>Activo</span></label>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Guardar banner</button>
+              <button class="secondary-button" type="reset">Limpiar</button>
+            </div>
+            <p class="form-status" id="banner-status" aria-live="polite"></p>
+          </form>
+
+          <section class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">LocalStorage</p>
+                <h2>Banners guardados</h2>
+              </div>
+            </div>
+            <div class="banner-list" id="banner-list"></div>
+            <p class="empty-state hidden" id="banners-empty">Aun no hay banners guardados.</p>
+          </section>
+        </div>
+      </section>
+
+      <section class="section-view" id="section-metrics">
+        <div class="stats-grid">
+          <article class="stat-card"><span>Visitas del dia</span><strong id="metric-visits">0</strong></article>
+          <article class="stat-card"><span>Clicks WhatsApp</span><strong id="metric-whatsapp">0</strong></article>
+          <article class="stat-card"><span>Clicks Mercado Pago</span><strong id="metric-mercado">0</strong></article>
+        </div>
+        <div class="dashboard-grid">
+          <section class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">Simulado</p><h2>Productos mas vistos</h2></div></div>
+            <div class="rank-list" id="most-viewed-products"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">Simulado</p><h2>Categorias mas consultadas</h2></div></div>
+            <div class="rank-list" id="top-categories"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="section-view" id="section-settings">
+        <form class="panel form-panel settings-form" id="settings-form">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Negocio</p>
+              <h2>Configuracion general</h2>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label>WhatsApp del negocio<input type="text" id="setting-whatsapp"></label>
+            <label>Correo<input type="email" id="setting-email"></label>
+          </div>
+          <label>Direccion<input type="text" id="setting-address"></label>
+          <label>Horarios<textarea id="setting-hours" rows="3"></textarea></label>
+          <label>Link Google Maps<input type="text" id="setting-maps"></label>
+          <label>Redes sociales<textarea id="setting-social" rows="4" placeholder="Instagram: https://..."></textarea></label>
+          <div class="form-actions">
+            <button class="primary-button" type="submit">Guardar configuracion</button>
+          </div>
+          <p class="form-status" id="settings-status" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

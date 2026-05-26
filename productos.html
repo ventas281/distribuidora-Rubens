@@ -210,17 +210,17 @@
 
         <div class="payment-customer-grid">
           <label class="payment-customer-field" for="payment-customer-name">
-            Nombre del cliente <span class="field-required">necesario</span>
+            Nombre del cliente
             <input type="text" id="payment-customer-name" placeholder="Escribe tu nombre" autocomplete="name" required aria-describedby="payment-customer-name-error">
             <small class="field-feedback" id="payment-customer-name-error"></small>
           </label>
           <label class="payment-customer-field" for="payment-customer-phone">
-            Teléfono <span class="field-required">necesario</span>
-            <input type="tel" id="payment-customer-phone" placeholder="55 0000 0000" autocomplete="tel" required aria-describedby="payment-customer-phone-error">
+            Teléfono
+            <input type="tel" id="payment-customer-phone" placeholder="5512345678" autocomplete="tel" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" required aria-describedby="payment-customer-phone-error">
             <small class="field-feedback" id="payment-customer-phone-error"></small>
           </label>
           <label class="payment-customer-field" for="payment-customer-email">
-            Correo <span class="field-required">necesario</span>
+            Correo
             <input type="email" id="payment-customer-email" placeholder="correo@ejemplo.com" autocomplete="email" required aria-describedby="payment-customer-email-error">
             <small class="field-feedback" id="payment-customer-email-error"></small>
           </label>
@@ -238,11 +238,43 @@
         </div>
 
         <div class="payment-panel" id="payment-transfer-panel">
-          <div class="payment-grid">
-            <label>Banco:<input type="text" id="payment-bank" placeholder="Banco"></label>
-            <label>Beneficiario:<input type="text" id="payment-beneficiary" placeholder="Beneficiario"></label>
+          <div class="spei-card">
+            <div class="spei-card-header">
+              <div class="spei-bank-icon" aria-hidden="true">
+                <span></span>
+              </div>
+              <div>
+                <strong>Transferencia Bancaria SPEI</strong>
+                <p>Realiza tu pago mediante transferencia bancaria. Una vez realizado el pago, envíanos tu comprobante por WhatsApp para procesar tu pedido.</p>
+              </div>
+            </div>
+
+            <div class="spei-details" aria-label="Datos bancarios">
+              <div class="spei-detail-row">
+                <span>Beneficiario</span>
+                <strong>Maria Cruz Cardenas Velazquez</strong>
+                <button class="spei-copy-button" type="button" data-copy-value="Maria Cruz Cardenas Velazquez">Copiar beneficiario</button>
+              </div>
+              <div class="spei-detail-row">
+                <span>Banco</span>
+                <strong>Santander</strong>
+              </div>
+              <div class="spei-detail-row spei-detail-row-wide">
+                <span>CLABE</span>
+                <strong class="spei-clabe">[AQUI VA LA CLABE]</strong>
+                <button class="spei-copy-button" type="button" data-copy-value="[AQUI VA LA CLABE]">Copiar CLABE</button>
+              </div>
+            </div>
+
+            <p class="spei-important">Importante: Tu pedido comenzará a procesarse una vez confirmado el pago.</p>
+            <p class="spei-copy-status" id="spei-copy-status" aria-live="polite"></p>
+          </div>
+
+          <div class="payment-grid spei-hidden-bank-fields">
+            <label>Banco:<input type="text" id="payment-bank" value="Santander" readonly></label>
+            <label>Beneficiario:<input type="text" id="payment-beneficiary" value="Maria Cruz Cardenas Velazquez" readonly></label>
             <label>Cuenta:<input type="text" id="payment-account" placeholder="Cuenta"></label>
-            <label>CLABE:<input type="text" id="payment-clabe" placeholder="CLABE"></label>
+            <label>CLABE:<input type="text" id="payment-clabe" value="[AQUI VA LA CLABE]" readonly></label>
             <label class="payment-grid-wide">Concepto:<input type="text" id="payment-concept" placeholder="Pedido Ruben's Distribuidora"></label>
           </div>
           <button class="btn btn-primary" id="send-transfer-whatsapp" type="button">Enviar comprobante por WhatsApp</button>

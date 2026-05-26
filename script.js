@@ -165,6 +165,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const paymentClabeInput = document.getElementById('payment-clabe');
   const paymentConceptInput = document.getElementById('payment-concept');
   const sendTransferWhatsappButton = document.getElementById('send-transfer-whatsapp');
+  const speiCopyButtons = document.querySelectorAll('.spei-copy-button');
+  const speiCopyStatus = document.getElementById('spei-copy-status');
   const payInStoreWhatsappButton = document.getElementById('pay-in-store-whatsapp');
   const orderEmailStatusEl = document.getElementById('order-email-status');
   const mercadoPagoButton = document.getElementById('mercadoPagoBtn');
@@ -3139,7 +3141,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const getCustomerData = () => ({
     name: paymentCustomerNameInput?.value.trim() || '',
-    phone: paymentCustomerPhoneInput?.value.trim() || '',
+    phone: getPhoneDigits(paymentCustomerPhoneInput?.value || ''),
     email: paymentCustomerEmailInput?.value.trim() || '',
     address: paymentCustomerAddressInput?.value.trim() || '',
   });
@@ -3244,30 +3246,75 @@ Total final: ${formatCurrency(order.totals.total)}`;
 
   const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
   const getPhoneDigits = (value) => value.replace(/\D/g, '');
+  const getMexicanPhoneDigits = (value) => getPhoneDigits(value).slice(0, 10);
+  const isValidMexicanPhone = (value) => getMexicanPhoneDigits(value).length === 10;
+  const phoneValidationMessage = 'Ingresa un número válido de 10 dígitos';
+  const requiredPaymentMessage = 'Llena los campos obligatorios';
+  let paymentStatusTimeout = null;
+
+  const sanitizePaymentPhoneInput = () => {
+    if (!paymentCustomerPhoneInput) return '';
+    const sanitizedValue = getMexicanPhoneDigits(paymentCustomerPhoneInput.value);
+    if (paymentCustomerPhoneInput.value !== sanitizedValue) {
+      paymentCustomerPhoneInput.value = sanitizedValue;
+    }
+    return sanitizedValue;
+  };
+
+  const validatePaymentPhoneField = ({ showEmpty = false } = {}) => {
+    if (!paymentCustomerPhoneInput) return true;
+    const phoneDigits = sanitizePaymentPhoneInput();
+    const shouldShowError = (showEmpty || phoneDigits.length > 0) && phoneDigits.length !== 10;
+    setPaymentFieldError(paymentCustomerPhoneInput, shouldShowError ? phoneValidationMessage : '');
+    return phoneDigits.length === 10;
+  };
+
+  const updatePaymentActionState = () => {
+    const nameIsValid = (paymentCustomerNameInput?.value.trim() || '').length >= 2;
+    const emailIsValid = isValidEmail(paymentCustomerEmailInput?.value.trim() || '');
+    const phoneIsValid = isValidMexicanPhone(paymentCustomerPhoneInput?.value || '');
+    const paymentDataIsValid = nameIsValid && emailIsValid && phoneIsValid;
+    [sendTransferWhatsappButton, mercadoPagoButton, mercadoWhatsappFallbackButton, payInStoreWhatsappButton]
+      .forEach((button) => {
+        if (!button) return;
+        button.setAttribute('aria-disabled', String(!paymentDataIsValid));
+        button.classList.toggle('is-payment-blocked', !paymentDataIsValid);
+      });
+  };
+
+  const showPaymentRequiredNotice = () => {
+    if (!paymentFormStatusEl) return;
+    clearTimeout(paymentStatusTimeout);
+    paymentFormStatusEl.textContent = requiredPaymentMessage;
+    paymentFormStatusEl.classList.add('is-error');
+    paymentFormStatusEl.classList.add('is-floating');
+    paymentStatusTimeout = setTimeout(() => {
+      paymentFormStatusEl.textContent = '';
+      paymentFormStatusEl.classList.remove('is-error');
+      paymentFormStatusEl.classList.remove('is-floating');
+    }, 3000);
+  };
 
   const validateOrderCustomerData = () => {
     const customer = getCustomerData();
     clearPaymentValidation();
     const validationMessages = [];
 
-    if (!customer.name) {
-      setPaymentFieldError(paymentCustomerNameInput, 'Cuéntanos a nombre de quién preparamos el pedido.');
+    if (!customer.name || customer.name.length < 2) {
+      setPaymentFieldError(paymentCustomerNameInput, 'Ingresa tu nombre');
       validationMessages.push('nombre');
     }
 
-    if (!customer.phone) {
-      setPaymentFieldError(paymentCustomerPhoneInput, 'Déjanos un teléfono para confirmar disponibilidad y entrega.');
+    if (!customer.phone || customer.phone.length !== 10) {
+      setPaymentFieldError(paymentCustomerPhoneInput, phoneValidationMessage);
       validationMessages.push('teléfono');
-    } else if (getPhoneDigits(customer.phone).length < 8) {
-      setPaymentFieldError(paymentCustomerPhoneInput, 'Revisa que el teléfono tenga al menos 8 dígitos.');
-      validationMessages.push('teléfono válido');
     }
 
     if (!customer.email) {
-      setPaymentFieldError(paymentCustomerEmailInput, 'Agrega un correo para enviarte la confirmación.');
+      setPaymentFieldError(paymentCustomerEmailInput, 'Ingresa un correo válido');
       validationMessages.push('correo');
     } else if (!isValidEmail(customer.email)) {
-      setPaymentFieldError(paymentCustomerEmailInput, 'El correo necesita un formato como nombre@dominio.com.');
+      setPaymentFieldError(paymentCustomerEmailInput, 'Ingresa un correo válido');
       validationMessages.push('correo válido');
     }
 
@@ -3277,10 +3324,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
     }
 
     if (validationMessages.length) {
-      if (paymentFormStatusEl) {
-        paymentFormStatusEl.textContent = 'Solo falta completar estos datos para continuar con tu pago.';
-        paymentFormStatusEl.classList.add('is-error');
-      }
+      showPaymentRequiredNotice();
       const firstInvalidField = [paymentCustomerNameInput, paymentCustomerPhoneInput, paymentCustomerEmailInput, paymentCustomerAddressInput]
         .find((input) => input?.classList.contains('field-invalid'));
       firstInvalidField?.focus({ preventScroll: true });
@@ -3453,6 +3497,9 @@ Total final: ${formatCurrency(order.totals.total)}`;
     const cashAllowed = deliveryState.type === 'pickup' && deliveryState.pickupConfirmed;
     if (cashPaymentOption) cashPaymentOption.classList.toggle('hidden', !cashAllowed);
     selectPaymentMethod('transfer');
+    sanitizePaymentPhoneInput();
+    validatePaymentPhoneField({ showEmpty: true });
+    updatePaymentActionState();
     paymentModal.classList.remove('hidden');
   };
 
@@ -3474,14 +3521,56 @@ Total final: ${formatCurrency(order.totals.total)}`;
   };
 
   const buildTransferWhatsappMessage = () => {
-    const orderText = buildOrderSummaryText('Hola, envío mi comprobante SPEI y confirmo este pedido en Ruben\'s Distribuidora');
-    return `${orderText}\n\nAdjunto mi comprobante de pago.${getTransferBankText()}`;
+    const orderText = buildOrderSummaryText('Confirmo este pedido en Ruben\'s Distribuidora');
+    return `Hola, adjunto mi comprobante de transferencia SPEI para validar mi pedido.\n\n${orderText}${getTransferBankText()}`;
   };
 
   const openTransferWhatsapp = () => {
     if (!validateOrderCustomerData()) return;
     const message = encodeURIComponent(buildTransferWhatsappMessage());
     window.open(`https://wa.me/${paymentWhatsappNumber}?text=${message}`, '_blank');
+  };
+
+  const stopPaymentActionIfInvalid = (event) => {
+    const target = event.target?.closest?.('#send-transfer-whatsapp, #mercadoPagoBtn, #mercado-whatsapp-fallback, #pay-in-store-whatsapp');
+    if (!target) return false;
+    if (validateOrderCustomerData()) return false;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+    return true;
+  };
+
+  const copyTextToClipboard = async (text) => {
+    if (!text) return false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const showSpeiCopyStatus = (message) => {
+    if (!speiCopyStatus) return;
+    speiCopyStatus.textContent = message;
+    setTimeout(() => {
+      if (speiCopyStatus.textContent === message) {
+        speiCopyStatus.textContent = '';
+      }
+    }, 2500);
   };
 
   const loadMercadoPagoSdk = () => new Promise((resolve, reject) => {
@@ -4415,18 +4504,52 @@ Total final: ${formatCurrency(order.totals.total)}`;
         hidePaymentModal();
       }
     });
+    paymentModal.addEventListener('click', stopPaymentActionIfInvalid, true);
   }
 
   [paymentCustomerNameInput, paymentCustomerPhoneInput, paymentCustomerEmailInput, paymentCustomerAddressInput].forEach((input) => {
     if (!input) return;
     input.addEventListener('input', () => {
-      setPaymentFieldError(input);
+      if (input === paymentCustomerPhoneInput) {
+        validatePaymentPhoneField();
+      } else {
+        setPaymentFieldError(input);
+      }
+      updatePaymentActionState();
       if (paymentFormStatusEl) {
         paymentFormStatusEl.textContent = '';
         paymentFormStatusEl.classList.remove('is-error');
+        paymentFormStatusEl.classList.remove('is-floating');
+        clearTimeout(paymentStatusTimeout);
       }
     });
   });
+
+  if (paymentCustomerPhoneInput) {
+    paymentCustomerPhoneInput.addEventListener('beforeinput', (event) => {
+      if (event.inputType && !event.inputType.startsWith('insert')) return;
+      if (event.data && /\D/.test(event.data)) {
+        event.preventDefault();
+      }
+      const currentDigits = getMexicanPhoneDigits(paymentCustomerPhoneInput.value);
+      const selectionLength = Math.max(0, paymentCustomerPhoneInput.selectionEnd - paymentCustomerPhoneInput.selectionStart);
+      if (event.data && /\d/.test(event.data) && currentDigits.length >= 10 && selectionLength === 0) {
+        event.preventDefault();
+      }
+    });
+
+    paymentCustomerPhoneInput.addEventListener('paste', () => {
+      setTimeout(() => {
+        validatePaymentPhoneField();
+        updatePaymentActionState();
+      }, 0);
+    });
+
+    paymentCustomerPhoneInput.addEventListener('blur', () => {
+      validatePaymentPhoneField({ showEmpty: true });
+      updatePaymentActionState();
+    });
+  }
 
   paymentMethodButtons.forEach((button) => {
     button.addEventListener('click', () => {
@@ -4437,6 +4560,13 @@ Total final: ${formatCurrency(order.totals.total)}`;
   if (sendTransferWhatsappButton) {
     sendTransferWhatsappButton.addEventListener('click', openTransferWhatsapp);
   }
+
+  speiCopyButtons.forEach((button) => {
+    button.addEventListener('click', async () => {
+      const copied = await copyTextToClipboard(button.dataset.copyValue || '');
+      showSpeiCopyStatus(copied ? 'Dato copiado al portapapeles.' : 'No se pudo copiar. Puedes seleccionarlo manualmente.');
+    });
+  });
 
   if (payInStoreWhatsappButton) {
     payInStoreWhatsappButton.addEventListener('click', () => {

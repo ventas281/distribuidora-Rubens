@@ -1958,6 +1958,7 @@ body.rain-popup-open {
 }
 
 .payment-body {
+  position: relative;
   display: grid;
   gap: 1rem;
 }
@@ -2066,6 +2067,18 @@ body.rain-popup-open {
   font-weight: 800;
 }
 
+.payment-form-status.is-floating {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  margin: 0;
+  border: 1px solid rgba(194, 43, 43, 0.24);
+  background: #fff7f5;
+  box-shadow: 0 16px 34px rgba(18, 18, 18, 0.12);
+}
+
 .payment-customer-field textarea {
   min-height: 92px;
   resize: vertical;
@@ -2118,6 +2131,153 @@ body.rain-popup-open {
   margin: 0;
   color: var(--muted);
   line-height: 1.5;
+}
+
+.spei-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(194, 43, 43, 0.18);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(194, 43, 43, 0.08), rgba(255, 255, 255, 0) 46%),
+    #ffffff;
+  box-shadow: 0 16px 34px rgba(18, 18, 18, 0.08);
+}
+
+.spei-card-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.spei-bank-icon {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--accent), #121212);
+  box-shadow: 0 14px 28px rgba(194, 43, 43, 0.18);
+}
+
+.spei-bank-icon span {
+  width: 27px;
+  height: 22px;
+  display: block;
+  position: relative;
+  border: 2px solid #fff;
+  border-top-width: 7px;
+  border-radius: 3px;
+}
+
+.spei-bank-icon span::before,
+.spei-bank-icon span::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 3px;
+  width: 2px;
+  background: #fff;
+}
+
+.spei-bank-icon span::before {
+  left: 7px;
+}
+
+.spei-bank-icon span::after {
+  right: 7px;
+}
+
+.spei-card-header strong {
+  display: block;
+  color: var(--text);
+  font-size: 1.12rem;
+  line-height: 1.2;
+}
+
+.spei-card-header p,
+.spei-important,
+.spei-copy-status {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.spei-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.spei-detail-row {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.spei-detail-row-wide {
+  grid-column: 1 / -1;
+}
+
+.spei-detail-row span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.spei-detail-row strong {
+  color: var(--text);
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.spei-clabe {
+  font-family: "Segoe UI Mono", Consolas, monospace;
+  letter-spacing: 0.03em;
+}
+
+.spei-copy-button {
+  width: fit-content;
+  min-height: 36px;
+  border: 1px solid rgba(194, 43, 43, 0.28);
+  border-radius: 999px;
+  background: #fff7f5;
+  color: var(--accent);
+  padding: 0.45rem 0.75rem;
+  font-weight: 900;
+}
+
+.spei-copy-button:hover {
+  border-color: rgba(194, 43, 43, 0.55);
+  background: #fff0ed;
+}
+
+.spei-important {
+  padding: 0.75rem 0.85rem;
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  background: rgba(194, 43, 43, 0.07);
+  color: #8f1f26;
+  font-weight: 800;
+}
+
+.spei-copy-status {
+  min-height: 1.25rem;
+  color: var(--accent);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.spei-hidden-bank-fields {
+  display: none;
 }
 
 .mercado-card {
@@ -2191,7 +2351,12 @@ body.rain-popup-open {
 
   .payment-customer-grid,
   .payment-methods,
-  .payment-grid {
+  .payment-grid,
+  .spei-details {
+    grid-template-columns: 1fr;
+  }
+
+  .spei-card-header {
     grid-template-columns: 1fr;
   }
 }
@@ -3846,6 +4011,16 @@ body.rain-popup-open {
 #pay-in-store-whatsapp {
   width: 100%;
   min-height: 50px;
+}
+
+#mercadoPagoBtn.is-payment-blocked,
+#mercado-whatsapp-fallback.is-payment-blocked,
+#send-transfer-whatsapp.is-payment-blocked,
+#pay-in-store-whatsapp.is-payment-blocked {
+  cursor: pointer;
+  opacity: 0.55;
+  box-shadow: none;
+  filter: grayscale(0.25);
 }
 
 #mercadoPagoBtn {
