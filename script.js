@@ -382,18 +382,25 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   const loadProductsFromSupabaseForCatalog = async () => {
-    const response = await fetch(`${SUPABASE_REST_URL}${SUPABASE_PRODUCTS_TABLE}?select=*&activo=eq.true`, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-      },
-    });
-    if (!response.ok) throw new Error(`Supabase productos HTTP ${response.status}`);
-    const data = await response.json();
-    const loadedProducts = (data || []).map(productFromSupabaseRow).filter((product) => product.name);
-    console.log('productos recibidos desde Supabase', loadedProducts);
-    console.log('productos sin imagen detectados', loadedProducts.filter((product) => !product.image));
-    return loadedProducts;
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 7000);
+    try {
+      const response = await fetch(`${SUPABASE_REST_URL}${SUPABASE_PRODUCTS_TABLE}?select=*&activo=eq.true`, {
+        signal: controller.signal,
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+      });
+      if (!response.ok) throw new Error(`Supabase productos HTTP ${response.status}`);
+      const data = await response.json();
+      const loadedProducts = (data || []).map(productFromSupabaseRow).filter((product) => product.name);
+      console.log('productos recibidos desde Supabase', loadedProducts);
+      console.log('productos sin imagen detectados', loadedProducts.filter((product) => !product.image));
+      return loadedProducts;
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
   };
 
   const normalizeAdminProductForCatalog = (product) => {
@@ -4276,34 +4283,40 @@ Total final: ${formatCurrency(order.totals.total)}`;
     generateProducts();
     const params = new URLSearchParams(window.location.search);
     const useLocalCatalog = params.get('catalogoLocal') === '1';
+    const requestedCategory = normalizeCategoryKey(params.get('categoria') || params.get('category'));
+    const renderCurrentCatalog = () => {
+      if (requestedCategory && subcategories[requestedCategory]) {
+        selectedCategory = requestedCategory;
+        categoryItems.forEach((item) => {
+          item.classList.toggle('active', normalizeCategoryKey(item.dataset.category) === requestedCategory);
+        });
+        const requestedButton = Array.from(categoryItems).find((item) => normalizeCategoryKey(item.dataset.category) === requestedCategory);
+        if (requestedButton && allCategoryButton) {
+          allCategoryButton.textContent = requestedButton.textContent;
+        }
+        renderSubcategoryOptions(requestedCategory);
+        applyFilters();
+        return;
+      }
+      renderSubcategoryOptions('all');
+      filteredProducts = [...products];
+      renderProducts();
+    };
+
+    renderCurrentCatalog();
+    if (useLocalCatalog) return;
+
     try {
-      const supabaseProducts = useLocalCatalog ? [] : await loadProductsFromSupabaseForCatalog();
-      if (!useLocalCatalog && supabaseProducts.length) {
+      const supabaseProducts = await loadProductsFromSupabaseForCatalog();
+      if (supabaseProducts.length) {
         products = supabaseProducts;
         filteredProducts = [...products];
-      } else if (!useLocalCatalog) {
+        renderCurrentCatalog();
+      } else {
         console.log('Supabase cargó 0 productos. Usando catálogo local como fallback.');
       }
     } catch (error) {
       console.warn('No se pudieron cargar productos desde Supabase. Usando catalogo local.', error);
-    }
-
-    const requestedCategory = normalizeCategoryKey(params.get('categoria') || params.get('category'));
-    if (requestedCategory && subcategories[requestedCategory]) {
-      selectedCategory = requestedCategory;
-      categoryItems.forEach((item) => {
-        item.classList.toggle('active', normalizeCategoryKey(item.dataset.category) === requestedCategory);
-      });
-      const requestedButton = Array.from(categoryItems).find((item) => normalizeCategoryKey(item.dataset.category) === requestedCategory);
-      if (requestedButton && allCategoryButton) {
-        allCategoryButton.textContent = requestedButton.textContent;
-      }
-      renderSubcategoryOptions(requestedCategory);
-      applyFilters();
-      document.querySelector('.catalog-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      renderSubcategoryOptions('all');
-      renderProducts();
     }
   };
 
