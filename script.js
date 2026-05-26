@@ -89,14 +89,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const productSearch = document.getElementById('product-search');
   const sortOrderSelect = document.getElementById('sort-order');
   let selectedCategory = 'all';
-  let selectedVisualCategoryFilter = 'todos los productos';
 
   const categoryItems = document.querySelectorAll('.category-item');
   const categoryList = document.getElementById('category-list');
   const toggleFiltersButton = document.getElementById('toggle-filters');
   const filterControls = document.getElementById('filter-controls');
   const productGeneralListEl = document.getElementById('product-general-list');
-  const productCheapListEl = document.getElementById('product-cheap-list');
   const productSeasonListEl = document.getElementById('product-season-list');
   const homeSeasonListEl = document.getElementById('home-season-list');
   const homeFeaturedListEl = document.getElementById('home-featured-list');
@@ -3644,23 +3642,6 @@ Total final: ${formatCurrency(order.totals.total)}`;
     products.forEach((product) => container.appendChild(createProductCard(product)));
   };
 
-  const applyVisualCategoryFilter = (filterValue = selectedVisualCategoryFilter) => {
-    const filter = normalizeCategory(filterValue || 'Todos los productos');
-    let visibleCount = 0;
-    console.log('Filtro seleccionado:', filter);
-
-    document.querySelectorAll('.product-card').forEach((card) => {
-      const category = normalizeCategory(card.dataset.category);
-      const isVisible = filter === 'todos los productos' || category === filter;
-      card.style.display = isVisible ? '' : 'none';
-      if (isVisible) visibleCount += 1;
-      console.log('Categoría de card:', category);
-    });
-
-    console.log('Total visibles:', visibleCount);
-    return visibleCount;
-  };
-
   const updateProductCardSelection = (product) => {
     document.querySelectorAll(`.product-card[data-product-id="${product.id}"]`).forEach((card) => {
       const priceEl = card.querySelector('.product-price');
@@ -3753,11 +3734,6 @@ Total final: ${formatCurrency(order.totals.total)}`;
 
     const activeProducts = filteredProducts.filter((product) => product.active !== false);
     const generalProducts = activeProducts;
-    const cheapProducts = activeProducts
-      .filter((product) => Number(product.price) > 0)
-      .slice()
-      .sort((a, b) => Number(a.price) - Number(b.price))
-      .slice(0, 4);
     const seasonProducts = activeProducts
       .filter((product) => normalizeCategory(getProductCategoryValue(product)) === normalizeCategory('Impermeabilizantes'))
       .slice()
@@ -3765,9 +3741,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
       .slice(0, 4);
 
     renderProductGrid(productGeneralListEl, generalProducts, 'No hay productos generales para esta combinación.');
-    renderProductGrid(productCheapListEl, cheapProducts, 'No hay productos económicos para esta búsqueda.');
     renderProductGrid(productSeasonListEl, seasonProducts, 'No hay impermeabilizantes para esta búsqueda.');
-    applyVisualCategoryFilter(selectedVisualCategoryFilter);
 
     productCountEl.textContent = `Mostrando ${generalProducts.length} productos generales`;
   };
@@ -4048,8 +4022,6 @@ Total final: ${formatCurrency(order.totals.total)}`;
       categoryItems.forEach((button) => {
         button.classList.toggle('active', categorySlugFromNormalized(normalizeCategory(button.dataset.category)) === selectedCategory);
       });
-      const activeCategoryButton = Array.from(categoryItems).find((button) => button.classList.contains('active'));
-      selectedVisualCategoryFilter = normalizeCategory(activeCategoryButton?.dataset.filter || activeCategoryButton?.textContent || requestedCategory);
     }
     renderSubcategoryOptions(selectedCategory);
     applyFilters();
@@ -4111,7 +4083,6 @@ Total final: ${formatCurrency(order.totals.total)}`;
         }
         categoryItems.forEach((item) => item.classList.remove('active'));
         button.classList.add('active');
-        selectedVisualCategoryFilter = filter;
         selectedCategory = filter === 'todos los productos' ? 'all' : categorySlugFromNormalized(filter);
         renderSubcategoryOptions(selectedCategory);
         if (subcategoryFilter) {
