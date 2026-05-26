@@ -1,8 +1,60 @@
 ﻿// Script ligero para Ruben's Distribuidora
 
 const MERCADO_PAGO_CHECKOUT_URL = window.MERCADO_PAGO_CHECKOUT_URL || "";
-const RUBENS_SUPABASE_REST_URL = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co/rest/v1/';
-const RUBENS_SUPABASE_KEY = 'sb_publishable_IPQVpAeDJwNh_bZ575tz5w_8hAUzsEL';
+const MERCADO_PAGO_PUBLIC_KEY_TEST = "APP_USR-1d421fc6-735f-4f5b-ac51-a5912edb29de";
+const MERCADO_PAGO_PREFERENCE_ID_TEST = window.MERCADO_PAGO_PREFERENCE_ID || "PEGAR_AQUI_EL_PREFERENCE_ID_DE_PRUEBA";
+
+const loadMercadoPagoSdkGlobal = () => new Promise((resolve, reject) => {
+  if (window.MercadoPago) {
+    resolve(window.MercadoPago);
+    return;
+  }
+
+  const existingScript = document.querySelector('script[src="https://sdk.mercadopago.com/js/v2"]');
+  if (existingScript) {
+    existingScript.addEventListener('load', () => resolve(window.MercadoPago), { once: true });
+    existingScript.addEventListener('error', () => reject(new Error('No se pudo cargar Mercado Pago.')), { once: true });
+    return;
+  }
+
+  const script = document.createElement('script');
+  script.src = 'https://sdk.mercadopago.com/js/v2';
+  script.onload = () => resolve(window.MercadoPago);
+  script.onerror = () => reject(new Error('No se pudo cargar Mercado Pago.'));
+  document.head.appendChild(script);
+});
+
+async function abrirMercadoPago() {
+  const preferenceId = MERCADO_PAGO_PREFERENCE_ID_TEST;
+  const hasPreferenceId = preferenceId && preferenceId !== "PEGAR_AQUI_EL_PREFERENCE_ID_DE_PRUEBA";
+
+  if (!hasPreferenceId) {
+    alert("Mercado Pago de prueba aún no configurado");
+    return false;
+  }
+
+  try {
+    const MercadoPagoSdk = await loadMercadoPagoSdkGlobal();
+    const mp = new MercadoPagoSdk(MERCADO_PAGO_PUBLIC_KEY_TEST, {
+      locale: "es-MX",
+    });
+
+    mp.checkout({
+      preference: {
+        id: preferenceId,
+      },
+      autoOpen: true,
+    });
+    return true;
+  } catch (error) {
+    if (MERCADO_PAGO_CHECKOUT_URL) {
+      window.open(MERCADO_PAGO_CHECKOUT_URL, "_blank");
+      return true;
+    }
+    alert("Mercado Pago de prueba aún no configurado");
+    return false;
+  }
+}
 
 window.addEventListener('DOMContentLoaded', () => {
   const revealElements = document.querySelectorAll('.reveal');
@@ -55,35 +107,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  const rainSeasonPopup = document.getElementById('temporada-lluvias');
-  const showRainSeasonPopup = () => {
-    if (!rainSeasonPopup) return;
-    rainSeasonPopup.classList.add('is-visible');
-    document.body.classList.add('modal-open');
-  };
-  const closeRainSeasonPopup = () => {
-    if (!rainSeasonPopup) return;
-    rainSeasonPopup.classList.remove('is-visible');
-    document.body.classList.remove('modal-open');
-  };
-
-  if (rainSeasonPopup) {
-    window.setTimeout(showRainSeasonPopup, 350);
-    document.querySelectorAll('[data-close-rain-banner]').forEach((button) => {
-      button.addEventListener('click', closeRainSeasonPopup);
-    });
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && rainSeasonPopup.classList.contains('is-visible')) {
-        closeRainSeasonPopup();
-      }
-    });
-    window.addEventListener('hashchange', () => {
-      if (window.location.hash === '#inicio' || window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
-        showRainSeasonPopup();
-      }
-    });
-  }
-
   const categoryFilter = document.getElementById('category-filter');
   const subcategoryFilter = document.getElementById('subcategory-filter');
   const productSearch = document.getElementById('product-search');
@@ -91,13 +114,13 @@ window.addEventListener('DOMContentLoaded', () => {
   let selectedCategory = 'all';
 
   const categoryItems = document.querySelectorAll('.category-item');
+  const allCategoryButton = document.querySelector('.category-item[data-category="all"]');
   const categoryList = document.getElementById('category-list');
   const toggleFiltersButton = document.getElementById('toggle-filters');
   const filterControls = document.getElementById('filter-controls');
   const productGeneralListEl = document.getElementById('product-general-list');
-  const productSeasonListEl = document.getElementById('product-season-list');
-  const homeSeasonListEl = document.getElementById('home-season-list');
-  const homeFeaturedListEl = document.getElementById('home-featured-list');
+  const productPopularListEl = document.getElementById('product-popular-list');
+  const productRecommendedListEl = document.getElementById('product-recommended-list');
   const productCountEl = document.getElementById('product-count');
   const cartCountEl = document.getElementById('cart-count');
   const viewCartButton = document.getElementById('view-cart');
@@ -130,6 +153,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const paymentCustomerPhoneInput = document.getElementById('payment-customer-phone');
   const paymentCustomerEmailInput = document.getElementById('payment-customer-email');
   const paymentCustomerAddressInput = document.getElementById('payment-customer-address');
+  const paymentFormStatusEl = document.getElementById('payment-form-status');
   const paymentMethodButtons = document.querySelectorAll('.payment-method-button');
   const cashPaymentOption = document.getElementById('cash-payment-option');
   const paymentTransferPanel = document.getElementById('payment-transfer-panel');
@@ -141,33 +165,35 @@ window.addEventListener('DOMContentLoaded', () => {
   const paymentClabeInput = document.getElementById('payment-clabe');
   const paymentConceptInput = document.getElementById('payment-concept');
   const sendTransferWhatsappButton = document.getElementById('send-transfer-whatsapp');
+  const speiCopyButtons = document.querySelectorAll('.spei-copy-button');
+  const speiCopyStatus = document.getElementById('spei-copy-status');
   const payInStoreWhatsappButton = document.getElementById('pay-in-store-whatsapp');
   const orderEmailStatusEl = document.getElementById('order-email-status');
-  const mercadoPagoButton = document.getElementById('mercado-pago-button');
+  const mercadoPagoButton = document.getElementById('mercadoPagoBtn');
   const mercadoWhatsappFallbackButton = document.getElementById('mercado-whatsapp-fallback');
+  const rainSeasonBanner = document.getElementById('temporada-lluvias');
+  const closeRainBannerButtons = document.querySelectorAll('[data-close-rain-banner]');
 
   const categoryLabels = {
-    vinilica: 'Pintura Vinílica',
-    esmalte: 'Pintura de Esmalte',
-    epoxica: 'Impermeabilizantes',
+    vinilica: 'Vinílica',
+    esmalte: 'Esmalte',
+    epoxica: 'Impermeabilizante',
     aerosoles: 'Aerosoles',
-    madera: 'Maderas',
+    madera: 'Madera',
     aplicadores: 'Aplicadores',
     selladores: 'Selladores y Adhesivos',
-    complementos: 'Complementos',
     diluyentes: 'Diluyentes',
     primerarios: 'Primarios',
   };
 
   const subcategories = {
-    vinilica: ['Económica', 'Media', 'Mediana-Alta', 'Alta', 'Sayer', 'Texturizados'],
+    vinilica: ['Sayer', 'Económica', 'Media', 'Mediana-Alta', 'Alta', 'Texturizados'],
     esmalte: ['Base Agua', 'Base Solvente', 'Esmalte Industrial'],
-    epoxica: ['Fester', 'Acrílico', 'Membranas', 'Complementos', 'Pisos', 'Industrial', 'Alto Tráfico'],
+    epoxica: ['Fester', 'Acrílico', 'Membranas', 'Vaportite', 'Plastic Cement', 'Espuma Poliuretano', 'Complementos', 'Pisos', 'Industrial', 'Alto Tráfico'],
     aerosoles: ['Normal', 'Metálico', 'Neón', 'Alta Temperatura'],
-    madera: ['Tintas', 'Barniz Marino', 'Barnices entintados', 'Barnices base agua', 'Barnices base esmalte', 'Lacas', 'Nitrocelulosas', 'Selladores', 'Primer para Madera', 'Poliuretanos', 'Polyform', 'Protectores para Madera', 'Removedores y Preparación', 'Resanadores', 'Aditivos'],
-    aplicadores: ['Brochas', 'Brochas para Madera', 'Cintas', 'Cintas Especializadas', 'Espátulas', 'Rodillos', 'Repuestos para Rodillo'],
+    madera: ['Tintas', 'Barniz Marino', 'Barnices entintados', 'Barnices base agua', 'Barnices base esmalte', 'Lacas', 'Nitrocelulosas', 'Selladores', 'Primer para Madera', 'Poliuretanos', 'Polyform', 'Protectores para Madera', 'Antiparásitos', 'Removedores y Preparación', 'Resanadores', 'Aditivos'],
+    aplicadores: ['Brochas', 'Brochas para Madera', 'Rodillos', 'Repuestos para Rodillo', 'Charolas', 'Masking', 'Cintas', 'Cintas Especializadas', 'Espátulas', 'Aplicadores'],
     selladores: ['Selladores Elásticos'],
-    complementos: ['Complementos'],
     diluyentes: ['Alberca y Tráfico'],
     primerarios: ['Primarios'],
   }; 
@@ -232,6 +258,27 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  if (rainSeasonBanner) {
+    rainSeasonBanner.classList.remove('is-hidden');
+    document.body.classList.add('rain-popup-open');
+  }
+
+  const closeRainBanner = () => {
+    if (!rainSeasonBanner) return;
+    rainSeasonBanner.classList.add('is-hidden');
+    document.body.classList.remove('rain-popup-open');
+  };
+
+  closeRainBannerButtons.forEach((button) => {
+    button.addEventListener('click', closeRainBanner);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeRainBanner();
+    }
+  });
+
   const savedCart = localStorage.getItem('rubensCart');
   if (savedCart) {
     try {
@@ -242,6 +289,200 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   const formatCurrency = (value) => `MXN ${Number(value || 0).toFixed(2)}`;
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+  const slugify = (value) => String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  const normalizeCategoryText = (value) => String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+  const categoryAliases = {
+    vinilica: 'vinilica',
+    'pintura vinilica': 'vinilica',
+    esmalte: 'esmalte',
+    esmaltes: 'esmalte',
+    'pintura de esmalte': 'esmalte',
+    epoxica: 'epoxica',
+    impermeabilizante: 'epoxica',
+    impermeabilizantes: 'epoxica',
+    aerosoles: 'aerosoles',
+    aerosol: 'aerosoles',
+    madera: 'madera',
+    maderas: 'madera',
+    'productos para madera': 'madera',
+    aplicadores: 'aplicadores',
+    ferreteria: 'aplicadores',
+    selladores: 'selladores',
+    'selladores y adhesivos': 'selladores',
+    diluyentes: 'diluyentes',
+    complementos: 'diluyentes',
+    primarios: 'primerarios',
+    primerarios: 'primerarios',
+    industrial: 'primerarios',
+  };
+
+  const normalizeCategoryKey = (category) => categoryAliases[normalizeCategoryText(category)] || normalizeCategoryText(category).replace(/\s+/g, '-');
+
+  const normalizeText = (text) => String(text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/\s+/g, ' ');
+
+  const productMergeKey = (product) => [
+    normalizeText(product.name),
+    normalizeCategoryKey(product.category),
+    normalizeText(product.brand),
+  ].join('|');
+
+  const mergeLocalAndSupabaseProducts = (localProducts, supabaseProducts) => {
+    const merged = new Map();
+    localProducts.forEach((product) => {
+      merged.set(productMergeKey(product), product);
+    });
+    supabaseProducts.forEach((product) => {
+      merged.set(productMergeKey(product), product);
+    });
+    return Array.from(merged.values());
+  };
+
+  const SUPABASE_REST_URL = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co/rest/v1/';
+  const SUPABASE_KEY = 'sb_publishable_IPQVpAeDJwNh_bZ575tz5w_8hAUzsEL';
+  const SUPABASE_PRODUCTS_TABLE = 'productos';
+
+  const parseAdminSizeOptions = (sizesText) => {
+    const lines = String(sizesText || '').split('\n').map((line) => line.trim()).filter(Boolean);
+    const options = lines.map((line, index) => {
+      const [labelPart, pricePart] = line.split(':');
+      const price = Number(String(pricePart || '').replace(/[^\d.]/g, '')) || 0;
+      return price ? {
+        id: slugify(labelPart || `opcion-${index + 1}`),
+        label: (labelPart || `Opción ${index + 1}`).trim(),
+        price,
+      } : null;
+    }).filter(Boolean);
+    return options.length > 1 ? options : null;
+  };
+
+  const productFromSupabaseRow = (row) => {
+    const category = normalizeCategoryKey(row.categoria);
+    const sizes = String(row.tamanos_precios || '').trim();
+    return {
+      id: String(row.id),
+      category,
+      categoryLabel: categoryLabels[category] || row.categoria || 'Producto',
+      subcategory: String(row.subcategoria || '').trim() || 'General',
+      name: String(row.nombre || '').trim(),
+      brand: String(row.marca || '').trim(),
+      description: String(row.descripcion || '').trim(),
+      detailText: String(row.descripcion || '').trim(),
+      price: Number(row.precio_base) || 0,
+      sizeOptions: parseAdminSizeOptions(sizes),
+      cantidad: sizes || 'Presentación única',
+      popular: Boolean(row.destacado || row.promocion),
+      recommended: Boolean(row.destacado),
+      rating: 4,
+      colorSwatch: '',
+      image: String(row.imagen || '').trim(),
+      imageFit: 'contain',
+      source: 'supabase',
+    };
+  };
+
+  const loadProductsFromSupabaseForCatalog = async () => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 7000);
+    try {
+      const response = await fetch(`${SUPABASE_REST_URL}${SUPABASE_PRODUCTS_TABLE}?select=*&activo=eq.true`, {
+        signal: controller.signal,
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+      });
+      if (!response.ok) throw new Error(`Supabase productos HTTP ${response.status}`);
+      const data = await response.json();
+      const loadedProducts = (data || []).map(productFromSupabaseRow).filter((product) => product.name);
+      console.log('productos recibidos desde Supabase', loadedProducts);
+      console.log('productos sin imagen detectados', loadedProducts.filter((product) => !product.image));
+      return loadedProducts;
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  };
+
+  const normalizeAdminProductForCatalog = (product) => {
+    const category = normalizeCategoryKey(product.category);
+    const name = String(product.name || '').trim();
+    const image = String(product.imageData || product.image || '').trim();
+    const sizes = String(product.sizes || '').trim();
+    return {
+      id: String(product.id || `${slugify(category)}-${slugify(name)}` || `admin-${Date.now()}`),
+      category,
+      categoryLabel: categoryLabels[category] || category || 'Producto',
+      subcategory: String(product.subcategory || '').trim() || 'General',
+      name,
+      description: String(product.description || '').trim(),
+      detailText: String(product.description || '').trim(),
+      price: Number(product.price) || 0,
+      cantidad: sizes || 'Presentacion unica',
+      popular: Boolean(product.featured || product.promo),
+      recommended: Boolean(product.featured),
+      rating: 4,
+      colorSwatch: '',
+      image,
+      imageFit: 'contain',
+    };
+  };
+
+  const mergeAdminProductsIntoCatalog = () => {
+    let adminProducts = [];
+    try {
+      adminProducts = JSON.parse(localStorage.getItem('rubensAdminProducts') || '[]');
+    } catch (error) {
+      adminProducts = [];
+    }
+    if (!Array.isArray(adminProducts) || !adminProducts.length) return;
+
+    adminProducts
+      .filter((product) => product && product.active !== false)
+      .map(normalizeAdminProductForCatalog)
+      .filter((product) => product.name && product.category)
+      .forEach((product) => {
+        const existingIndex = products.findIndex((item) => (
+          item.name.trim().toLowerCase() === product.name.trim().toLowerCase()
+          && normalizeCategoryKey(item.category) === normalizeCategoryKey(product.category)
+        ));
+        if (existingIndex >= 0) {
+          products[existingIndex] = {
+            ...products[existingIndex],
+            ...product,
+            id: products[existingIndex].id,
+            popular: product.popular || products[existingIndex].popular,
+            recommended: product.recommended || products[existingIndex].recommended,
+          };
+        } else {
+          products.push(product);
+        }
+      });
+  };
+
   const formatDeliveryFee = (value) => Number(value || 0) === 0 ? 'GRATIS' : formatCurrency(value);
   const getShippingSummaryRows = () => {
     if (deliveryState.type !== 'delivery') {
@@ -395,6 +636,245 @@ window.addEventListener('DOMContentLoaded', () => {
         { name: 'Mandarina Neón', color: '#ff6d00' },
         { name: 'Verde Neón', color: '#00ff00' },
       ],
+    });
+
+    const sayerUltraPalette = [
+      { name: 'Blanco Ostión VU-022', color: '#ece3d4' },
+      { name: 'Marfil VU-077', color: '#f4edc4' },
+      { name: 'Amarillo Colonial VU-0713', color: '#efa429' },
+      { name: 'Amarillo Limón VU-0700', color: '#f4e31e' },
+      { name: 'Amarillo Óxido VU-0775', color: '#b27629' },
+      { name: 'Champagne VU-0511', color: '#f2e3d3' },
+      { name: 'Beige VU-0776', color: '#d7bea1' },
+      { name: 'Mandarina VU-0678', color: '#ed914f' },
+      { name: 'Naranja Fuego VU-0600', color: '#e73520' },
+      { name: 'Rojo Chino VU-0500', color: '#e1211b' },
+      { name: 'Rojo Óxido VU-0555', color: '#7f241d' },
+      { name: 'Rosa Mexicano VU-0504', color: '#d92f62' },
+      { name: 'Violeta Intenso VU-0800', color: '#261071' },
+      { name: 'Azul Infinito VU-0307', color: '#5b88d6' },
+      { name: 'Azul Colonial VU-0333', color: '#0034bb' },
+      { name: 'Azul Trafalgar VU-0300', color: '#0a2f8f' },
+      { name: 'Turmalina VU-0317', color: '#4c9aa3' },
+      { name: 'Verde Limón VU-0415', color: '#8cc95f' },
+      { name: 'Verde Esmeralda VU-0400', color: '#164f2d' },
+      { name: 'Chocolate VU-0582', color: '#1f1714' },
+      { name: 'Negro VU-0100', color: '#050505' },
+      { name: 'Blanco Satinado VU-0200', color: '#f7f7f2' },
+      { name: 'Blanco Mate VU-1200', color: '#f3f1eb' },
+    ];
+
+    const sayerMaximaPalette = [
+      { name: 'Naranja Fuego VX-0600', color: '#ed4c3f' },
+      { name: 'Rojo Chino VX-0500', color: '#dd3328' },
+      { name: 'Rojo Óxido VX-0555', color: '#7d2b28' },
+      { name: 'Café Óxido VX-0527', color: '#5a4542' },
+      { name: 'Negro VX-0100', color: '#272727' },
+      { name: 'Blanco VX-0200', color: '#ffffff' },
+      { name: 'Blanco Semibrillante VX-5200', color: '#f3f3f1' },
+      { name: 'Amarillo Verano VX-0779', color: '#f0ad5f' },
+      { name: 'Blanco Ostión VX-0229', color: '#efe4d6' },
+      { name: 'Manzana Verde VX-0413', color: '#bdd26b' },
+      { name: 'Amarillo Óxido VX-0775', color: '#b78641' },
+      { name: 'Amarillo Limón VX-0700', color: '#f5ee35' },
+      { name: 'Verde Esmeralda VX-0400', color: '#28474d' },
+      { name: 'Azul Trafalgar VX-0300', color: '#2c285e' },
+      { name: 'Violeta Intenso VX-0800', color: '#6d4c91' },
+    ];
+
+    const sayerProMasterPalette = [
+      { name: 'Azul Cielo VP-0304', color: '#b8e7f7' },
+      { name: 'Azul Horizonte VP-0306', color: '#9fb5d8' },
+      { name: 'Azul Trafalgar VP-0300', color: '#073aaf' },
+      { name: 'Verde Pradera VP-0406', color: '#d8ec65' },
+      { name: 'Verde Natural VP-0403', color: '#b7d957' },
+      { name: 'Verde Claro VP-0441', color: '#b9f1ce' },
+      { name: 'Verde Esmeralda VP-0400', color: '#145932' },
+      { name: 'Amarillo Limón VP-0700', color: '#f2f02c' },
+      { name: 'Blanco Ostión VP-0229', color: '#f4f0e2' },
+      { name: 'Arena VP-0703', color: '#f0e7d5' },
+      { name: 'Trigo', color: '#f3efbd' },
+      { name: 'Crema', color: '#f5edaa' },
+      { name: 'Marfil', color: '#f1dd8c' },
+      { name: 'Amarillo Napolitano', color: '#e9c66a' },
+      { name: 'Amarillo Verano', color: '#e79e43' },
+      { name: 'Amarillo Óxido', color: '#a96c27' },
+      { name: 'Melón VP-0603', color: '#f1c29d' },
+      { name: 'Mandarina VP-0678', color: '#e8824b' },
+      { name: 'Naranja Fuego VP-0600', color: '#e42f1e' },
+      { name: 'Rosa Tierno VP-0513', color: '#f1d8df' },
+      { name: 'Rojo Chino VP-0500', color: '#ac1d17' },
+      { name: 'Rojo Óxido VP-0555', color: '#7a2b1f' },
+      { name: 'Orquídea VP-0805', color: '#d6b4f2' },
+      { name: 'Violeta Intenso VP-0800', color: '#2a176d' },
+      { name: 'Negro VP-0100', color: '#050505' },
+      { name: 'Blanco Mate VP-0200', color: '#ffffff' },
+      { name: 'Blanco Satinado VP-3200', color: '#f7f7f4' },
+      { name: 'Blanco Semibrillante VP-5200', color: '#f4f4f2' },
+    ];
+
+    const sayerMagicolorPalette = [
+      { name: 'Rojo Chino VG-0500', color: '#f2383d' },
+      { name: 'Naranja Fuego VG-0600', color: '#f24a2e' },
+      { name: 'Rojo Flamingo VG-0503', color: '#ef6f75' },
+      { name: 'Blanco Ostión VG-0229', color: '#f7f5e5' },
+      { name: 'Magnolia VG-0274', color: '#f7f3d8' },
+      { name: 'Rojo Óxido VG-0555', color: '#7f2118' },
+      { name: 'Mandarina VG-0678', color: '#ef7846' },
+      { name: 'Amarillo Verano VG-0779', color: '#f0b262' },
+      { name: 'Salmón VG-0551', color: '#f4c2a2' },
+      { name: 'Verde Natural VG-0403', color: '#addc5e' },
+      { name: 'Pistache VG-0448', color: '#98ec98' },
+      { name: 'Turquesa VG-0442', color: '#5ccfa5' },
+      { name: 'Verde Esmeralda VG-0400', color: '#125f3d' },
+      { name: 'Violeta Intenso VG-0800', color: '#2e1f8c' },
+      { name: 'Azul Riviera VG-0302', color: '#9fd9ec' },
+      { name: 'Mediterráneo VG-0303', color: '#32a4b4' },
+      { name: 'Azul Paraíso VG-0339', color: '#2d99d2' },
+      { name: 'Azul Trafalgar VG-0300', color: '#04349f' },
+      { name: 'Mango', color: '#f1ce25' },
+      { name: 'Amarillo Limón VG-0700', color: '#eff22d' },
+      { name: 'Amarillo Canario', color: '#f1ef7f' },
+      { name: 'Marfil', color: '#f2edbd' },
+      { name: 'Amarillo Pérsico', color: '#f3e59e' },
+      { name: 'Piñón', color: '#f0c3a7' },
+      { name: 'Amarillo Óxido VG-0775', color: '#c46f25' },
+      { name: 'Blanco VG-0200', color: '#ffffff' },
+      { name: 'Negro VG-0100', color: '#050505' },
+    ];
+
+    const sayerContractorPalette = [
+      { name: 'Blanco Ostión VC-0229', color: '#e8e0d6' },
+      { name: 'Capuchino VC-0567', color: '#a78f7a' },
+      { name: 'Crema VC-0772', color: '#e5d57a' },
+      { name: 'Amarillo Canario', color: '#e7ed62' },
+      { name: 'Amarillo Napolitano VC-0777', color: '#e8ce72' },
+      { name: 'Blanco VC-0200', color: '#ffffff' },
+      { name: 'Salmón VC-0551', color: '#e3a27b' },
+      { name: 'Durazno VC-0566', color: '#de936a' },
+      { name: 'Mandarina VC-0678', color: '#ef6b3f' },
+      { name: 'Rojo Óxido VC-0555', color: '#802318' },
+      { name: 'Violeta VC-0588', color: '#9a6a9f' },
+      { name: 'Turquesa VC-0444', color: '#55bfa4' },
+      { name: 'Fucsia VC-0572', color: '#c65f8a' },
+      { name: 'Azul Celeste VC-0304', color: '#87cfe1' },
+      { name: 'Azul Caribe VC-0318', color: '#0e9cc7' },
+      { name: 'Verde Natural VC-0403', color: '#a9d066' },
+      { name: 'Verde Alpino VC-0401', color: '#a7cfae' },
+    ];
+
+    products.push({
+      id: 'vinilica-ultra-sayer',
+      category: 'vinilica',
+      categoryLabel: categoryLabels['vinilica'],
+      subcategory: 'Sayer',
+      name: 'Ultra Sayer',
+      description: 'Pintura vinílica premium de máxima calidad, con gran cubrimiento, alta durabilidad y excelente resistencia al lavado.',
+      detailText: 'Pintura vinílica premium de máxima calidad, diseñada para ofrecer el mejor cubrimiento, alta durabilidad y excelente resistencia al lavado. Ideal para proyectos residenciales y comerciales donde se busca un acabado superior y de larga duración.',
+      price: 295,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 295 },
+        { id: '4lts', label: '4 Litros', price: 1095 },
+        { id: '19lts', label: '19 Litros', price: 4390 },
+      ],
+      cantidad: '1 litro / 4 litros / 19 litros',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#f4edc4',
+      image: '',
+      palette: sayerUltraPalette,
+    });
+
+    products.push({
+      id: 'vinilica-maxima-sayer',
+      category: 'vinilica',
+      categoryLabel: categoryLabels['vinilica'],
+      subcategory: 'Sayer',
+      name: 'Máxima Sayer',
+      description: 'Pintura vinílica de alta calidad con excelente cubrimiento y gran durabilidad para interiores y exteriores.',
+      detailText: 'Pintura vinílica de alta calidad con excelente cubrimiento y gran durabilidad, ideal para interiores y exteriores. Ofrece uniformidad y gran rendimiento para acabados profesionales.',
+      price: 245,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 245 },
+        { id: '4lts', label: '4 Litros', price: 865 },
+        { id: '19lts', label: '19 Litros', price: 3690 },
+      ],
+      cantidad: '1 litro / 4 litros / 19 litros',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#f0ad5f',
+      image: '',
+      palette: sayerMaximaPalette,
+    });
+
+    products.push({
+      id: 'vinilica-pro-master-sayer',
+      category: 'vinilica',
+      categoryLabel: categoryLabels['vinilica'],
+      subcategory: 'Sayer',
+      name: 'Pro Master Sayer',
+      description: 'Pintura vinílica profesional con excelente rendimiento y cubrimiento para acabados uniformes y duraderos.',
+      detailText: 'Pintura vinílica profesional con excelente rendimiento y cubrimiento. Ideal para hogares, oficinas y proyectos donde se busca un acabado uniforme y duradero a un excelente costo-beneficio.',
+      price: 195,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 195 },
+        { id: '4lts', label: '4 Litros', price: 715 },
+        { id: '19lts', label: '19 Litros', price: 2950 },
+      ],
+      cantidad: '1 litro / 4 litros / 19 litros',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#b8e7f7',
+      image: '',
+      palette: sayerProMasterPalette,
+    });
+
+    products.push({
+      id: 'vinilica-magicolor-sayer',
+      category: 'vinilica',
+      categoryLabel: categoryLabels['vinilica'],
+      subcategory: 'Sayer',
+      name: 'Magicolor Sayer',
+      description: 'Pintura vinílica de gran desempeño y excelente relación calidad-precio para interiores y exteriores.',
+      detailText: 'Pintura vinílica de gran desempeño y excelente relación calidad-precio, ideal para interiores y exteriores con buena adherencia y rendimiento uniforme.',
+      price: 170,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 170 },
+        { id: '4lts', label: '4 Litros', price: 625 },
+        { id: '19lts', label: '19 Litros', price: 2450 },
+      ],
+      cantidad: '1 litro / 4 litros / 19 litros',
+      popular: true,
+      recommended: false,
+      rating: 4,
+      colorSwatch: '#f2383d',
+      image: '',
+      palette: sayerMagicolorPalette,
+    });
+
+    products.push({
+      id: 'vinilica-contractor-sayer',
+      category: 'vinilica',
+      categoryLabel: categoryLabels['vinilica'],
+      subcategory: 'Sayer',
+      name: 'Contractor Sayer',
+      description: 'Pintura vinílica económica para mantenimiento, obra y grandes superficies con precio accesible.',
+      detailText: 'Pintura vinílica económica diseñada para proyectos de mantenimiento, obra y grandes superficies, ofreciendo rendimiento y practicidad a un precio accesible.',
+      price: 425,
+      sizeOptions: [
+        { id: '4lts', label: '4 Litros', price: 425 },
+        { id: '19lts', label: '19 Litros', price: 1695 },
+      ],
+      cantidad: '4 litros / 19 litros',
+      popular: false,
+      recommended: false,
+      rating: 4,
+      colorSwatch: '#e8e0d6',
+      image: '',
+      palette: sayerContractorPalette,
     });
 
     const precioVinilicaGalon = 160;
@@ -866,670 +1346,6 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    const recoveredCatalogProducts = [
-      {
-        id: 'thermotek-3-anos',
-        category: 'epoxica',
-        categoryLabel: categoryLabels['epoxica'],
-        subcategory: 'Acrílico',
-        name: 'Thermotek 3 Años',
-        description: 'Impermeabilizante acrílico Thermotek 3 años para protección básica de techos y superficies expuestas a lluvia y humedad.',
-        detailText: 'Impermeabilizante acrílico Thermotek 3 años ideal para protección básica de techos y superficies expuestas a lluvia y humedad. Disponible en color rojo o blanco, recomendado para mantenimiento preventivo y aplicación residencial.',
-        price: 400,
-        sizeOptions: [
-          { id: '4lts', label: '4 Litros', price: 400 },
-          { id: '19lts', label: '19 Litros', price: 1150 },
-        ],
-        cantidad: '4 litros / 19 litros',
-        popular: true,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#b94735',
-        image: '',
-        palette: [
-          { name: 'Rojo', color: '#b94735', description: 'Color rojo. Impermeabilizante acrílico Thermotek 3 años.', sizeOptions: [{ id: '4lts', label: '4 Litros', price: 400 }, { id: '19lts', label: '19 Litros', price: 1150 }] },
-          { name: 'Blanco', color: '#f7f7f2', description: 'Color blanco. Impermeabilizante acrílico Thermotek 3 años.', sizeOptions: [{ id: '4lts', label: '4 Litros', price: 400 }, { id: '19lts', label: '19 Litros', price: 1150 }] },
-        ],
-      },
-      {
-        id: 'thermotek-5-anos',
-        category: 'epoxica',
-        categoryLabel: categoryLabels['epoxica'],
-        subcategory: 'Acrílico',
-        name: 'Thermotek 5 Años',
-        description: 'Impermeabilizante acrílico Thermotek 5 años para proteger techos, losas y superficies exteriores contra filtraciones.',
-        detailText: 'Impermeabilizante acrílico Thermotek 5 años de mayor durabilidad, diseñado para proteger techos, losas y superficies exteriores contra filtraciones, humedad y desgaste por intemperie. Disponible en color rojo o blanco.',
-        price: 450,
-        sizeOptions: [
-          { id: '4lts', label: '4 Litros', price: 450 },
-          { id: '19lts', label: '19 Litros', price: 1450 },
-        ],
-        cantidad: '4 litros / 19 litros',
-        popular: true,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#b94735',
-        image: '',
-        palette: [
-          { name: 'Rojo', color: '#b94735', description: 'Color rojo. Impermeabilizante acrílico Thermotek 5 años.', sizeOptions: [{ id: '4lts', label: '4 Litros', price: 450 }, { id: '19lts', label: '19 Litros', price: 1450 }] },
-          { name: 'Blanco', color: '#f7f7f2', description: 'Color blanco. Impermeabilizante acrílico Thermotek 5 años.', sizeOptions: [{ id: '4lts', label: '4 Litros', price: 450 }, { id: '19lts', label: '19 Litros', price: 1450 }] },
-        ],
-      },
-      {
-        id: 'membrana-rollo-sencilla',
-        category: 'epoxica',
-        categoryLabel: categoryLabels['epoxica'],
-        subcategory: 'Membranas',
-        name: 'Membrana Rollo Sencilla',
-        description: 'Membrana sencilla en rollo ideal como refuerzo para sistemas de impermeabilización.',
-        detailText: 'Membrana sencilla en rollo ideal como refuerzo para sistemas de impermeabilización. Ayuda a mejorar la resistencia del impermeabilizante en zonas críticas, grietas, juntas y superficies con movimiento.',
-        price: 700,
-        cantidad: 'Rollo 100 metros',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#eeeeee',
-        image: '',
-      },
-      {
-        id: 'membrana-rollo-reforzada',
-        category: 'epoxica',
-        categoryLabel: categoryLabels['epoxica'],
-        subcategory: 'Membranas',
-        name: 'Membrana Rollo Reforzada',
-        description: 'Membrana reforzada en rollo para impermeabilización que requiere mayor resistencia y durabilidad.',
-        detailText: 'Membrana reforzada en rollo para trabajos de impermeabilización que requieren mayor resistencia y durabilidad. Recomendada para techos, losas, juntas, grietas y áreas con mayor exposición a humedad.',
-        price: 1750,
-        cantidad: 'Rollo 100 metros',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#d7d7d7',
-        image: '',
-      },
-      {
-        id: 'aplicadores-brochas-perfect',
-        category: 'aplicadores',
-        categoryLabel: categoryLabels['aplicadores'],
-        subcategory: 'Brochas',
-        name: 'Brochas Perfect',
-        description: 'Brochas marca Perfect ideales para aplicación de pintura vinílica y esmaltes base aceite.',
-        detailText: 'Brochas marca Perfect ideales para pintura vinílica, pintura base aceite, esmaltes, selladores y mantenimiento general. Diseñadas para brindar excelente absorción y distribución uniforme de pintura, ofreciendo acabados limpios y profesionales.',
-        price: 13,
-        sizeOptions: [
-          { id: '6in', label: '6 pulgadas', price: 70 },
-          { id: '5in', label: '5 pulgadas', price: 65 },
-          { id: '4in', label: '4 pulgadas', price: 55 },
-          { id: '3in', label: '3 pulgadas', price: 45 },
-          { id: '2-5in', label: '2 1/2 pulgadas', price: 35 },
-          { id: '2in', label: '2 pulgadas', price: 30 },
-          { id: '1-5in', label: '1 1/2 pulgadas', price: 25 },
-          { id: '1in', label: '1 pulgada', price: 20 },
-          { id: '0-5in', label: '1/2 pulgada', price: 13 },
-        ],
-        cantidad: '1/2 a 6 pulgadas',
-        popular: true,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#c88b45',
-        image: '',
-      },
-      {
-        id: 'aplicadores-brochas-pelo-camello',
-        category: 'aplicadores',
-        categoryLabel: categoryLabels['aplicadores'],
-        subcategory: 'Brochas para Madera',
-        name: 'Brochas Pelo de Camello',
-        description: 'Brochas de pelo de camello recomendadas para acabados sobre madera, barnices, lacas y selladores.',
-        detailText: 'Brochas de pelo de camello especialmente recomendadas para acabados sobre madera, barnices, lacas, selladores, Polyform y trabajos de carpintería fina. Su suavidad permite una mejor distribución del producto y acabados más uniformes.',
-        price: 30,
-        sizeOptions: [
-          { id: '4in', label: '4 pulgadas', price: 105 },
-          { id: '3in', label: '3 pulgadas', price: 98 },
-          { id: '2in', label: '2 pulgadas', price: 60 },
-          { id: '1-5in', label: '1 1/2 pulgadas', price: 47 },
-          { id: '1in', label: '1 pulgada', price: 35 },
-          { id: '0-5in', label: '1/2 pulgada', price: 30 },
-        ],
-        cantidad: '1/2 a 4 pulgadas',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#d8b676',
-        image: '',
-      },
-      {
-        id: 'aplicadores-masking-tape',
-        category: 'aplicadores',
-        categoryLabel: categoryLabels['aplicadores'],
-        subcategory: 'Cintas',
-        name: 'Masking Tape',
-        description: 'Masking tape de uso general ideal para delimitar áreas y proteger superficies durante trabajos de pintura.',
-        detailText: 'Masking tape de uso general ideal para pintura vinílica, esmaltes, delimitación de áreas y protección de molduras, proporcionando acabados limpios y profesionales.',
-        price: 22,
-        sizeOptions: [
-          { id: '2in', label: '2 pulgadas', price: 90 },
-          { id: '1-5in', label: '1 1/2 pulgadas', price: 65 },
-          { id: '1in', label: '1 pulgada', price: 42 },
-          { id: '0-75in', label: '3/4 pulgada', price: 32 },
-          { id: '0-5in', label: '1/2 pulgada', price: 22 },
-        ],
-        cantidad: '1/2 a 2 pulgadas',
-        popular: true,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#efe0a5',
-        image: '',
-      },
-      {
-        id: 'aplicadores-masking-tape-azul',
-        category: 'aplicadores',
-        categoryLabel: categoryLabels['aplicadores'],
-        subcategory: 'Cintas Especializadas',
-        name: 'Masking Tape Azul',
-        description: 'Masking tape azul de alta precisión para aplicaciones automotrices y acabados delicados.',
-        detailText: 'Masking tape azul de alta precisión, recomendado para aplicación automotriz, delimitación precisa, trabajos delicados y acabados finos. Ofrece excelente adherencia y remoción limpia sin dañar superficies.',
-        price: 48,
-        sizeOptions: [
-          { id: '2in', label: '2 pulgadas', price: 200 },
-          { id: '1-5in', label: '1 1/2 pulgadas', price: 170 },
-          { id: '1in', label: '1 pulgada', price: 112 },
-          { id: '0-75in', label: '3/4 pulgada', price: 78 },
-          { id: '0-5in', label: '1/2 pulgada', price: 48 },
-        ],
-        cantidad: '1/2 a 2 pulgadas',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#256fc8',
-        image: '',
-      },
-      {
-        id: 'aplicadores-espatulas',
-        category: 'aplicadores',
-        categoryLabel: categoryLabels['aplicadores'],
-        subcategory: 'Espátulas',
-        name: 'Espátulas',
-        description: 'Espátulas resistentes ideales para resanado, aplicación de pastas, selladores y preparación de superficies.',
-        detailText: 'Espátulas resistentes ideales para resanadores, pastas, selladores y preparación de superficies antes de pintar.',
-        price: 25,
-        sizeOptions: [
-          { id: '5in', label: '5 pulgadas', price: 42 },
-          { id: '4in', label: '4 pulgadas', price: 38 },
-          { id: '3in', label: '3 pulgadas', price: 35 },
-          { id: '2in', label: '2 pulgadas', price: 30 },
-          { id: '1in', label: '1 pulgada', price: 25 },
-        ],
-        cantidad: '1 a 5 pulgadas',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#9aa3ad',
-        image: '',
-      },
-      {
-        id: 'aplicadores-rodillo-truper-9',
-        category: 'aplicadores',
-        categoryLabel: categoryLabels['aplicadores'],
-        subcategory: 'Rodillos',
-        name: 'Rodillo Truper 9 Pulgadas',
-        description: 'Rodillo Truper de 9 pulgadas para pintura vinílica, impermeabilizantes y recubrimientos.',
-        detailText: 'Rodillo Truper de 9 pulgadas ideal para aplicación de pintura vinílica, impermeabilizantes y recubrimientos en superficies lisas, rugosas o extra rugosas, dependiendo del tipo de felpa seleccionada.',
-        price: 60,
-        sizeOptions: [
-          { id: 'liso', label: 'Liso', price: 60 },
-          { id: 'rugoso', label: 'Rugoso', price: 75 },
-          { id: 'extra-rugoso', label: 'Extra rugoso', price: 77 },
-        ],
-        cantidad: '9 pulgadas',
-        popular: true,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#f0f0f0',
-        image: '',
-      },
-      {
-        id: 'aplicadores-repuesto-rodillo-truper-9',
-        category: 'aplicadores',
-        categoryLabel: categoryLabels['aplicadores'],
-        subcategory: 'Repuestos para Rodillo',
-        name: 'Repuesto para Rodillo Truper 9 Pulgadas',
-        description: 'Repuesto para rodillo Truper de 9 pulgadas para pintura, impermeabilización y mantenimiento.',
-        detailText: 'Repuesto para rodillo Truper de 9 pulgadas, ideal para renovar el aplicador y obtener mejor cobertura en trabajos de pintura, impermeabilización y mantenimiento.',
-        price: 35,
-        sizeOptions: [
-          { id: 'liso', label: 'Liso', price: 35 },
-          { id: 'rugoso', label: 'Rugoso', price: 40 },
-          { id: 'extra-rugoso', label: 'Extra rugoso', price: 45 },
-        ],
-        cantidad: '9 pulgadas',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#f3f3f3',
-        image: '',
-      },
-      {
-        id: 'aplicadores-rodillo-truper-4-nylon',
-        category: 'aplicadores',
-        categoryLabel: categoryLabels['aplicadores'],
-        subcategory: 'Rodillos',
-        name: 'Rodillo Truper 4 Pulgadas Nylon',
-        description: 'Rodillo Truper de 4 pulgadas con felpa de nylon para retoques y superficies pequeñas.',
-        detailText: 'Rodillo Truper de 4 pulgadas con felpa de nylon, ideal para trabajos detallados, retoques y aplicación en superficies pequeñas. Recomendado para pinturas de esmalte y pintura vinílica.',
-        price: 45,
-        cantidad: '4 pulgadas',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#e9e9e9',
-        image: '',
-      },
-      {
-        id: 'aplicadores-rodillo-truper-4-esponja',
-        category: 'aplicadores',
-        categoryLabel: categoryLabels['aplicadores'],
-        subcategory: 'Rodillos',
-        name: 'Rodillo Truper 4 Pulgadas Esponja',
-        description: 'Rodillo Truper de 4 pulgadas de esponja para pintura vinílica, retoques y acabados uniformes.',
-        detailText: 'Rodillo Truper de 4 pulgadas de esponja, ideal para aplicación de pintura vinílica en superficies pequeñas, retoques y acabados uniformes.',
-        price: 45,
-        cantidad: '4 pulgadas',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#f1d36f',
-        image: '',
-      },
-      {
-        id: 'fester-espuma-poliuretano-750g',
-        category: 'epoxica',
-        categoryLabel: categoryLabels['epoxica'],
-        subcategory: 'Complementos',
-        name: 'Espuma de Poliuretano Fester',
-        description: 'Espuma de poliuretano Fester de alto desempeño ideal para rellenar, sellar y aislar espacios, grietas y cavidades.',
-        detailText: 'Espuma de poliuretano Fester de alto desempeño ideal para rellenar, sellar y aislar espacios, grietas y cavidades. Excelente para trabajos de impermeabilización y construcción.',
-        price: 274,
-        cantidad: '750 gramos',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#f2d184',
-        image: '',
-      },
-      {
-        id: 'sika-sikaflex-1a-purform',
-        category: 'selladores',
-        categoryLabel: categoryLabels['selladores'],
-        subcategory: 'Selladores Elásticos',
-        name: 'Sellador Elástico Sikaflex 1A Purform',
-        description: 'Sellador elástico de poliuretano Sikaflex 1A Purform de alta resistencia para juntas, grietas y sellados en construcción.',
-        detailText: 'Sellador elástico de poliuretano Sikaflex 1A Purform de alta resistencia, ideal para juntas de expansión, grietas, sellado impermeable y construcción. Excelente adherencia, elasticidad y durabilidad.',
-        price: 300,
-        cantidad: 'Pieza',
-        popular: true,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#d3412c',
-        image: '',
-      },
-      {
-        id: 'vinilica-pasta-texturizada',
-        category: 'vinilica',
-        categoryLabel: categoryLabels['vinilica'],
-        subcategory: 'Texturizados',
-        name: 'Pasta Texturizada',
-        description: 'Pasta texturizada para acabados decorativos en muros interiores y exteriores.',
-        detailText: 'Pasta texturizada ideal para acabados decorativos en muros interiores y exteriores. Disponible en textura fina, media y gruesa, permite crear acabados con relieve y apariencia profesional.',
-        price: 650,
-        sizeOptions: [
-          { id: '19lts', label: '19 Litros', price: 650 },
-        ],
-        finishOptions: ['Fino', 'Medio', 'Grueso'],
-        cantidad: '19 litros',
-        popular: true,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#e5dfd2',
-        image: '',
-      },
-      {
-        id: 'madera-antiparasitos-sayer-lack',
-        category: 'madera',
-        categoryLabel: categoryLabels['madera'],
-        subcategory: 'Protectores para Madera',
-        name: 'Antiparásitos para Madera Sayer Lack',
-        description: 'Antiparásitos para madera Sayer Lack diseñado para proteger contra plagas, hongos, termitas y humedad.',
-        detailText: 'Clave: AD-0051. Antiparásitos para madera Sayer Lack diseñado para proteger superficies de madera contra plagas, hongos, termitas y deterioro causado por humedad o agentes biológicos. Ideal para preparación y mantenimiento de madera en interiores y exteriores.',
-        price: 270,
-        sizeOptions: [
-          { id: '1lt', label: '1 Litro', price: 270 },
-          { id: '4lts', label: '4 Litros', price: 1055 },
-          { id: '19lts', label: '19 Litros', price: 4301 },
-        ],
-        cantidad: '1 litro / 4 litros / 19 litros',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#cfa46b',
-        image: '',
-      },
-      {
-        id: 'madera-barniz-marino-transparente-brillante',
-        category: 'madera',
-        categoryLabel: categoryLabels['madera'],
-        subcategory: 'Barniz Marino',
-        name: 'Barniz Marino Transparente Brillante',
-        description: 'Barniz marino transparente brillante para proteger y embellecer superficies de madera expuestas a humedad, sol y exteriores.',
-        detailText: 'Clave: HI-0900. Barniz marino transparente brillante diseñado para proteger y embellecer superficies de madera expuestas a humedad, sol y condiciones exteriores. Ideal para muebles de exterior, puertas, ventanas, embarcaciones y proyectos de carpintería donde se requiere alta resistencia y acabado brillante.',
-        price: 489,
-        sizeOptions: [
-          { id: '1lt', label: '1 Litro', price: 489 },
-          { id: '4lts', label: '4 Litros', price: 1915 },
-          { id: '19lts', label: '19 Litros', price: 7817 },
-        ],
-        cantidad: '1 litro / 4 litros / 19 litros',
-        popular: true,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#f1dfb8',
-        image: '',
-      },
-      {
-        id: 'madera-barniz-marino-transparente-semi-mate',
-        category: 'madera',
-        categoryLabel: categoryLabels['madera'],
-        subcategory: 'Barniz Marino',
-        name: 'Barniz Marino Transparente Semi Mate',
-        description: 'Barniz marino transparente semi mate para proteger madera expuesta al exterior con acabado elegante de bajo brillo.',
-        detailText: 'Clave: HI-0940. Barniz marino transparente semi mate ideal para proteger superficies de madera expuestas al exterior, proporcionando resistencia a humedad y desgaste con un acabado elegante de bajo brillo.',
-        price: 489,
-        sizeOptions: [
-          { id: '1lt', label: '1 Litro', price: 489 },
-          { id: '4lts', label: '4 Litros', price: 1915 },
-          { id: '19lts', label: '19 Litros', price: 7817 },
-        ],
-        cantidad: '1 litro / 4 litros / 19 litros',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#e6d3aa',
-        image: '',
-      },
-      {
-        id: 'madera-diluyente-pet-polyform',
-        category: 'madera',
-        categoryLabel: categoryLabels['madera'],
-        subcategory: 'Polyform',
-        name: 'Diluyente PET Polyform',
-        description: 'Diluyente especializado para productos Polyform, diseñado para mejorar la viscosidad y facilitar la aplicación.',
-        detailText: 'Diluyente especializado para productos Polyform, diseñado para mejorar la viscosidad, facilitar la aplicación y optimizar acabados en sistemas para madera.',
-        price: 95,
-        sizeOptions: [
-          { id: '500ml', label: '500 ml', price: 95 },
-          { id: '1lt', label: '1 Litro', price: 170 },
-          { id: '4lts', label: '4 Litros', price: 680 },
-        ],
-        cantidad: '500 ml / 1 litro / 4 litros',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#e8e1d1',
-        image: '',
-      },
-      {
-        id: 'madera-laca-chocolate-polyform',
-        category: 'madera',
-        categoryLabel: categoryLabels['madera'],
-        subcategory: 'Polyform',
-        name: 'Laca Chocolate Polyform',
-        description: 'Laca color chocolate especializada para acabados decorativos sobre madera y muebles.',
-        detailText: 'Laca color chocolate especializada para acabados decorativos sobre madera y muebles. Proporciona uniformidad, buena cobertura y excelente apariencia estética.',
-        price: 230,
-        sizeOptions: [
-          { id: '1lt', label: '1 Litro', price: 230 },
-          { id: '4lts', label: '4 Litros', price: 850 },
-        ],
-        cantidad: '1 litro / 4 litros',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#4a2519',
-        image: '',
-      },
-      {
-        id: 'madera-pegamento-blanco-polyform',
-        category: 'madera',
-        categoryLabel: categoryLabels['madera'],
-        subcategory: 'Polyform',
-        name: 'Pegamento Blanco Polyform',
-        description: 'Pegamento blanco de alto rendimiento para carpintería, ensamblado, MDF y aplicaciones sobre madera.',
-        detailText: 'Pegamento blanco de alto rendimiento para trabajos de carpintería, ensamblado, MDF y aplicaciones sobre madera de uso profesional o doméstico. Ofrece excelente adherencia y resistencia.',
-        price: 70,
-        sizeOptions: [
-          { id: '1lt', label: '1 Litro', price: 70 },
-          { id: '4lts', label: '4 Litros', price: 240 },
-          { id: 'cubeta', label: 'Cubeta', price: 1075 },
-        ],
-        cantidad: '1 litro / 4 litros / cubeta',
-        popular: true,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#ffffff',
-        image: '',
-      },
-      {
-        id: 'madera-polyform-11000-brillante',
-        category: 'madera',
-        categoryLabel: categoryLabels['madera'],
-        subcategory: 'Polyform',
-        name: 'Polyform 11000 Brillante',
-        description: 'Barniz brillante diseñado para proteger y embellecer superficies de madera, resaltando el color natural con larga duración.',
-        detailText: 'Barniz Polyform 11000 brillante diseñado para proteger y embellecer superficies de madera, resaltando el color natural y proporcionando un acabado brillante de larga duración. Ideal para muebles, carpintería y acabados finos.',
-        price: 550,
-        sizeOptions: [
-          { id: '1lt', label: '1 Litro', price: 550 },
-          { id: '4lts', label: '4 Litros', price: 1850 },
-        ],
-        finishOptions: ['Brillante'],
-        cantidad: '1 litro / 4 litros',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#e7c987',
-        image: '',
-      },
-      {
-        id: 'madera-polyform-3000',
-        category: 'madera',
-        categoryLabel: categoryLabels['madera'],
-        subcategory: 'Polyform',
-        name: 'Polyform 3000',
-        description: 'Acabado profesional para madera ideal para muebles, carpintería y superficies que requieren protección, durabilidad y excelente presentación.',
-        detailText: 'Acabado profesional para madera Polyform 3000 ideal para muebles, carpintería y superficies de madera que requieren protección, durabilidad y excelente presentación. Proporciona una apariencia uniforme, buena adherencia y acabado de alta calidad para proyectos residenciales o profesionales.',
-        price: 185,
-        sizeOptions: [
-          { id: '500ml', label: '500 ml', price: 185 },
-          { id: '1lt', label: '1 Litro', price: 325 },
-          { id: '4lts', label: '4 Litros', price: 1350 },
-        ],
-        finishOptions: ['Brillante', 'Mate', 'Semi Mate'],
-        cantidad: '500 ml / 1 litro / 4 litros',
-        popular: true,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#d9b26c',
-        image: '',
-      },
-      {
-        id: 'madera-primer-chocolate-polyform',
-        category: 'madera',
-        categoryLabel: categoryLabels['madera'],
-        subcategory: 'Polyform',
-        name: 'Primer Chocolate Polyform',
-        description: 'Primer color chocolate para preparación de superficies de madera antes de aplicar lacas o acabados finales.',
-        detailText: 'Primer color chocolate para preparación de superficies de madera antes de aplicar lacas o acabados finales. Mejora la adherencia, uniformidad y apariencia profesional del acabado.',
-        price: 230,
-        sizeOptions: [
-          { id: '1lt', label: '1 Litro', price: 230 },
-          { id: '4lts', label: '4 Litros', price: 850 },
-        ],
-        cantidad: '1 litro / 4 litros',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#3d2118',
-        image: '',
-      },
-      {
-        id: 'madera-removedor-pintura',
-        category: 'madera',
-        categoryLabel: categoryLabels['madera'],
-        subcategory: 'Removedores y Preparación',
-        name: 'Removedor de Pintura',
-        description: 'Removedor de pintura de alto desempeño para eliminar recubrimientos viejos, esmaltes, barnices y acabados deteriorados.',
-        detailText: 'Clave: AR-0001. Removedor de pintura de alto desempeño ideal para eliminar recubrimientos viejos, esmaltes, barnices y acabados deteriorados sobre distintas superficies. Facilita trabajos de restauración y preparación antes de volver a pintar.',
-        price: 271,
-        sizeOptions: [
-          { id: '1lt', label: '1 Litro', price: 271 },
-          { id: '4lts', label: '4 Litros', price: 1062 },
-          { id: '19lts', label: '19 Litros', price: 4336 },
-        ],
-        cantidad: '1 litro / 4 litros / 19 litros',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#b98a45',
-        image: '',
-      },
-      {
-        id: 'madera-s270-polyform',
-        category: 'madera',
-        categoryLabel: categoryLabels['madera'],
-        subcategory: 'Polyform',
-        name: 'S270 Polyform',
-        description: 'Sellador para preparación de madera antes del acabado final.',
-        detailText: 'Sellador Polyform S270 para preparación de madera antes del acabado final. Ayuda a sellar poros, mejorar adherencia y optimizar el rendimiento del barniz o laca.',
-        price: 150,
-        sizeOptions: [
-          { id: '1lt', label: '1 Litro', price: 150 },
-          { id: '4lts', label: '4 Litros', price: 600 },
-        ],
-        cantidad: '1 litro / 4 litros',
-        popular: false,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#eadcc8',
-        image: '',
-      },
-      {
-        id: 'vinilica-contractor-sayer',
-        category: 'vinilica',
-        categoryLabel: categoryLabels['vinilica'],
-        subcategory: 'Sayer',
-        name: 'Contractor Sayer',
-        description: 'Pintura vinílica económica para mantenimiento, obra y grandes superficies con precio accesible.',
-        detailText: 'Pintura vinílica económica diseñada para proyectos de mantenimiento, obra y grandes superficies, ofreciendo rendimiento y practicidad a un precio accesible.',
-        price: 425,
-        sizeOptions: [
-          { id: '4lts', label: '4 Litros', price: 425 },
-          { id: '19lts', label: '19 Litros', price: 1695 },
-        ],
-        cantidad: '4 litros / 19 litros',
-        popular: false,
-        recommended: false,
-        rating: 4,
-        colorSwatch: '#e8e0d6',
-        image: '',
-      },
-      {
-        id: 'vinilica-magicolor-sayer',
-        category: 'vinilica',
-        categoryLabel: categoryLabels['vinilica'],
-        subcategory: 'Sayer',
-        name: 'Magicolor Sayer',
-        description: 'Pintura vinílica de gran desempeño y excelente relación calidad-precio para interiores y exteriores.',
-        detailText: 'Pintura vinílica de gran desempeño y excelente relación calidad-precio, ideal para interiores y exteriores con buena adherencia y rendimiento uniforme.',
-        price: 170,
-        sizeOptions: [
-          { id: '1lt', label: '1 Litro', price: 170 },
-          { id: '4lts', label: '4 Litros', price: 625 },
-          { id: '19lts', label: '19 Litros', price: 2450 },
-        ],
-        cantidad: '1 litro / 4 litros / 19 litros',
-        popular: true,
-        recommended: false,
-        rating: 4,
-        colorSwatch: '#f2383d',
-        image: '',
-      },
-      {
-        id: 'vinilica-maxima-sayer',
-        category: 'vinilica',
-        categoryLabel: categoryLabels['vinilica'],
-        subcategory: 'Sayer',
-        name: 'Máxima Sayer',
-        description: 'Pintura vinílica de alta calidad con excelente cubrimiento y gran durabilidad para interiores y exteriores.',
-        detailText: 'Pintura vinílica de alta calidad con excelente cubrimiento y gran durabilidad, ideal para interiores y exteriores. Ofrece uniformidad y gran rendimiento para acabados profesionales.',
-        price: 245,
-        sizeOptions: [
-          { id: '1lt', label: '1 Litro', price: 245 },
-          { id: '4lts', label: '4 Litros', price: 865 },
-          { id: '19lts', label: '19 Litros', price: 3690 },
-        ],
-        cantidad: '1 litro / 4 litros / 19 litros',
-        popular: true,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#f0ad5f',
-        image: '',
-      },
-      {
-        id: 'vinilica-pro-master-sayer',
-        category: 'vinilica',
-        categoryLabel: categoryLabels['vinilica'],
-        subcategory: 'Sayer',
-        name: 'Pro Master Sayer',
-        description: 'Pintura vinílica profesional con excelente rendimiento y cubrimiento para acabados uniformes y duraderos.',
-        detailText: 'Pintura vinílica profesional con excelente rendimiento y cubrimiento. Ideal para hogares, oficinas y proyectos donde se busca un acabado uniforme y duradero a un excelente costo-beneficio.',
-        price: 195,
-        sizeOptions: [
-          { id: '1lt', label: '1 Litro', price: 195 },
-          { id: '4lts', label: '4 Litros', price: 715 },
-          { id: '19lts', label: '19 Litros', price: 2950 },
-        ],
-        cantidad: '1 litro / 4 litros / 19 litros',
-        popular: true,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#b8e7f7',
-        image: '',
-      },
-      {
-        id: 'vinilica-ultra-sayer',
-        category: 'vinilica',
-        categoryLabel: categoryLabels['vinilica'],
-        subcategory: 'Sayer',
-        name: 'Ultra Sayer',
-        description: 'Pintura vinílica premium de máxima calidad, con gran cubrimiento, alta durabilidad y excelente resistencia al lavado.',
-        detailText: 'Pintura vinílica premium de máxima calidad, diseñada para ofrecer el mejor cubrimiento, alta durabilidad y excelente resistencia al lavado. Ideal para proyectos residenciales y comerciales donde se busca un acabado superior y de larga duración.',
-        price: 295,
-        sizeOptions: [
-          { id: '1lt', label: '1 Litro', price: 295 },
-          { id: '4lts', label: '4 Litros', price: 1095 },
-          { id: '19lts', label: '19 Litros', price: 4390 },
-        ],
-        cantidad: '1 litro / 4 litros / 19 litros',
-        popular: true,
-        recommended: true,
-        rating: 4,
-        colorSwatch: '#f4edc4',
-        image: '',
-      },
-    ];
-
-    recoveredCatalogProducts.forEach((product) => products.push(product));
-
     products.push({
       id: 'esmalte-alva-fast',
       category: 'esmalte',
@@ -1952,6 +1768,50 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     products.push({
+      id: 'madera-barniz-marino-transparente-brillante',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Barniz Marino',
+      name: 'Barniz Marino Transparente Brillante',
+      description: 'Barniz marino transparente brillante para proteger y embellecer superficies de madera expuestas a humedad, sol y exteriores.',
+      detailText: 'Clave: HI-0900. Barniz marino transparente brillante diseñado para proteger y embellecer superficies de madera expuestas a humedad, sol y condiciones exteriores. Ideal para muebles de exterior, puertas, ventanas, embarcaciones y proyectos de carpintería donde se requiere alta resistencia y acabado brillante.',
+      price: 489,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 489 },
+        { id: '4lts', label: '4 Litros', price: 1915 },
+        { id: '19lts', label: '19 Litros', price: 7817 },
+      ],
+      cantidad: '1 litro / 4 litros / 19 litros',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#f1dfb8',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-barniz-marino-transparente-semi-mate',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Barniz Marino',
+      name: 'Barniz Marino Transparente Semi Mate',
+      description: 'Barniz marino transparente semi mate para proteger madera expuesta al exterior con acabado elegante de bajo brillo.',
+      detailText: 'Clave: HI-0940. Barniz marino transparente semi mate ideal para proteger superficies de madera expuestas al exterior, proporcionando resistencia a humedad y desgaste con un acabado elegante de bajo brillo.',
+      price: 489,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 489 },
+        { id: '4lts', label: '4 Litros', price: 1915 },
+        { id: '19lts', label: '19 Litros', price: 7817 },
+      ],
+      cantidad: '1 litro / 4 litros / 19 litros',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#e6d3aa',
+      image: '',
+    });
+
+    products.push({
       id: 'madera-sellalack-profesional',
       category: 'madera',
       categoryLabel: categoryLabels['madera'],
@@ -2331,6 +2191,202 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     products.push({
+      id: 'madera-polyform-3000',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Polyform',
+      name: 'Polyform 3000',
+      description: 'Acabado profesional para madera ideal para muebles, carpintería y superficies que requieren protección, durabilidad y excelente presentación.',
+      detailText: 'Acabado profesional para madera Polyform 3000 ideal para muebles, carpintería y superficies de madera que requieren protección, durabilidad y excelente presentación. Proporciona una apariencia uniforme, buena adherencia y acabado de alta calidad para proyectos residenciales o profesionales.',
+      price: 185,
+      sizeOptions: [
+        { id: '500ml', label: '500 ml', price: 185 },
+        { id: '1lt', label: '1 Litro', price: 325 },
+        { id: '4lts', label: '4 Litros', price: 1350 },
+      ],
+      finishOptions: ['Brillante', 'Mate', 'Semi Mate'],
+      cantidad: '500 ml / 1 litro / 4 litros',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#d9b26c',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-polyform-11000-brillante',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Polyform',
+      name: 'Polyform 11000 Brillante',
+      description: 'Barniz brillante diseñado para proteger y embellecer superficies de madera, resaltando el color natural con larga duración.',
+      detailText: 'Barniz Polyform 11000 brillante diseñado para proteger y embellecer superficies de madera, resaltando el color natural y proporcionando un acabado brillante de larga duración. Ideal para muebles, carpintería y acabados finos.',
+      price: 550,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 550 },
+        { id: '4lts', label: '4 Litros', price: 1850 },
+      ],
+      finishOptions: ['Brillante'],
+      cantidad: '1 litro / 4 litros',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#e7c987',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-primer-chocolate-polyform',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Polyform',
+      name: 'Primer Chocolate Polyform',
+      description: 'Primer color chocolate para preparación de superficies de madera antes de aplicar lacas o acabados finales.',
+      detailText: 'Primer color chocolate para preparación de superficies de madera antes de aplicar lacas o acabados finales. Mejora la adherencia, uniformidad y apariencia profesional del acabado.',
+      price: 230,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 230 },
+        { id: '4lts', label: '4 Litros', price: 850 },
+      ],
+      cantidad: '1 litro / 4 litros',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#3d2118',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-laca-chocolate-polyform',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Polyform',
+      name: 'Laca Chocolate Polyform',
+      description: 'Laca color chocolate especializada para acabados decorativos sobre madera y muebles.',
+      detailText: 'Laca color chocolate especializada para acabados decorativos sobre madera y muebles. Proporciona uniformidad, buena cobertura y excelente apariencia estética.',
+      price: 230,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 230 },
+        { id: '4lts', label: '4 Litros', price: 850 },
+      ],
+      cantidad: '1 litro / 4 litros',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#4a2519',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-diluyente-pet-polyform',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Polyform',
+      name: 'Diluyente PET Polyform',
+      description: 'Diluyente especializado para productos Polyform, diseñado para mejorar la viscosidad y facilitar la aplicación.',
+      detailText: 'Diluyente especializado para productos Polyform, diseñado para mejorar la viscosidad, facilitar la aplicación y optimizar acabados en sistemas para madera.',
+      price: 95,
+      sizeOptions: [
+        { id: '500ml', label: '500 ml', price: 95 },
+        { id: '1lt', label: '1 Litro', price: 170 },
+        { id: '4lts', label: '4 Litros', price: 680 },
+      ],
+      cantidad: '500 ml / 1 litro / 4 litros',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#e8e1d1',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-pegamento-blanco-polyform',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Polyform',
+      name: 'Pegamento Blanco Polyform',
+      description: 'Pegamento blanco de alto rendimiento para carpintería, ensamblado, MDF y aplicaciones sobre madera.',
+      detailText: 'Pegamento blanco de alto rendimiento para trabajos de carpintería, ensamblado, MDF y aplicaciones sobre madera de uso profesional o doméstico. Ofrece excelente adherencia y resistencia.',
+      price: 70,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 70 },
+        { id: '4lts', label: '4 Litros', price: 240 },
+        { id: 'cubeta', label: 'Cubeta', price: 1075 },
+      ],
+      cantidad: '1 litro / 4 litros / cubeta',
+      popular: true,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#ffffff',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-s270-polyform',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Polyform',
+      name: 'S270 Polyform',
+      description: 'Sellador para preparación de madera antes del acabado final.',
+      detailText: 'Sellador Polyform S270 para preparación de madera antes del acabado final. Ayuda a sellar poros, mejorar adherencia y optimizar el rendimiento del barniz o laca.',
+      price: 150,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 150 },
+        { id: '4lts', label: '4 Litros', price: 600 },
+      ],
+      cantidad: '1 litro / 4 litros',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#eadcc8',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-antiparasitos-sayer-lack',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Protectores para Madera',
+      name: 'Antiparásitos para Madera Sayer Lack',
+      description: 'Antiparásitos para madera Sayer Lack diseñado para proteger contra plagas, hongos, termitas y humedad.',
+      detailText: 'Clave: AD-0051. Antiparásitos para madera Sayer Lack diseñado para proteger superficies de madera contra plagas, hongos, termitas y deterioro causado por humedad o agentes biológicos. Ideal para preparación y mantenimiento de madera en interiores y exteriores.',
+      price: 270,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 270 },
+        { id: '4lts', label: '4 Litros', price: 1055 },
+        { id: '19lts', label: '19 Litros', price: 4301 },
+      ],
+      cantidad: '1 litro / 4 litros / 19 litros',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#cfa46b',
+      image: '',
+    });
+
+    products.push({
+      id: 'madera-removedor-pintura',
+      category: 'madera',
+      categoryLabel: categoryLabels['madera'],
+      subcategory: 'Removedores y Preparación',
+      name: 'Removedor de Pintura',
+      description: 'Removedor de pintura de alto desempeño para eliminar recubrimientos viejos, esmaltes, barnices y acabados deteriorados.',
+      detailText: 'Clave: AR-0001. Removedor de pintura de alto desempeño ideal para eliminar recubrimientos viejos, esmaltes, barnices y acabados deteriorados sobre distintas superficies. Facilita trabajos de restauración y preparación antes de volver a pintar.',
+      price: 271,
+      sizeOptions: [
+        { id: '1lt', label: '1 Litro', price: 271 },
+        { id: '4lts', label: '4 Litros', price: 1062 },
+        { id: '19lts', label: '19 Litros', price: 4336 },
+      ],
+      cantidad: '1 litro / 4 litros / 19 litros',
+      popular: false,
+      recommended: true,
+      rating: 4,
+      colorSwatch: '#b98a45',
+      image: '',
+    });
+
+    products.push({
       id: 'esmalte-oro-1lt',
       category: 'esmalte',
       categoryLabel: categoryLabels['esmalte'],
@@ -2381,182 +2437,346 @@ window.addEventListener('DOMContentLoaded', () => {
       image: '',
     });
 
-    filteredProducts = [...products];
-    window.RubensCatalogProducts = products.map((product) => ({ ...product }));
-  };
-
-  const normalizeCatalogText = (value) => String(value || '')
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-
-  const normalizeCategory = (value) => {
-    const normalized = String(value || '')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .trim()
-      .replace(/\s+/g, ' ')
-      .replace(/s$/, '');
-    const aliases = {
-      'todos los producto': 'todos los productos',
-      vinilica: 'vinilica',
-      'pintura vinilica': 'vinilica',
-      esmalte: 'esmalte',
-      'pintura de esmalte': 'esmalte',
-      epoxica: 'impermeabilizante',
-      impermeabilizante: 'impermeabilizante',
-      aerosol: 'aerosol',
-      aerosole: 'aerosol',
-      madera: 'madera',
-      'productos para madera': 'madera',
-      aplicador: 'aplicador',
-      aplicadore: 'aplicador',
-      sellador: 'selladores y adhesivos',
-      selladore: 'selladores y adhesivos',
-      'selladores y adhesivos': 'selladores y adhesivos',
-      'selladores y adhesivo': 'selladores y adhesivos',
-      complemento: 'complemento',
-      diluyente: 'diluyente',
-      primario: 'primario',
-      primerario: 'primario',
-    };
-    return aliases[normalized] || normalized;
-  };
-
-  const categoryLabelAliases = {
-    vinilica: categoryLabels.vinilica,
-    esmalte: categoryLabels.esmalte,
-    impermeabilizante: categoryLabels.epoxica,
-    aerosoles: categoryLabels.aerosoles,
-    aerosol: categoryLabels.aerosoles,
-    madera: categoryLabels.madera,
-    aplicadores: categoryLabels.aplicadores,
-    aplicador: categoryLabels.aplicadores,
-    'selladores y adhesivos': categoryLabels.selladores,
-    complemento: categoryLabels.complementos,
-    diluyentes: categoryLabels.diluyentes,
-    diluyente: categoryLabels.diluyentes,
-    primario: categoryLabels.primerarios,
-  };
-
-  const categorySlugFromNormalized = (category) => ({
-    vinilica: 'vinilica',
-    esmalte: 'esmalte',
-    impermeabilizante: 'epoxica',
-    aerosol: 'aerosoles',
-    madera: 'madera',
-    aplicador: 'aplicadores',
-    'selladores y adhesivos': 'selladores',
-    complemento: 'complementos',
-    diluyente: 'diluyentes',
-    primario: 'primerarios',
-  }[category] || category);
-
-  const normalizeCatalogCategory = (category) => categorySlugFromNormalized(normalizeCategory(category));
-  const getProductCategoryValue = (product) => product.categoria || product.category || product.categoryLabel || '';
-  const catalogProductKey = (product) => `${normalizeCatalogText(product.name)}|${normalizeCategory(getProductCategoryValue(product))}`;
-  const getDeletedCatalogKeys = () => {
-    try {
-      return new Set(JSON.parse(localStorage.getItem('rubensDeletedCatalogProducts') || '[]'));
-    } catch (error) {
-      return new Set();
-    }
-  };
-
-  const parseSupabaseSizes = (sizes) => String(sizes || '')
-    .split(/\n+/)
-    .map((line) => {
-      const [labelPart, pricePart] = line.split(':');
-      const price = Number(String(pricePart || '').replace(/[^\d.]/g, '')) || 0;
-      const label = String(labelPart || '').trim();
-      return label && price ? { id: label.toLowerCase().replace(/[^a-z0-9]+/g, '-'), label, price } : null;
-    })
-    .filter(Boolean);
-
-  const productFromSupabaseRow = (row) => {
-    const category = row.categoria || '';
-    const normalizedCategory = normalizeCategory(category);
-    const sizeOptions = parseSupabaseSizes(row.tamanos_precios);
-    return {
-      id: row.id,
-      category,
-      categoria: category,
-      categoryLabel: categoryLabelAliases[normalizedCategory] || category,
-      subcategory: row.subcategoria || '',
-      name: row.nombre || '',
-      description: row.descripcion || '',
-      detailText: row.descripcion || '',
-      price: Number(row.precio_base) || 0,
-      sizeOptions: sizeOptions.length ? sizeOptions : undefined,
-      cantidad: row.tamanos_precios || '',
-      popular: Boolean(row.destacado),
-      recommended: Boolean(row.destacado),
-      featured: Boolean(row.destacado),
-      promo: Boolean(row.promocion),
-      rating: 4,
-      colorSwatch: '#d7d7d7',
-      image: row.imagen || '',
-      active: row.activo !== false,
-      source: 'supabase',
-    };
-  };
-
-  const mergeCatalogProducts = (localProducts, remoteProducts) => {
-    const deletedKeys = getDeletedCatalogKeys();
-    const inactiveRemoteKeys = new Set(
-      remoteProducts.filter((product) => product.active === false).map(catalogProductKey)
-    );
-    const merged = [];
-    const addProduct = (product, preferIncoming = false) => {
-      const key = catalogProductKey(product);
-      if (inactiveRemoteKeys.has(key)) return;
-      if (product.source !== 'supabase' && deletedKeys.has(key)) return;
-      const existingIndex = merged.findIndex((item) => catalogProductKey(item) === key);
-      if (existingIndex >= 0) {
-        if (preferIncoming) merged[existingIndex] = { ...merged[existingIndex], ...product };
-      } else {
-        merged.push(product);
-      }
-    };
-    localProducts.forEach((product) => addProduct(product, false));
-    remoteProducts.filter((product) => product.active !== false).forEach((product) => addProduct(product, true));
-    if (merged.length === 0 && localProducts.length > 0) {
-      console.warn('La fusion del catalogo quedo vacia; se conserva el catalogo local como respaldo.');
-      return localProducts;
-    }
-    return merged;
-  };
-
-  const loadSupabaseCatalogProducts = async () => {
-    const response = await fetch(`${RUBENS_SUPABASE_REST_URL}productos?select=*`, {
-      headers: {
-        apikey: RUBENS_SUPABASE_KEY,
-        Authorization: `Bearer ${RUBENS_SUPABASE_KEY}`,
+    const newVariantProducts = [
+      {
+        id: 'thermotek-3-anos',
+        category: 'epoxica',
+        subcategory: 'Acrílico',
+        name: 'Thermotek 3 Años',
+        description: 'Impermeabilizante acrílico Thermotek 3 años para protección básica de techos y superficies expuestas a lluvia y humedad.',
+        detailText: 'Impermeabilizante acrílico Thermotek 3 años ideal para protección básica de techos y superficies expuestas a lluvia y humedad. Disponible en color rojo o blanco, recomendado para mantenimiento preventivo y aplicación residencial.',
+        price: 400,
+        sizeOptions: [
+          { id: '4lts', label: '4 Litros', price: 400 },
+          { id: '19lts', label: '19 Litros', price: 1150 },
+        ],
+        cantidad: '4 litros / 19 litros',
+        popular: true,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#b94735',
+        palette: [
+          {
+            name: 'Rojo',
+            color: '#b94735',
+            description: 'Color rojo. Impermeabilizante acrílico Thermotek 3 años.',
+            sizeOptions: [
+              { id: '4lts', label: '4 Litros', price: 400 },
+              { id: '19lts', label: '19 Litros', price: 1150 },
+            ],
+          },
+          {
+            name: 'Blanco',
+            color: '#f7f7f2',
+            description: 'Color blanco. Impermeabilizante acrílico Thermotek 3 años.',
+            sizeOptions: [
+              { id: '4lts', label: '4 Litros', price: 400 },
+              { id: '19lts', label: '19 Litros', price: 1150 },
+            ],
+          },
+        ],
       },
-    });
-    if (!response.ok) throw new Error(`Supabase productos ${response.status}`);
-    const rows = await response.json();
-    console.log('productos recibidos desde Supabase', rows);
-    return rows.map(productFromSupabaseRow);
-  };
+      {
+        id: 'thermotek-5-anos',
+        category: 'epoxica',
+        subcategory: 'Acrílico',
+        name: 'Thermotek 5 Años',
+        description: 'Impermeabilizante acrílico Thermotek 5 años para proteger techos, losas y superficies exteriores contra filtraciones.',
+        detailText: 'Impermeabilizante acrílico Thermotek 5 años de mayor durabilidad, diseñado para proteger techos, losas y superficies exteriores contra filtraciones, humedad y desgaste por intemperie. Disponible en color rojo o blanco.',
+        price: 450,
+        sizeOptions: [
+          { id: '4lts', label: '4 Litros', price: 450 },
+          { id: '19lts', label: '19 Litros', price: 1450 },
+        ],
+        cantidad: '4 litros / 19 litros',
+        popular: true,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#b94735',
+        palette: [
+          {
+            name: 'Rojo',
+            color: '#b94735',
+            description: 'Color rojo. Impermeabilizante acrílico Thermotek 5 años.',
+            sizeOptions: [
+              { id: '4lts', label: '4 Litros', price: 450 },
+              { id: '19lts', label: '19 Litros', price: 1450 },
+            ],
+          },
+          {
+            name: 'Blanco',
+            color: '#f7f7f2',
+            description: 'Color blanco. Impermeabilizante acrílico Thermotek 5 años.',
+            sizeOptions: [
+              { id: '4lts', label: '4 Litros', price: 450 },
+              { id: '19lts', label: '19 Litros', price: 1450 },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'membrana-rollo-sencilla',
+        category: 'epoxica',
+        subcategory: 'Membranas',
+        name: 'Membrana Rollo Sencilla',
+        description: 'Membrana sencilla en rollo ideal como refuerzo para sistemas de impermeabilización.',
+        detailText: 'Membrana sencilla en rollo ideal como refuerzo para sistemas de impermeabilización. Ayuda a mejorar la resistencia del impermeabilizante en zonas críticas, grietas, juntas y superficies con movimiento.',
+        price: 700,
+        cantidad: 'Rollo 100 metros',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#eeeeee',
+      },
+      {
+        id: 'membrana-rollo-reforzada',
+        category: 'epoxica',
+        subcategory: 'Membranas',
+        name: 'Membrana Rollo Reforzada',
+        description: 'Membrana reforzada en rollo para impermeabilización que requiere mayor resistencia y durabilidad.',
+        detailText: 'Membrana reforzada en rollo para trabajos de impermeabilización que requieren mayor resistencia y durabilidad. Recomendada para techos, losas, juntas, grietas y áreas con mayor exposición a humedad.',
+        price: 1750,
+        cantidad: 'Rollo 100 metros',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#d7d7d7',
+      },
+      {
+        id: 'aplicadores-brochas-perfect',
+        category: 'aplicadores',
+        subcategory: 'Brochas',
+        name: 'Brochas Perfect',
+        description: 'Brochas marca Perfect ideales para aplicación de pintura vinílica y esmaltes base aceite.',
+        detailText: 'Brochas marca Perfect ideales para pintura vinílica, pintura base aceite, esmaltes, selladores y mantenimiento general. Diseñadas para brindar excelente absorción y distribución uniforme de pintura, ofreciendo acabados limpios y profesionales en interiores y exteriores.',
+        price: 13,
+        sizeOptions: [
+          { id: '6in', label: '6 pulgadas', price: 70 },
+          { id: '5in', label: '5 pulgadas', price: 65 },
+          { id: '4in', label: '4 pulgadas', price: 55 },
+          { id: '3in', label: '3 pulgadas', price: 45 },
+          { id: '2-5in', label: '2 1/2 pulgadas', price: 35 },
+          { id: '2in', label: '2 pulgadas', price: 30 },
+          { id: '1-5in', label: '1 1/2 pulgadas', price: 25 },
+          { id: '1in', label: '1 pulgada', price: 20 },
+          { id: '0-5in', label: '1/2 pulgada', price: 13 },
+        ],
+        cantidad: '1/2 a 6 pulgadas',
+        popular: true,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#c88b45',
+      },
+      {
+        id: 'aplicadores-brochas-pelo-camello',
+        category: 'aplicadores',
+        subcategory: 'Brochas para Madera',
+        name: 'Brochas Pelo de Camello',
+        description: 'Brochas de pelo de camello recomendadas para acabados sobre madera, barnices, lacas y selladores.',
+        detailText: 'Brochas de pelo de camello especialmente recomendadas para acabados sobre madera, barnices, lacas, selladores, Polyform y trabajos de carpintería fina. Su suavidad permite una mejor distribución del producto y acabados más uniformes.',
+        price: 30,
+        sizeOptions: [
+          { id: '4in', label: '4 pulgadas', price: 105 },
+          { id: '3in', label: '3 pulgadas', price: 98 },
+          { id: '2in', label: '2 pulgadas', price: 60 },
+          { id: '1-5in', label: '1 1/2 pulgadas', price: 47 },
+          { id: '1in', label: '1 pulgada', price: 35 },
+          { id: '0-5in', label: '1/2 pulgada', price: 30 },
+        ],
+        cantidad: '1/2 a 4 pulgadas',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#d8b676',
+      },
+      {
+        id: 'aplicadores-masking-tape',
+        category: 'aplicadores',
+        subcategory: 'Cintas',
+        name: 'Masking Tape',
+        description: 'Masking tape de uso general ideal para delimitar áreas y proteger superficies durante trabajos de pintura.',
+        detailText: 'Masking tape de uso general ideal para pintura vinílica, esmaltes, delimitación de áreas y protección de molduras, proporcionando acabados limpios y profesionales.',
+        price: 22,
+        sizeOptions: [
+          { id: '2in', label: '2 pulgadas', price: 90 },
+          { id: '1-5in', label: '1 1/2 pulgadas', price: 65 },
+          { id: '1in', label: '1 pulgada', price: 42 },
+          { id: '0-75in', label: '3/4 pulgada', price: 32 },
+          { id: '0-5in', label: '1/2 pulgada', price: 22 },
+        ],
+        cantidad: '1/2 a 2 pulgadas',
+        popular: true,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#efe0a5',
+      },
+      {
+        id: 'aplicadores-masking-tape-azul',
+        category: 'aplicadores',
+        subcategory: 'Cintas Especializadas',
+        name: 'Masking Tape Azul',
+        description: 'Masking tape azul de alta precisión para aplicaciones automotrices y acabados delicados.',
+        detailText: 'Masking tape azul de alta precisión, recomendado para aplicación automotriz, delimitación precisa, trabajos delicados y acabados finos. Ofrece excelente adherencia y remoción limpia sin dañar superficies.',
+        price: 48,
+        sizeOptions: [
+          { id: '2in', label: '2 pulgadas', price: 200 },
+          { id: '1-5in', label: '1 1/2 pulgadas', price: 170 },
+          { id: '1in', label: '1 pulgada', price: 112 },
+          { id: '0-75in', label: '3/4 pulgada', price: 78 },
+          { id: '0-5in', label: '1/2 pulgada', price: 48 },
+        ],
+        cantidad: '1/2 a 2 pulgadas',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#256fc8',
+      },
+      {
+        id: 'aplicadores-espatulas',
+        category: 'aplicadores',
+        subcategory: 'Espátulas',
+        name: 'Espátulas',
+        description: 'Espátulas resistentes ideales para resanado, aplicación de pastas, selladores y preparación de superficies.',
+        detailText: 'Espátulas resistentes ideales para resanadores, pastas, selladores y preparación de superficies antes de pintar.',
+        price: 25,
+        sizeOptions: [
+          { id: '5in', label: '5 pulgadas', price: 42 },
+          { id: '4in', label: '4 pulgadas', price: 38 },
+          { id: '3in', label: '3 pulgadas', price: 35 },
+          { id: '2in', label: '2 pulgadas', price: 30 },
+          { id: '1in', label: '1 pulgada', price: 25 },
+        ],
+        cantidad: '1 a 5 pulgadas',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#9aa3ad',
+      },
+      {
+        id: 'aplicadores-rodillo-truper-9',
+        category: 'aplicadores',
+        subcategory: 'Rodillos',
+        name: 'Rodillo Truper 9 Pulgadas',
+        description: 'Rodillo Truper de 9 pulgadas para pintura vinílica, impermeabilizantes y recubrimientos.',
+        detailText: 'Rodillo Truper de 9 pulgadas ideal para aplicación de pintura vinílica, impermeabilizantes y recubrimientos en superficies lisas, rugosas o extra rugosas, dependiendo del tipo de felpa seleccionada.',
+        price: 60,
+        sizeOptions: [
+          { id: 'liso', label: 'Liso', price: 60 },
+          { id: 'rugoso', label: 'Rugoso', price: 75 },
+          { id: 'extra-rugoso', label: 'Extra rugoso', price: 77 },
+        ],
+        cantidad: '9 pulgadas',
+        popular: true,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#f0f0f0',
+      },
+      {
+        id: 'aplicadores-repuesto-rodillo-truper-9',
+        category: 'aplicadores',
+        subcategory: 'Repuestos para Rodillo',
+        name: 'Repuesto para Rodillo Truper 9 Pulgadas',
+        description: 'Repuesto para rodillo Truper de 9 pulgadas para pintura, impermeabilización y mantenimiento.',
+        detailText: 'Repuesto para rodillo Truper de 9 pulgadas, ideal para renovar el aplicador y obtener mejor cobertura en trabajos de pintura, impermeabilización y mantenimiento.',
+        price: 35,
+        sizeOptions: [
+          { id: 'liso', label: 'Liso', price: 35 },
+          { id: 'rugoso', label: 'Rugoso', price: 40 },
+          { id: 'extra-rugoso', label: 'Extra rugoso', price: 45 },
+        ],
+        cantidad: '9 pulgadas',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#f3f3f3',
+      },
+      {
+        id: 'aplicadores-rodillo-truper-4-nylon',
+        category: 'aplicadores',
+        subcategory: 'Rodillos',
+        name: 'Rodillo Truper 4 Pulgadas Nylon',
+        description: 'Rodillo Truper de 4 pulgadas con felpa de nylon para retoques y superficies pequeñas.',
+        detailText: 'Rodillo Truper de 4 pulgadas con felpa de nylon, ideal para trabajos detallados, retoques y aplicación en superficies pequeñas. Recomendado para pinturas de esmalte y pintura vinílica.',
+        price: 45,
+        cantidad: '4 pulgadas',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#e9e9e9',
+      },
+      {
+        id: 'aplicadores-rodillo-truper-4-esponja',
+        category: 'aplicadores',
+        subcategory: 'Rodillos',
+        name: 'Rodillo Truper 4 Pulgadas Esponja',
+        description: 'Rodillo Truper de 4 pulgadas de esponja para pintura vinílica, retoques y acabados uniformes.',
+        detailText: 'Rodillo Truper de 4 pulgadas de esponja, ideal para aplicación de pintura vinílica en superficies pequeñas, retoques y acabados uniformes.',
+        price: 45,
+        cantidad: '4 pulgadas',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#f1d36f',
+      },
+      {
+        id: 'fester-espuma-poliuretano-750g',
+        category: 'epoxica',
+        subcategory: 'Complementos',
+        name: 'Espuma de Poliuretano Fester',
+        description: 'Espuma de poliuretano Fester de alto desempeño ideal para rellenar, sellar y aislar espacios, grietas y cavidades.',
+        detailText: 'Espuma de poliuretano Fester de alto desempeño ideal para rellenar, sellar y aislar espacios, grietas y cavidades. Excelente para trabajos de impermeabilización y construcción.',
+        price: 274,
+        cantidad: '750 gramos',
+        popular: false,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#f2d184',
+      },
+      {
+        id: 'sika-sikaflex-1a-purform',
+        category: 'selladores',
+        subcategory: 'Selladores Elásticos',
+        name: 'Sellador Elástico Sikaflex 1A Purform',
+        description: 'Sellador elástico de poliuretano Sikaflex 1A Purform de alta resistencia para juntas, grietas y sellados en construcción.',
+        detailText: 'Sellador elástico de poliuretano Sikaflex 1A Purform de alta resistencia, ideal para juntas de expansión, grietas, sellado impermeable y construcción. Excelente adherencia, elasticidad y durabilidad.',
+        price: 300,
+        cantidad: 'Pieza',
+        popular: true,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#d3412c',
+      },
+      {
+        id: 'vinilica-pasta-texturizada',
+        category: 'vinilica',
+        subcategory: 'Texturizados',
+        name: 'Pasta Texturizada',
+        description: 'Pasta texturizada para acabados decorativos en muros interiores y exteriores.',
+        detailText: 'Pasta texturizada ideal para acabados decorativos en muros interiores y exteriores. Disponible en textura fina, media y gruesa, permite crear acabados con relieve y apariencia profesional.',
+        price: 650,
+        sizeOptions: [
+          { id: '19lts', label: '19 Litros', price: 650 },
+        ],
+        finishOptions: ['Fino', 'Medio', 'Grueso'],
+        cantidad: '19 litros',
+        popular: true,
+        recommended: true,
+        rating: 4,
+        colorSwatch: '#e5dfd2',
+      },
+    ];
 
-  const refreshCatalogFromSupabase = () => loadSupabaseCatalogProducts()
-    .then((remoteProducts) => {
-      products = mergeCatalogProducts(products, remoteProducts);
-      filteredProducts = [...products];
-      window.RubensCatalogProducts = products.map((product) => ({ ...product }));
-      console.log('productos después de fusionar catálogo local + Supabase', products);
-      applyFilters();
-      renderHomeHighlights();
-    })
-    .catch((error) => {
-      console.error('No se pudo cargar Supabase; se usa catálogo local', error);
-      renderHomeHighlights();
+    newVariantProducts.forEach((product) => {
+      products.push({
+        categoryLabel: categoryLabels[product.category],
+        image: '',
+        ...product,
+      });
     });
+
+    mergeAdminProductsIntoCatalog();
+    filteredProducts = [...products];
+  };
 
   const updateCartCount = () => {
     if (!cartCountEl) return;
@@ -3116,7 +3336,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const getCustomerData = () => ({
     name: paymentCustomerNameInput?.value.trim() || '',
-    phone: paymentCustomerPhoneInput?.value.trim() || '',
+    phone: getPhoneDigits(paymentCustomerPhoneInput?.value || ''),
     email: paymentCustomerEmailInput?.value.trim() || '',
     address: paymentCustomerAddressInput?.value.trim() || '',
   });
@@ -3200,16 +3420,113 @@ Total final: ${formatCurrency(order.totals.total)}`;
     `Gracias por tu compra. Recibimos tu pedido y en breve confirmaremos disponibilidad y detalles de entrega.\n\n${buildOrderSummaryText('Resumen de pedido')}`
   );
 
+  const setPaymentFieldError = (input, message = '') => {
+    if (!input) return;
+    input.classList.toggle('field-invalid', Boolean(message));
+    input.setAttribute('aria-invalid', message ? 'true' : 'false');
+    const feedback = document.getElementById(`${input.id}-error`);
+    if (feedback) {
+      feedback.textContent = message;
+    }
+  };
+
+  const clearPaymentValidation = () => {
+    [paymentCustomerNameInput, paymentCustomerPhoneInput, paymentCustomerEmailInput, paymentCustomerAddressInput]
+      .forEach((input) => setPaymentFieldError(input));
+    if (paymentFormStatusEl) {
+      paymentFormStatusEl.textContent = '';
+      paymentFormStatusEl.classList.remove('is-error');
+    }
+  };
+
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
+  const getPhoneDigits = (value) => value.replace(/\D/g, '');
+  const getMexicanPhoneDigits = (value) => getPhoneDigits(value).slice(0, 10);
+  const isValidMexicanPhone = (value) => getMexicanPhoneDigits(value).length === 10;
+  const phoneValidationMessage = 'Ingresa un número válido de 10 dígitos';
+  const requiredPaymentMessage = 'Llena los campos obligatorios';
+  let paymentStatusTimeout = null;
+
+  const sanitizePaymentPhoneInput = () => {
+    if (!paymentCustomerPhoneInput) return '';
+    const sanitizedValue = getMexicanPhoneDigits(paymentCustomerPhoneInput.value);
+    if (paymentCustomerPhoneInput.value !== sanitizedValue) {
+      paymentCustomerPhoneInput.value = sanitizedValue;
+    }
+    return sanitizedValue;
+  };
+
+  const validatePaymentPhoneField = ({ showEmpty = false } = {}) => {
+    if (!paymentCustomerPhoneInput) return true;
+    const phoneDigits = sanitizePaymentPhoneInput();
+    const shouldShowError = (showEmpty || phoneDigits.length > 0) && phoneDigits.length !== 10;
+    setPaymentFieldError(paymentCustomerPhoneInput, shouldShowError ? phoneValidationMessage : '');
+    return phoneDigits.length === 10;
+  };
+
+  const updatePaymentActionState = () => {
+    const nameIsValid = (paymentCustomerNameInput?.value.trim() || '').length >= 2;
+    const emailIsValid = isValidEmail(paymentCustomerEmailInput?.value.trim() || '');
+    const phoneIsValid = isValidMexicanPhone(paymentCustomerPhoneInput?.value || '');
+    const paymentDataIsValid = nameIsValid && emailIsValid && phoneIsValid;
+    [sendTransferWhatsappButton, mercadoPagoButton, mercadoWhatsappFallbackButton, payInStoreWhatsappButton]
+      .forEach((button) => {
+        if (!button) return;
+        button.setAttribute('aria-disabled', String(!paymentDataIsValid));
+        button.classList.toggle('is-payment-blocked', !paymentDataIsValid);
+      });
+  };
+
+  const showPaymentRequiredNotice = () => {
+    if (!paymentFormStatusEl) return;
+    clearTimeout(paymentStatusTimeout);
+    paymentFormStatusEl.textContent = requiredPaymentMessage;
+    paymentFormStatusEl.classList.add('is-error');
+    paymentFormStatusEl.classList.add('is-floating');
+    paymentStatusTimeout = setTimeout(() => {
+      paymentFormStatusEl.textContent = '';
+      paymentFormStatusEl.classList.remove('is-error');
+      paymentFormStatusEl.classList.remove('is-floating');
+    }, 3000);
+  };
+
   const validateOrderCustomerData = () => {
     const customer = getCustomerData();
-    if (!customer.name || !customer.phone || !customer.email) {
-      alert('Por favor completa nombre, teléfono y correo para confirmar tu pedido.');
-      return false;
+    clearPaymentValidation();
+    const validationMessages = [];
+
+    if (!customer.name || customer.name.length < 2) {
+      setPaymentFieldError(paymentCustomerNameInput, 'Ingresa tu nombre');
+      validationMessages.push('nombre');
     }
+
+    if (!customer.phone || customer.phone.length !== 10) {
+      setPaymentFieldError(paymentCustomerPhoneInput, phoneValidationMessage);
+      validationMessages.push('teléfono');
+    }
+
+    if (!customer.email) {
+      setPaymentFieldError(paymentCustomerEmailInput, 'Ingresa un correo válido');
+      validationMessages.push('correo');
+    } else if (!isValidEmail(customer.email)) {
+      setPaymentFieldError(paymentCustomerEmailInput, 'Ingresa un correo válido');
+      validationMessages.push('correo válido');
+    }
+
     if (deliveryState.type === 'delivery' && !customer.address && !deliveryState.postalCode) {
-      alert('Por favor escribe la dirección de entrega.');
+      setPaymentFieldError(paymentCustomerAddressInput, 'Comparte tu dirección para calcular y confirmar la entrega.');
+      validationMessages.push('dirección');
+    }
+
+    if (validationMessages.length) {
+      showPaymentRequiredNotice();
+      const firstInvalidField = [paymentCustomerNameInput, paymentCustomerPhoneInput, paymentCustomerEmailInput, paymentCustomerAddressInput]
+        .find((input) => input?.classList.contains('field-invalid'));
+      firstInvalidField?.focus({ preventScroll: true });
+      firstInvalidField?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return false;
     }
+
     return true;
   };
 
@@ -3375,6 +3692,9 @@ Total final: ${formatCurrency(order.totals.total)}`;
     const cashAllowed = deliveryState.type === 'pickup' && deliveryState.pickupConfirmed;
     if (cashPaymentOption) cashPaymentOption.classList.toggle('hidden', !cashAllowed);
     selectPaymentMethod('transfer');
+    sanitizePaymentPhoneInput();
+    validatePaymentPhoneField({ showEmpty: true });
+    updatePaymentActionState();
     paymentModal.classList.remove('hidden');
   };
 
@@ -3396,14 +3716,56 @@ Total final: ${formatCurrency(order.totals.total)}`;
   };
 
   const buildTransferWhatsappMessage = () => {
-    const orderText = buildOrderSummaryText('Hola, envío mi comprobante SPEI y confirmo este pedido en Ruben\'s Distribuidora');
-    return `${orderText}\n\nAdjunto mi comprobante de pago.${getTransferBankText()}`;
+    const orderText = buildOrderSummaryText('Confirmo este pedido en Ruben\'s Distribuidora');
+    return `Hola, adjunto mi comprobante de transferencia SPEI para validar mi pedido.\n\n${orderText}${getTransferBankText()}`;
   };
 
   const openTransferWhatsapp = () => {
     if (!validateOrderCustomerData()) return;
     const message = encodeURIComponent(buildTransferWhatsappMessage());
     window.open(`https://wa.me/${paymentWhatsappNumber}?text=${message}`, '_blank');
+  };
+
+  const stopPaymentActionIfInvalid = (event) => {
+    const target = event.target?.closest?.('#send-transfer-whatsapp, #mercadoPagoBtn, #mercado-whatsapp-fallback, #pay-in-store-whatsapp');
+    if (!target) return false;
+    if (validateOrderCustomerData()) return false;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation?.();
+    return true;
+  };
+
+  const copyTextToClipboard = async (text) => {
+    if (!text) return false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const showSpeiCopyStatus = (message) => {
+    if (!speiCopyStatus) return;
+    speiCopyStatus.textContent = message;
+    setTimeout(() => {
+      if (speiCopyStatus.textContent === message) {
+        speiCopyStatus.textContent = '';
+      }
+    }, 2500);
   };
 
   const loadMercadoPagoSdk = () => new Promise((resolve, reject) => {
@@ -3420,6 +3782,9 @@ Total final: ${formatCurrency(order.totals.total)}`;
   });
 
   const openMercadoPagoCheckout = async (preferenceId) => {
+    if (!preferenceId) {
+      throw new Error('Falta configurar el preferenceId de Mercado Pago.');
+    }
     const MercadoPagoSdk = await loadMercadoPagoSdk();
     const mercadoPago = new MercadoPagoSdk(mercadoPagoPublicKey, { locale: 'es-MX' });
     mercadoPago.checkout({
@@ -3429,30 +3794,39 @@ Total final: ${formatCurrency(order.totals.total)}`;
   };
 
   const createMercadoPagoPreference = async () => {
+    /*
+      Mercado Pago Checkout Pro requiere crear una preference_id en un backend.
+      La Public Key puede estar en frontend, pero el Access Token NO debe exponerse
+      en GitHub Pages ni en ningún archivo público.
+
+      Netlify ejecuta /.netlify/functions/createPreference en servidor.
+      Ahí debe configurarse MERCADO_PAGO_ACCESS_TOKEN como variable de entorno.
+    */
     const order = buildOrderSummaryData();
-    const response = await fetch('/api/createPreference', {
+    const response = await fetch('/.netlify/functions/createPreference', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        cart: cart.map((item) => ({
-          name: item.name,
-          description: item.description || '',
-          quantity: item.quantity,
-          price: item.price,
-        })),
-        shippingCost: order.totals.shipping,
-        customer: order.customer,
+        cart,
+        shippingCost: deliveryState.type === 'delivery' ? deliveryState.fee : 0,
         deliveryMethod: order.deliveryMethod,
+        customer: order.customer,
+        total: order.totals.total,
       }),
     });
 
     const data = await response.json().catch(() => ({}));
-
     if (!response.ok) {
       throw new Error(data.message || data.error || 'No se pudo crear la preferencia de Mercado Pago.');
     }
 
-    return data.preference_id || data.id;
+    if (data.init_point || data.sandbox_init_point) {
+      window.MERCADO_PAGO_CHECKOUT_URL = data.sandbox_init_point || data.init_point;
+    }
+
+    return data.preference_id || data.id || null;
   };
 
   const buildMercadoPagoValidationMessage = () => (
@@ -3484,19 +3858,29 @@ Total final: ${formatCurrency(order.totals.total)}`;
 
       if (preferenceId) {
         rememberMercadoPagoOrder();
-        await openMercadoPagoCheckout(preferenceId);
+        try {
+          await openMercadoPagoCheckout(preferenceId);
+        } catch (error) {
+          const checkoutUrl = window.MERCADO_PAGO_CHECKOUT_URL || mercadoPagoLink;
+          if (checkoutUrl) {
+            window.open(checkoutUrl, '_blank');
+            return;
+          }
+          throw error;
+        }
         return;
       }
 
-      if (mercadoPagoLink) {
+      const checkoutUrl = window.MERCADO_PAGO_CHECKOUT_URL || mercadoPagoLink;
+      if (checkoutUrl) {
         rememberMercadoPagoOrder();
-        window.open(mercadoPagoLink, '_blank');
+        window.open(checkoutUrl, '_blank');
         return;
       }
 
-      showMercadoPagoSetupMessage();
+      await abrirMercadoPago();
     } catch (error) {
-      showMercadoPagoSetupMessage();
+      await abrirMercadoPago();
     }
   };
 
@@ -3535,13 +3919,14 @@ Total final: ${formatCurrency(order.totals.total)}`;
   const renderSubcategoryOptions = (category) => {
     if (!subcategoryFilter) return;
     subcategoryFilter.innerHTML = '<option value="all">Todas</option>';
+    const categoryKey = normalizeCategoryKey(category);
 
-    if (!category || category === 'all') {
+    if (!categoryKey || categoryKey === 'all' || !subcategories[categoryKey]) {
       subcategoryFilter.disabled = true;
       return;
     }
 
-    (subcategories[category] || []).forEach((sub) => {
+    subcategories[categoryKey].forEach((sub) => {
       const option = document.createElement('option');
       option.value = sub.toLowerCase().replace(/\s+/g, '-');
       option.textContent = sub;
@@ -3550,14 +3935,13 @@ Total final: ${formatCurrency(order.totals.total)}`;
     subcategoryFilter.disabled = false;
   };
 
-  const normalizeSubcategory = (value) => value.toLowerCase().replace(/\s+/g, '-');
+  const normalizeSubcategory = (value) => normalizeCategoryText(value).replace(/\s+/g, '-');
   const getEffectiveSizeOptions = (product) => product.selectedPaletteColor?.sizeOptions || product.sizeOptions;
 
   const createProductCard = (product) => {
     const card = document.createElement('article');
     card.className = 'product-card reveal';
     card.dataset.productId = product.id;
-    card.dataset.category = product.categoryLabel || getProductCategoryValue(product) || '';
     const ratingValue = Math.max(0, Math.min(5, Number(product.rating) || 0));
     const ratingVotes = Number(product.ratingVotes) || 0;
     const stars = Array.from({ length: 5 }, (_, index) => {
@@ -3569,16 +3953,16 @@ Total final: ${formatCurrency(order.totals.total)}`;
     if (product.category === 'aerosoles' && product.image) {
       imageMarkup = `
         <div class="aerosol-image-wrapper">
-          <img src="${product.image}" alt="${product.name}" class="aerosol-bg-image">
-          <div class="swatch-circle" style="background:${product.colorSwatch};"></div>
+          <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" class="aerosol-bg-image">
+          <div class="swatch-circle" style="background:${escapeHtml(product.colorSwatch)};"></div>
         </div>
       `;
     } else if (product.image) {
-      imageMarkup = `<img src="${product.image}" alt="${product.name}">`;
+      imageMarkup = `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" class="${product.imageFit === 'contain' ? 'product-image-contain' : ''}">`;
     } else if (product.colorSwatch) {
-      imageMarkup = `<div class="swatch-circle" style="background:${product.colorSwatch};"></div>`;
+      imageMarkup = `<div class="swatch-circle" style="background:${escapeHtml(product.colorSwatch)};"></div>`;
     } else {
-      imageMarkup = '<span class="product-image-placeholder">Sin imagen</span>';
+      imageMarkup = 'Sin imagen';
     }
 
     const sizeOptions = getEffectiveSizeOptions(product);
@@ -3589,6 +3973,13 @@ Total final: ${formatCurrency(order.totals.total)}`;
         `).join('')}
       </div>
     ` : '<div class="size-selector size-selector-placeholder" aria-hidden="true"></div>';
+    const finishSelectorMarkup = product.finishOptions ? `
+      <div class="size-selector finish-selector" aria-label="Selecciona acabado">
+        ${product.finishOptions.map((finish) => `
+          <button type="button" class="finish-option" data-finish="${finish}">${finish}</button>
+        `).join('')}
+      </div>
+    ` : '';
 
     const initialPriceText = sizeOptions ? 'Seleccione tamaño' : formatCurrency(product.price);
     const selectedColorText = product.selectedPaletteColor ? ` - ${product.selectedPaletteColor.name}` : '';
@@ -3607,6 +3998,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
       </div>
       <h3>${product.name}</h3>
       <p>${product.description}</p>
+      ${finishSelectorMarkup}
       ${sizeSelectorMarkup}
       ${volumeMarkup}
       <div class="product-rating" aria-label="Calificación actual ${ratingValue} de 5">
@@ -3669,79 +4061,18 @@ Total final: ${formatCurrency(order.totals.total)}`;
     });
   };
 
-  const seasonPriority = (product) => {
-    const text = normalizeCatalogText(`${product.name} ${product.description} ${product.subcategory}`);
-    const keywords = ['membrana', 'thermotek', 'acriton', 'vaportite', 'plastic cement'];
-    const index = keywords.findIndex((keyword) => text.includes(keyword));
-    return index >= 0 ? index : keywords.length;
-  };
-
-  const getSeasonSizeOption = (product) => {
-    const sizeOptions = getEffectiveSizeOptions(product) || [];
-    return sizeOptions.find((option) => /(?:^|\D)19\s*(?:l|lt|lts|litro|litros)\b/i.test(option.label))
-      || sizeOptions.find((option) => normalizeCatalogText(option.label).includes('cubeta'))
-      || null;
-  };
-
-  const detectPriceFromText = (text, preferBucketLine = false) => {
-    const lines = String(text || '').split(/\n+/);
-    const parseLinePrice = (line) => {
-      const currencyMatch = line.match(/\$\s*([\d,]+(?:\.\d+)?)/);
-      const colonMatch = line.match(/:\s*\$?\s*([\d,]+(?:\.\d+)?)/);
-      const match = currencyMatch || colonMatch;
-      return match ? Number(match[1].replace(/,/g, '')) : 0;
-    };
-    const preferredLines = lines.filter((line) => {
-      const normalized = normalizeCatalogText(line);
-      return normalized.includes('cubeta') || /(?:^|\D)19\s*(?:l|lt|lts|litro|litros)\b/i.test(line);
-    });
-    const candidates = (preferBucketLine ? preferredLines : lines)
-      .map(parseLinePrice)
-      .filter((price) => price > 0);
-    if (candidates.length) return Math.min(...candidates);
-    if (preferBucketLine) return detectPriceFromText(text, false);
-    return Number.POSITIVE_INFINITY;
-  };
-
-  const getDetectedProductPrice = (product) => {
-    const sizeOption = getSeasonSizeOption(product);
-    if (sizeOption && Number(sizeOption.price) > 0) return Number(sizeOption.price);
-    const sizePrices = (getEffectiveSizeOptions(product) || [])
-      .map((option) => Number(option.price))
-      .filter((price) => price > 0);
-    if (sizePrices.length) return Math.min(...sizePrices);
-    return detectPriceFromText(product.cantidad || product.tamanos_precios, true);
-  };
-
-  const getSeasonSortPrice = (product) => {
-    const basePrice = Number(product.price);
-    return basePrice > 0 ? basePrice : getDetectedProductPrice(product);
-  };
-
-  const isImpermeabilizanteBucket = (product) => {
-    if (product.active === false) return false;
-    if (normalizeCategory(getProductCategoryValue(product)) !== normalizeCategory('Impermeabilizante')) return false;
-    const sizeText = normalizeCatalogText([
-      product.cantidad,
-      product.tamanos_precios,
-      ...(getEffectiveSizeOptions(product) || []).map((option) => option.label),
-    ].filter(Boolean).join(' '));
-    return sizeText.includes('cubeta') || /(?:^|\D)19\s*(?:l|lt|lts|litro|litros)\b/.test(sizeText);
-  };
-
   const renderProducts = () => {
-    if (!productGeneralListEl || !productCountEl) return;
+    if (!productGeneralListEl || !productPopularListEl || !productRecommendedListEl || !productCountEl) return;
 
-    const activeProducts = filteredProducts.filter((product) => product.active !== false);
-    const generalProducts = activeProducts;
-    const seasonProducts = activeProducts
-      .filter((product) => normalizeCategory(getProductCategoryValue(product)) === normalizeCategory('Impermeabilizantes'))
-      .slice()
-      .sort((a, b) => seasonPriority(a) - seasonPriority(b) || sortByDisplayPriority(a, b))
-      .slice(0, 4);
+    const generalProducts = filteredProducts;
+    const popularProducts = filteredProducts.filter((product) => product.popular);
+    const recommendedProducts = filteredProducts.filter((product) => product.recommended);
+    console.log('productos después de filtros', generalProducts);
+    console.log('productos sin imagen detectados', generalProducts.filter((product) => !product.image));
 
     renderProductGrid(productGeneralListEl, generalProducts, 'No hay productos generales para esta combinación.');
-    renderProductGrid(productSeasonListEl, seasonProducts, 'No hay impermeabilizantes para esta búsqueda.');
+    renderProductGrid(productPopularListEl, popularProducts, 'No hay productos populares para esta búsqueda.');
+    renderProductGrid(productRecommendedListEl, recommendedProducts, 'No hay recomendaciones para esta fecha.');
 
     productCountEl.textContent = `Mostrando ${generalProducts.length} productos generales`;
   };
@@ -3762,83 +4093,24 @@ Total final: ${formatCurrency(order.totals.total)}`;
     return a.name.localeCompare(b.name);
   };
 
-  const createHomeHighlightCard = (product) => {
-    const article = document.createElement('article');
-    article.className = 'home-product-card';
-    const defaultSizeOption = getSeasonSizeOption(product) || (getEffectiveSizeOptions(product) || [])[0] || null;
-    const displayPrice = defaultSizeOption?.price || Number(product.price) || getDetectedProductPrice(product);
-    const priceText = Number.isFinite(displayPrice) ? formatCurrency(displayPrice) : 'Precio por confirmar';
-    const imageMarkup = product.image
-      ? `<img src="${product.image}" alt="${product.name}">`
-      : `<div class="home-product-swatch" style="background:${product.colorSwatch || '#d7d7d7'}"></div>`;
-    article.innerHTML = `
-      <a href="productos.html?categoria=${encodeURIComponent(getProductCategoryValue(product) || 'all')}" aria-label="Ver ${product.name} en catálogo">
-        <div class="home-product-media">${imageMarkup}</div>
-        <div class="home-product-copy">
-          <span>${product.categoryLabel || product.category || 'Producto'}</span>
-          <h4>${product.name}</h4>
-          <p>${priceText}</p>
-        </div>
-      </a>
-      <div class="home-product-actions">
-        <button class="btn btn-secondary add-to-cart home-product-action" data-product-id="${product.id}" data-default-size="${defaultSizeOption?.id || ''}">Agregar</button>
-        <button class="btn btn-secondary view-detail home-product-action" type="button" data-detail-id="${product.id}">Detalle</button>
-      </div>
-    `;
-    return article;
-  };
-
-  const renderHomeHighlightList = (container, list, emptyMessage) => {
-    if (!container) return;
-    container.innerHTML = '';
-    if (!list.length) {
-      container.innerHTML = `<p class="no-results">${emptyMessage}</p>`;
-      return;
-    }
-    list.forEach((product) => container.appendChild(createHomeHighlightCard(product)));
-  };
-
-  const renderHomeHighlights = () => {
-    if (!homeSeasonListEl && !homeFeaturedListEl) return;
-    const activeProducts = products.filter((product) => product.active !== false);
-    const seasonProducts = activeProducts
-      .filter(isImpermeabilizanteBucket)
-      .slice()
-      .sort((a, b) => getSeasonSortPrice(a) - getSeasonSortPrice(b) || sortByDisplayPriority(a, b))
-      .slice(0, 3);
-    const featuredProducts = activeProducts
-      .filter((product) => product.popular || product.featured || product.destacado)
-      .slice()
-      .sort(sortByDisplayPriority)
-      .slice(0, 3);
-
-    renderHomeHighlightList(homeSeasonListEl, seasonProducts, 'No hay cubetas impermeabilizantes activas.');
-    renderHomeHighlightList(homeFeaturedListEl, featuredProducts, 'No hay destacados activos.');
-  };
-
   const applyFilters = () => {
-    const categoryValue = selectedCategory;
+    const categoryValue = normalizeCategoryKey(selectedCategory);
     const subcategoryValue = subcategoryFilter ? subcategoryFilter.value : 'all';
     const priceInput = document.getElementById('price-filter');
     const maxPrice = priceInput && priceInput.value.trim() !== '' ? parseFloat(priceInput.value) : null;
-    const searchTerm = productSearch ? normalizeCatalogText(productSearch.value) : '';
+    const searchTerm = productSearch ? productSearch.value.trim().toLowerCase() : '';
     const sortOrder = sortOrderSelect ? sortOrderSelect.value : 'default';
 
     filteredProducts = products.filter((product) => {
-      const productCategory = normalizeCategory(getProductCategoryValue(product));
-      const selectedCategoryNormalized = normalizeCategory(categoryValue);
-      const categoryMatch = categoryValue === 'all' || productCategory === selectedCategoryNormalized;
+      const productCategory = normalizeCategoryKey(product.category);
+      const categoryMatch = categoryValue === 'all' || productCategory === categoryValue;
       const subcategoryMatch = subcategoryValue === 'all' || normalizeSubcategory(product.subcategory) === subcategoryValue;
       const priceMatch = maxPrice === null || product.price <= maxPrice;
+      const normalizedSearchTerm = normalizeCategoryText(searchTerm);
       const searchMatch = !searchTerm || [product.name, product.description, product.categoryLabel, product.subcategory]
-        .some((text) => normalizeCatalogText(text).includes(searchTerm));
+        .some((text) => normalizeCategoryText(text).includes(normalizedSearchTerm));
       return categoryMatch && subcategoryMatch && priceMatch && searchMatch;
     });
-
-    console.log('Categoría seleccionada:', categoryValue);
-    console.log('Productos totales:', products.length);
-    console.log('Productos filtrados:', filteredProducts.length, filteredProducts);
-    console.log('Categorías detectadas:', Array.from(new Set(products.map((product) => getProductCategoryValue(product)).filter(Boolean))));
 
     if (sortOrder === 'price-asc') {
       filteredProducts.sort((a, b) => a.price - b.price);
@@ -3859,14 +4131,22 @@ Total final: ${formatCurrency(order.totals.total)}`;
     renderProducts();
   };
 
-  const getProductCardError = (product, selectedSize) => {
+  const getProductCardError = (product, selectedSize, selectedFinish) => {
     const needsSize = product.sizeOptions && !selectedSize;
     const needsColor = product.palette && !product.selectedPaletteColor;
-    if (needsSize && needsColor) {
-      return 'Aún no has agregado nada al carrito. Por favor selecciona color y tamaño que deseas agregar al carrito.';
+    const needsFinish = product.finishOptions && product.finishOptions.length > 1 && !selectedFinish;
+    const missing = [];
+    if (needsColor) missing.push('color');
+    if (needsFinish) missing.push('acabado');
+    if (needsSize) missing.push('tamaño');
+    if (missing.length > 1) {
+      return `Aún no has agregado nada al carrito. Por favor selecciona ${missing.join(' y ')} que deseas agregar al carrito.`;
     }
     if (needsSize) {
       return 'Aún no has agregado nada al carrito. Por favor selecciona tamaño que deseas agregar al carrito.';
+    }
+    if (needsFinish) {
+      return 'Aún no has agregado nada al carrito. Por favor selecciona acabado que deseas agregar al carrito.';
     }
     if (needsColor) {
       return 'Aún no has agregado nada al carrito. Por favor selecciona color que deseas agregar al carrito.';
@@ -3886,10 +4166,11 @@ Total final: ${formatCurrency(order.totals.total)}`;
     }, 5000);
   };
 
-  const addProductToCart = (productId, selectedSize = null) => {
+  const addProductToCart = (productId, selectedSize = null, selectedFinish = null) => {
     const product = products.find((item) => item.id === productId);
     if (!product) return;
-    const errorMessage = getProductCardError(product, selectedSize);
+    const finish = selectedFinish || (product.finishOptions && product.finishOptions.length === 1 ? product.finishOptions[0] : null);
+    const errorMessage = getProductCardError(product, selectedSize, finish);
     if (errorMessage) {
       showProductCardError(productId, errorMessage);
       return;
@@ -3899,6 +4180,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
     let name = product.name;
     let sizeKey = '';
     let colorKey = '';
+    let finishKey = '';
     let description = product.detailText || product.description || '';
 
     if (product.selectedPaletteColor) {
@@ -3907,19 +4189,26 @@ Total final: ${formatCurrency(order.totals.total)}`;
       description = product.selectedPaletteColor.description || `Color: ${product.selectedPaletteColor.name}`;
     }
 
+    if (finish) {
+      name = `${name} - ${finish}`;
+      finishKey = `-${finish.replace(/\s+/g, '-')}`;
+      description = `${description}${description ? ' · ' : ''}Acabado: ${finish}`;
+    }
+
     const sizeOptions = getEffectiveSizeOptions(product);
     if (sizeOptions) {
       const option = selectedSize ? sizeOptions.find((opt) => opt.id === selectedSize) : null;
       const selectedOption = option || sizeOptions[0];
       if (selectedOption) {
         price = selectedOption.price;
-        name = `${product.name} - ${product.selectedPaletteColor ? product.selectedPaletteColor.name + ' ' : ''}(${selectedOption.label})`;
+        const selectedVariant = [product.selectedPaletteColor?.name, finish].filter(Boolean).join(' ');
+        name = `${product.name}${selectedVariant ? ` - ${selectedVariant}` : ''} (${selectedOption.label})`;
         sizeKey = `-${selectedOption.id}`;
         description = `${description}${description ? ' · ' : ''}Tamaño: ${selectedOption.label}`;
       }
     }
 
-    const cartId = `${product.id}${colorKey}${sizeKey}`;
+    const cartId = `${product.id}${colorKey}${finishKey}${sizeKey}`;
     const existing = cart.find((item) => item.id === cartId);
     if (existing) {
       existing.quantity += 1;
@@ -3932,6 +4221,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
         color: product.selectedPaletteColor?.color || null,
         quantity: 1,
         size: selectedSize,
+        finish,
       });
     }
 
@@ -4013,32 +4303,54 @@ Total final: ${formatCurrency(order.totals.total)}`;
     renderCart();
   };
 
-  if (productGeneralListEl) {
+  const initializeProductCatalog = async () => {
     generateProducts();
     const params = new URLSearchParams(window.location.search);
-    const requestedCategory = params.get('categoria');
-    if (requestedCategory) {
-      selectedCategory = categorySlugFromNormalized(normalizeCategory(requestedCategory));
-      categoryItems.forEach((button) => {
-        button.classList.toggle('active', categorySlugFromNormalized(normalizeCategory(button.dataset.category)) === selectedCategory);
-      });
-    }
-    renderSubcategoryOptions(selectedCategory);
-    applyFilters();
-    refreshCatalogFromSupabase();
-  }
+    const useLocalCatalog = params.get('catalogoLocal') === '1';
+    const requestedCategory = normalizeCategoryKey(params.get('categoria') || params.get('category'));
+    const renderCurrentCatalog = () => {
+      if (requestedCategory && subcategories[requestedCategory]) {
+        selectedCategory = requestedCategory;
+        categoryItems.forEach((item) => {
+          item.classList.toggle('active', normalizeCategoryKey(item.dataset.category) === requestedCategory);
+        });
+        const requestedButton = Array.from(categoryItems).find((item) => normalizeCategoryKey(item.dataset.category) === requestedCategory);
+        if (requestedButton && allCategoryButton) {
+          allCategoryButton.textContent = requestedButton.textContent;
+        }
+        renderSubcategoryOptions(requestedCategory);
+        applyFilters();
+        return;
+      }
+      renderSubcategoryOptions('all');
+      filteredProducts = [...products];
+      renderProducts();
+    };
 
-  if (!productGeneralListEl && (homeSeasonListEl || homeFeaturedListEl)) {
-    generateProducts();
-    renderHomeHighlights();
-    refreshCatalogFromSupabase();
-  }
+    renderCurrentCatalog();
+    if (useLocalCatalog) return;
 
-  window.addEventListener('storage', (event) => {
-    if (event.key === 'rubensCatalogUpdatedAt' && (productGeneralListEl || homeSeasonListEl || homeFeaturedListEl)) {
-      refreshCatalogFromSupabase();
+    try {
+      const supabaseProducts = await loadProductsFromSupabaseForCatalog();
+      if (supabaseProducts.length) {
+        products = mergeLocalAndSupabaseProducts(products, supabaseProducts);
+        filteredProducts = [...products];
+        console.log('catálogo fusionado local + Supabase', {
+          total: products.length,
+          supabase: supabaseProducts.length,
+        });
+        renderCurrentCatalog();
+      } else {
+        console.log('Supabase cargó 0 productos. Usando catálogo local como fallback.');
+      }
+    } catch (error) {
+      console.warn('No se pudieron cargar productos desde Supabase. Usando catalogo local.', error);
     }
-  });
+  };
+
+  if (productGeneralListEl) {
+    initializeProductCatalog();
+  }
 
   if (categoryFilter) {
     categoryFilter.addEventListener('change', () => {
@@ -4071,10 +4383,23 @@ Total final: ${formatCurrency(order.totals.total)}`;
     });
   }
 
+  const updateCompactCategoryLabel = (button) => {
+    if (!allCategoryButton) return;
+    if (button.dataset.category !== 'all') {
+      allCategoryButton.textContent = button.textContent;
+    } else {
+      allCategoryButton.textContent = 'Todos los productos';
+    }
+  };
+
   if (categoryItems.length > 0) {
     categoryItems.forEach((button) => {
       button.addEventListener('click', () => {
-        const filter = normalizeCategory(button.dataset.filter || button.textContent);
+        if (button.dataset.category === 'all' && categoryList && selectedCategory !== 'all' && categoryList.classList.contains('is-collapsed')) {
+          categoryList.classList.remove('is-collapsed');
+          allCategoryButton.textContent = 'Todos los productos';
+          return;
+        }
 
         if (button.dataset.category === 'all' && categoryList) {
           categoryList.classList.toggle('is-collapsed');
@@ -4083,8 +4408,9 @@ Total final: ${formatCurrency(order.totals.total)}`;
         }
         categoryItems.forEach((item) => item.classList.remove('active'));
         button.classList.add('active');
-        selectedCategory = filter === 'todos los productos' ? 'all' : categorySlugFromNormalized(filter);
-        renderSubcategoryOptions(selectedCategory);
+        updateCompactCategoryLabel(button);
+        selectedCategory = button.dataset.category;
+        renderSubcategoryOptions(button.dataset.category);
         if (subcategoryFilter) {
           subcategoryFilter.value = 'all';
         }
@@ -4152,11 +4478,20 @@ Total final: ${formatCurrency(order.totals.total)}`;
       card.querySelectorAll('.size-option').forEach((btn) => btn.classList.toggle('active', btn === sizeButton));
       return;
     }
+    const finishButton = event.target.closest('.finish-option');
+    if (finishButton) {
+      const card = finishButton.closest('.product-card');
+      if (!card) return;
+      card.dataset.selectedFinish = finishButton.dataset.finish;
+      card.querySelectorAll('.finish-option').forEach((btn) => btn.classList.toggle('active', btn === finishButton));
+      return;
+    }
     const addButton = event.target.closest('.add-to-cart');
     if (addButton && addButton.dataset.productId) {
       const card = addButton.closest('.product-card');
-      const selectedSize = card ? card.dataset.selectedSize : (addButton.dataset.defaultSize || null);
-      addProductToCart(addButton.dataset.productId, selectedSize);
+      const selectedSize = card ? card.dataset.selectedSize : null;
+      const selectedFinish = card ? card.dataset.selectedFinish : null;
+      addProductToCart(addButton.dataset.productId, selectedSize, selectedFinish);
       return;
     }
     const addPaletteColorButton = event.target.closest('.add-palette-color');
@@ -4396,6 +4731,51 @@ Total final: ${formatCurrency(order.totals.total)}`;
         hidePaymentModal();
       }
     });
+    paymentModal.addEventListener('click', stopPaymentActionIfInvalid, true);
+  }
+
+  [paymentCustomerNameInput, paymentCustomerPhoneInput, paymentCustomerEmailInput, paymentCustomerAddressInput].forEach((input) => {
+    if (!input) return;
+    input.addEventListener('input', () => {
+      if (input === paymentCustomerPhoneInput) {
+        validatePaymentPhoneField();
+      } else {
+        setPaymentFieldError(input);
+      }
+      updatePaymentActionState();
+      if (paymentFormStatusEl) {
+        paymentFormStatusEl.textContent = '';
+        paymentFormStatusEl.classList.remove('is-error');
+        paymentFormStatusEl.classList.remove('is-floating');
+        clearTimeout(paymentStatusTimeout);
+      }
+    });
+  });
+
+  if (paymentCustomerPhoneInput) {
+    paymentCustomerPhoneInput.addEventListener('beforeinput', (event) => {
+      if (event.inputType && !event.inputType.startsWith('insert')) return;
+      if (event.data && /\D/.test(event.data)) {
+        event.preventDefault();
+      }
+      const currentDigits = getMexicanPhoneDigits(paymentCustomerPhoneInput.value);
+      const selectionLength = Math.max(0, paymentCustomerPhoneInput.selectionEnd - paymentCustomerPhoneInput.selectionStart);
+      if (event.data && /\d/.test(event.data) && currentDigits.length >= 10 && selectionLength === 0) {
+        event.preventDefault();
+      }
+    });
+
+    paymentCustomerPhoneInput.addEventListener('paste', () => {
+      setTimeout(() => {
+        validatePaymentPhoneField();
+        updatePaymentActionState();
+      }, 0);
+    });
+
+    paymentCustomerPhoneInput.addEventListener('blur', () => {
+      validatePaymentPhoneField({ showEmpty: true });
+      updatePaymentActionState();
+    });
   }
 
   paymentMethodButtons.forEach((button) => {
@@ -4408,17 +4788,97 @@ Total final: ${formatCurrency(order.totals.total)}`;
     sendTransferWhatsappButton.addEventListener('click', openTransferWhatsapp);
   }
 
+  speiCopyButtons.forEach((button) => {
+    button.addEventListener('click', async () => {
+      const copied = await copyTextToClipboard(button.dataset.copyValue || '');
+      showSpeiCopyStatus(copied ? 'Dato copiado al portapapeles.' : 'No se pudo copiar. Puedes seleccionarlo manualmente.');
+    });
+  });
+
   if (payInStoreWhatsappButton) {
     payInStoreWhatsappButton.addEventListener('click', () => {
       sendOrderByWhatsapp('Hola, quiero pagar en tienda y confirmar este pedido en Ruben\'s Distribuidora');
     });
   }
 
-  if (mercadoPagoButton) {
-    mercadoPagoButton.addEventListener('click', () => {
-      handleMercadoPagoPayment();
-    });
-  }
+  document.addEventListener('click', async (event) => {
+    const mercadoButton = event.target && event.target.closest ? event.target.closest('#mercadoPagoBtn') : null;
+    if (mercadoButton) {
+      event.preventDefault();
+      console.log('Click Mercado Pago detectado');
+
+      if (!validateOrderCustomerData()) return;
+
+      try {
+        const hasCartItems = Array.isArray(cart) && cart.length > 0;
+        const mercadoPagoPayload = hasCartItems ? {
+          cart,
+          shippingCost: deliveryState.type === 'delivery' ? deliveryState.fee : 0,
+          customer: getCustomerData(),
+          deliveryMethod: getDeliveryMethodLabel(),
+        } : {
+          title: 'Compra Rubens Distribuidora',
+          quantity: 1,
+          unit_price: 100,
+          customer: getCustomerData(),
+          deliveryMethod: getDeliveryMethodLabel(),
+        };
+
+        const res = await fetch('/.netlify/functions/createPreference', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(mercadoPagoPayload),
+        });
+
+        const data = await res.json();
+        console.log('Respuesta createPreference:', data);
+
+        if (!data.preference_id && !data.id && !data.init_point && !data.sandbox_init_point) {
+          alert('No se pudo crear la preferencia de Mercado Pago');
+          return;
+        }
+
+        const preferenceId = data.preference_id || data.id;
+        const initPoint = data.sandbox_init_point || data.init_point;
+
+        if (preferenceId) {
+          try {
+            const MercadoPagoSdk = window.MercadoPago || await loadMercadoPagoSdkGlobal();
+            const mp = new MercadoPagoSdk('APP_USR-1d421fc6-735f-4f5b-ac51-a5912edb29de', {
+              locale: 'es-MX',
+            });
+
+            mp.checkout({
+              preference: {
+                id: preferenceId,
+              },
+              autoOpen: true,
+            });
+            return;
+          } catch (checkoutError) {
+            console.error('Error abriendo Checkout Pro:', checkoutError);
+            if (initPoint) {
+              window.open(initPoint, '_blank');
+              return;
+            }
+            throw checkoutError;
+          }
+        }
+
+        if (initPoint) {
+          window.open(initPoint, '_blank');
+          return;
+        }
+
+        alert('No se pudo crear la preferencia de Mercado Pago');
+      } catch (error) {
+        console.error('Error Mercado Pago:', error);
+        alert('Error al abrir Mercado Pago. Revisa consola.');
+      }
+    }
+  });
 
   if (mercadoWhatsappFallbackButton) {
     mercadoWhatsappFallbackButton.addEventListener('click', () => {
@@ -4459,3 +4919,4 @@ Total final: ${formatCurrency(order.totals.total)}`;
   renderCart();
   sendPendingMercadoPagoOrder();
 });
+
