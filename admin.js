@@ -11,7 +11,7 @@
   const SUPABASE_KEY = 'sb_publishable_IPQVpAeDJwNh_bZ575tz5w_8hAUzsEL';
   const SUPABASE_PRODUCTS_TABLE = 'productos';
   const AUTHORIZED_ADMIN_EMAIL = 'ventas@rubensdistribuidora.com';
-  const ADMIN_AUTH_REDIRECT_TO = 'https://rubensdistribuidora.com/admin.html';
+  const getAdminAuthRedirectTo = () => `${window.location.origin}/admin.html`;
 
   const createId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
@@ -561,19 +561,25 @@
       setStatus(elements.loginStatus, 'No se pudo iniciar Supabase Auth.', true, false);
       return;
     }
+    const redirectTo = getAdminAuthRedirectTo();
     elements.googleLoginButton.disabled = true;
     setStatus(elements.loginStatus, 'Abriendo Google...', false, false);
-    const { error } = await client.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: ADMIN_AUTH_REDIRECT_TO,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'select_account',
+    console.log('Iniciando login con Google');
+    console.log('Redirect OAuth admin:', redirectTo);
+    try {
+      const { error } = await client.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
         },
-      },
-    });
-    if (error) {
+      });
+      if (error) {
+        console.error('Error al iniciar login con Google', error);
+        elements.googleLoginButton.disabled = false;
+        setStatus(elements.loginStatus, `Error al iniciar sesion: ${getSupabaseErrorMessage(error)}`, true, false);
+      }
+    } catch (error) {
+      console.error('Error inesperado al iniciar login con Google', error);
       elements.googleLoginButton.disabled = false;
       setStatus(elements.loginStatus, `Error al iniciar sesion: ${getSupabaseErrorMessage(error)}`, true, false);
     }
@@ -595,6 +601,7 @@
       return false;
     }
     if (!isAuthorizedAdminEmail(email)) {
+      console.error('Acceso denegado al panel admin para el correo:', email);
       await signOutAdmin('No tienes permisos para acceder al panel administrativo.');
       return false;
     }
@@ -614,6 +621,7 @@
     setStatus(elements.loginStatus, 'Validando sesion...', false, false);
     const { data, error } = await client.auth.getSession();
     if (error) {
+      console.error('Error al obtener sesion actual de Supabase Auth', error);
       showLogin(`Error al validar sesion: ${getSupabaseErrorMessage(error)}`);
       return;
     }
@@ -1084,6 +1092,7 @@
   };
 
   elements.googleLoginButton?.addEventListener('click', () => {
+    console.log('Click en Continuar con Google');
     signInWithGoogle();
   });
 
