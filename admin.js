@@ -556,6 +556,30 @@
     return productFromSupabaseRow(row);
   };
 
+  const updateProductBooleanInSupabase = async (productId, field, value) => {
+    const allowedFields = ['destacado', 'promocion'];
+    if (!allowedFields.includes(field)) {
+      throw new Error(`Campo booleano no permitido: ${field}`);
+    }
+    const data = await supabaseRestRequest(`${SUPABASE_PRODUCTS_TABLE}?id=eq.${encodeURIComponent(productId)}&select=*`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ [field]: Boolean(value) }),
+    });
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row?.id) throw new Error('No se encontro el producto para actualizar en Supabase.');
+    const updatedProduct = productFromSupabaseRow(row);
+    console.log('Producto actualizado:', updatedProduct);
+    return updatedProduct;
+  };
+
+  const reloadAllAdminProductsAfterChange = async () => {
+    const loadedProducts = await loadProductsFromSupabase();
+    products = adminStore.saveProducts(loadedProducts);
+    console.log('Productos cargados en admin después del cambio:', products);
+    return products;
+  };
+
   const deleteProductFromSupabase = async (product) => {
     getSupabaseClient();
     if (!product.id || product.source !== 'supabase') {
@@ -1413,9 +1437,44 @@
       return;
     }
 
+    if (button.dataset.productAction === 'toggle-featured' || button.dataset.productAction === 'toggle-promo') {
+      const isFeaturedToggle = button.dataset.productAction === 'toggle-featured';
+      const field = isFeaturedToggle ? 'destacado' : 'promocion';
+      const productField = isFeaturedToggle ? 'featured' : 'promo';
+      const nextValue = !product[productField];
+
+      if (isFeaturedToggle) {
+        console.log('Toggle destacado ID:', product.id);
+      } else {
+        console.log('Toggle promo ID:', product.id);
+      }
+
+      try {
+        const updatedProduct = await updateProductBooleanInSupabase(product.id, field, nextValue);
+        const index = products.findIndex((item) => item.id === product.id);
+        if (index >= 0) products[index] = updatedProduct;
+        supabaseEnabled = true;
+        setStatus(elements.productStatus, 'Producto actualizado');
+        await reloadAllAdminProductsAfterChange();
+      } catch (error) {
+        logSupabaseError('Cambiar promo/destacado fallback a localStorage', error, {
+          id: product.id,
+          field,
+          value: nextValue,
+        });
+        supabaseEnabled = false;
+        product[productField] = nextValue;
+        persistProductsFallback();
+        console.log('Producto actualizado:', product);
+        console.log('Productos cargados en admin después del cambio:', products);
+        setStatus(elements.productStatus, `Error Supabase: ${getSupabaseErrorMessage(error)}. Producto actualizado en localStorage.`, true);
+      }
+      persistProductsFallback();
+      renderAll();
+      return;
+    }
+
     if (button.dataset.productAction === 'toggle-active') product.active = !product.active;
-    if (button.dataset.productAction === 'toggle-featured') product.featured = !product.featured;
-    if (button.dataset.productAction === 'toggle-promo') product.promo = !product.promo;
 
     try {
       const savedProduct = await saveProductToSupabase(product, product.id);
