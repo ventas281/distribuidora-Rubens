@@ -2,12 +2,12 @@ const { createClient } = require('@supabase/supabase-js');
 const { sendOrderEmails } = require('../lib/order-email');
 const tableName = 'pedidos';
 const schemaName = 'public';
-const fallbackSupabaseUrl = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co';
+const SUPABASE_URL = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co';
 
 const normalizeSupabaseUrl = (value) => {
-  const rawUrl = String(value || fallbackSupabaseUrl).trim();
+  const rawUrl = String(value || SUPABASE_URL).trim();
   const parsedUrl = new URL(rawUrl);
-  const expectedUrl = new URL(fallbackSupabaseUrl);
+  const expectedUrl = new URL(SUPABASE_URL);
   if (parsedUrl.hostname !== expectedUrl.hostname) {
     console.warn('SUPABASE_URL no apunta al proyecto esperado; usando proyecto configurado.', {
       receivedHost: parsedUrl.hostname,
@@ -158,7 +158,7 @@ module.exports = async (req, res) => {
     const {
       data,
       error: insertError,
-    } = await supabase.schema(schemaName).from(tableName).insert(safeOrder).select('*').single();
+    } = await supabase.from(tableName).insert([safeOrder]).select();
     console.log('Resultado Supabase:', data, insertError);
 
     if (insertError) {
@@ -170,7 +170,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    const savedOrder = data;
+    const savedOrder = Array.isArray(data) && data.length > 0 ? data[0] : safeOrder;
     console.log('Pedido guardado correctamente', savedOrder);
 
     let mailgunResult;
