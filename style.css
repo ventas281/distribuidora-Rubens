@@ -1031,6 +1031,44 @@ body.rain-popup-open {
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4);
 }
 
+.product-options-block {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+}
+
+.product-options-block > small {
+  color: #666;
+  font-weight: 700;
+}
+
+.product-color-preview,
+.product-option-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 68px;
+  overflow-y: auto;
+}
+
+.product-color-preview-item {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+.product-option-labels span {
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  background: #fff;
+  padding: 4px 8px;
+  color: #444;
+  font-size: 0.75rem;
+}
+
 .palette-subtitle {
   margin: 0 0 0.4rem;
   font-size: 0.95rem;

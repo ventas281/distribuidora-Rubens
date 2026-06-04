@@ -349,13 +349,86 @@ window.addEventListener('DOMContentLoaded', () => {
     normalizeText(product.brand),
   ].join('|');
 
+  const parseProductOptionValue = (value) => {
+    if (Array.isArray(value)) return value;
+    if (value && typeof value === 'object') return Object.entries(value).map(([name, color]) => ({ name, color }));
+    if (typeof value !== 'string' || !value.trim()) return [];
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return value.split(/[\n,]/).map((item) => item.trim()).filter(Boolean);
+    }
+  };
+
+  const normalizeProductPalette = (product) => {
+    const source = [
+      product.palette,
+      product.colores,
+      product.colors,
+      product.tonos,
+      product.color,
+    ].find((value) => parseProductOptionValue(value).length);
+    return parseProductOptionValue(source).map((item, index) => {
+      if (typeof item === 'string') {
+        if (/^(#|rgb|hsl|transparent)/i.test(item)) {
+          return { name: 'Color disponible', color: item };
+        }
+        return { name: item, color: '#d7d7d7' };
+      }
+      return {
+        ...item,
+        name: String(item.name || item.nombre || item.label || item.tono || `Color ${index + 1}`),
+        color: String(item.color || item.hex || item.value || '#d7d7d7'),
+      };
+    });
+  };
+
+  const normalizeProductOptionLabels = (product) => {
+    const values = [
+      product.optionLabels,
+      product.opciones,
+      product.variantes,
+      product.presentaciones,
+    ].flatMap(parseProductOptionValue);
+    return values.map((item) => (
+      typeof item === 'string'
+        ? item
+        : String(item.label || item.name || item.nombre || item.presentacion || '')
+    )).filter(Boolean);
+  };
+
+  const mergeProductCatalogData = (localProduct, incomingProduct) => {
+    const incomingPalette = normalizeProductPalette(incomingProduct);
+    const localPalette = normalizeProductPalette(localProduct);
+    const incomingOptions = normalizeProductOptionLabels(incomingProduct);
+    const localOptions = normalizeProductOptionLabels(localProduct);
+    return {
+      ...localProduct,
+      ...incomingProduct,
+      palette: incomingPalette.length ? incomingPalette : (localPalette.length ? localPalette : undefined),
+      optionLabels: incomingOptions.length ? incomingOptions : localOptions,
+      colorSwatch: incomingProduct.colorSwatch || localProduct.colorSwatch || '',
+      sizeOptions: incomingProduct.sizeOptions || localProduct.sizeOptions,
+      finishOptions: incomingProduct.finishOptions || localProduct.finishOptions,
+    };
+  };
+
   const mergeLocalAndSupabaseProducts = (localProducts, supabaseProducts) => {
     const merged = new Map();
     localProducts.forEach((product) => {
       merged.set(productMergeKey(product), product);
     });
     supabaseProducts.forEach((product) => {
-      merged.set(productMergeKey(product), product);
+      const key = productMergeKey(product);
+      const localEntry = Array.from(merged.entries()).find(([, localProduct]) => (
+        normalizeText(localProduct.name) === normalizeText(product.name)
+        && normalizeCategoryKey(localProduct.category) === normalizeCategoryKey(product.category)
+      ));
+      const localKey = merged.has(key) ? key : localEntry?.[0];
+      const localProduct = localKey ? merged.get(localKey) : null;
+      if (localKey && localKey !== key) merged.delete(localKey);
+      merged.set(key, localProduct ? mergeProductCatalogData(localProduct, product) : product);
     });
     return Array.from(merged.values());
   };
@@ -382,6 +455,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const productFromSupabaseRow = (row) => {
     const category = normalizeCategoryKey(row.categoria);
     const sizes = String(row.tamanos_precios || '').trim();
+    const palette = normalizeProductPalette(row);
     return {
       id: String(row.id),
       category,
@@ -398,6 +472,8 @@ window.addEventListener('DOMContentLoaded', () => {
       recommended: Boolean(row.destacado),
       rating: 4,
       colorSwatch: '',
+      palette: palette.length ? palette : undefined,
+      optionLabels: normalizeProductOptionLabels(row),
       image: String(row.imagen || '').trim(),
       imageFit: 'contain',
       source: 'supabase',
@@ -431,6 +507,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const name = String(product.name || '').trim();
     const image = String(product.imageData || product.image || '').trim();
     const sizes = String(product.sizes || '').trim();
+    const palette = normalizeProductPalette(product);
     return {
       id: String(product.id || `${slugify(category)}-${slugify(name)}` || `admin-${Date.now()}`),
       category,
@@ -445,6 +522,8 @@ window.addEventListener('DOMContentLoaded', () => {
       recommended: Boolean(product.featured),
       rating: 4,
       colorSwatch: '',
+      palette: palette.length ? palette : undefined,
+      optionLabels: normalizeProductOptionLabels(product),
       image,
       imageFit: 'contain',
     };
@@ -469,13 +548,12 @@ window.addEventListener('DOMContentLoaded', () => {
           && normalizeCategoryKey(item.category) === normalizeCategoryKey(product.category)
         ));
         if (existingIndex >= 0) {
-          products[existingIndex] = {
-            ...products[existingIndex],
+          products[existingIndex] = mergeProductCatalogData(products[existingIndex], {
             ...product,
             id: products[existingIndex].id,
             popular: product.popular || products[existingIndex].popular,
             recommended: product.recommended || products[existingIndex].recommended,
-          };
+          });
         } else {
           products.push(product);
         }
@@ -4001,6 +4079,26 @@ Total final: ${formatCurrency(order.totals.total)}`;
         `).join('')}
       </div>
     ` : '';
+    const productPalette = normalizeProductPalette(product);
+    const productOptionLabels = normalizeProductOptionLabels(product);
+    const colorsMarkup = productPalette.length ? `
+      <div class="product-options-block product-colors-block" aria-label="Colores disponibles">
+        <small>Colores disponibles</small>
+        <div class="product-color-preview">
+          ${productPalette.map((swatch) => `
+            <span class="product-color-preview-item" title="${escapeHtml(swatch.name)}" style="background:${escapeHtml(swatch.color)};"></span>
+          `).join('')}
+        </div>
+      </div>
+    ` : '';
+    const optionsMarkup = productOptionLabels.length ? `
+      <div class="product-options-block" aria-label="Opciones disponibles">
+        <small>Opciones disponibles</small>
+        <div class="product-option-labels">
+          ${productOptionLabels.map((option) => `<span>${escapeHtml(option)}</span>`).join('')}
+        </div>
+      </div>
+    ` : '';
 
     const initialPriceText = sizeOptions ? 'Seleccione tamaño' : formatCurrency(product.price);
     const selectedColorText = product.selectedPaletteColor ? ` - ${product.selectedPaletteColor.name}` : '';
@@ -4009,7 +4107,12 @@ Total final: ${formatCurrency(order.totals.total)}`;
     const volumeMarkup = sizeOptions
       ? '<p class="product-volume">Contenido: Seleccione tamaño</p>'
       : (product.cantidad ? `<p class="product-volume">Contenido: ${product.cantidad}</p>` : '');
-    const paletteButtonMarkup = product.palette ? `<button class="btn btn-primary view-palette product-action-main" type="button" data-palette-id="${product.id}">Colores</button>` : '';
+    const paletteButtonMarkup = productPalette.length ? `<button class="btn btn-primary view-palette product-action-main" type="button" data-palette-id="${product.id}">Colores</button>` : '';
+
+    if (productPalette.length) {
+      console.log('Producto con colores:', product);
+      console.log('Colores renderizados:', productPalette);
+    }
 
     card.innerHTML = `
       <div class="product-image">${imageMarkup}</div>
@@ -4019,6 +4122,8 @@ Total final: ${formatCurrency(order.totals.total)}`;
       </div>
       <h3>${product.name}</h3>
       <p>${product.description}</p>
+      ${colorsMarkup}
+      ${optionsMarkup}
       ${finishSelectorMarkup}
       ${sizeSelectorMarkup}
       ${volumeMarkup}
@@ -4040,6 +4145,11 @@ Total final: ${formatCurrency(order.totals.total)}`;
       <p class="product-error hidden"></p>
       <p class="product-sku">CLAVE: ${product.id.toUpperCase()}</p>
     `;
+    console.log('Render final de producto:', {
+      id: product.id,
+      colores: productPalette.length,
+      opciones: productOptionLabels.length,
+    });
     return card;
   };
 
@@ -4090,6 +4200,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
     const recommendedProducts = filteredProducts.filter((product) => product.recommended);
     console.log('productos después de filtros', generalProducts);
     console.log('productos sin imagen detectados', generalProducts.filter((product) => !product.image));
+    console.log('Productos con colores después del render final:', generalProducts.filter((product) => normalizeProductPalette(product).length));
 
     renderProductGrid(productGeneralListEl, generalProducts, 'No hay productos generales para esta combinación.');
     renderProductGrid(productPopularListEl, popularProducts, 'No hay productos populares para esta búsqueda.');
