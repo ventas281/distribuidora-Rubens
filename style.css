@@ -3288,6 +3288,13 @@ body.rain-popup-open {
   margin: auto;
   object-fit: contain;
   object-position: center;
+  opacity: 1;
+}
+
+.product-card .swatch-circle,
+.product-card .product-colors-block,
+.product-card .product-color-preview {
+  display: none;
 }
 
 .product-footer {

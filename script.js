@@ -4053,13 +4053,10 @@ Total final: ${formatCurrency(order.totals.total)}`;
       imageMarkup = `
         <div class="aerosol-image-wrapper">
           <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" class="aerosol-bg-image">
-          <div class="swatch-circle" style="background:${escapeHtml(product.colorSwatch)};"></div>
         </div>
       `;
     } else if (product.image) {
       imageMarkup = `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" class="${product.imageFit === 'contain' ? 'product-image-contain' : ''}">`;
-    } else if (product.colorSwatch) {
-      imageMarkup = `<div class="swatch-circle" style="background:${escapeHtml(product.colorSwatch)};"></div>`;
     } else {
       imageMarkup = 'Sin imagen';
     }
