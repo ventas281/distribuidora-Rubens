@@ -435,7 +435,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_REST_URL = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co/rest/v1/';
   const SUPABASE_KEY = 'sb_publishable_IPQVpAeDJwNh_bZ575tz5w_8hAUzsEL';
   const SUPABASE_PRODUCTS_TABLE = 'productos';
-  const SUPABASE_ORDERS_TABLE = 'pedidos';
   const ORDER_API_BASE_URL = String(window.ORDER_API_BASE_URL || '').replace(/\/$/, '');
 
   const parseAdminSizeOptions = (sizesText) => {
@@ -3471,46 +3470,26 @@ window.addEventListener('DOMContentLoaded', () => {
     metodo_pago: order.paymentMethod,
     productos: order.products,
     total: order.totals.total,
-    estado: 'Nuevo',
-    notas: order.deliveryDetails,
   });
 
-  const saveOrderDirectlyToSupabase = async (orderRecord) => {
-    const response = await fetch(`${SUPABASE_REST_URL}${SUPABASE_ORDERS_TABLE}?select=*`, {
+  const saveOrder = async (orderRecord) => {
+    const createOrderUrl = `${ORDER_API_BASE_URL}/api/createOrder`;
+    console.log('ORDER_API_BASE_URL:', window.ORDER_API_BASE_URL);
+    console.log('Pedido a enviar:', orderRecord);
+    console.log('Productos:', orderRecord?.productos);
+    console.log('Intentando crear pedido mediante endpoint Vercel:', createOrderUrl);
+
+    const response = await fetch(createOrderUrl, {
       method: 'POST',
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=representation',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orderRecord),
     });
-    const data = await response.json().catch(() => []);
-    if (!response.ok) throw new Error(data?.message || `Supabase pedidos HTTP ${response.status}`);
-    return Array.isArray(data) ? data[0] : data;
-  };
-
-  const saveOrder = async (orderRecord) => {
-    try {
-      const createOrderUrl = `${ORDER_API_BASE_URL}/api/createOrder`;
-      console.log('ORDER_API_BASE_URL:', window.ORDER_API_BASE_URL);
-      console.log('Pedido a enviar:', orderRecord);
-      console.log('Productos:', orderRecord?.productos);
-      console.log('Intentando crear pedido mediante endpoint Vercel:', createOrderUrl);
-      const response = await fetch(createOrderUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderRecord),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.order) throw new Error(data.message || data.error || 'No se pudo guardar el pedido.');
-      console.log('Pedido creado mediante endpoint Vercel:', data);
-      return data.order;
-    } catch (error) {
-      console.error('No se pudo ejecutar /api/createOrder; guardando directamente en Supabase sin correo:', error);
-      return saveOrderDirectlyToSupabase(orderRecord);
+    const data = await response.json().catch(() => ({}));
+    if (response.status !== 201 || !data.order) {
+      throw new Error(data.message || data.error || `No se pudo guardar el pedido. HTTP ${response.status}`);
     }
+    console.log('Pedido creado mediante endpoint Vercel:', data);
+    return data.order;
   };
 
   const clearCartAfterOrder = () => {
@@ -3546,9 +3525,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     orderSubmissionInProgress = true;
     const snapshot = buildOrderSummaryData();
+    const orderRecord = buildOrderRecord(snapshot);
     setOrderEmailStatus('Guardando pedido...');
     try {
-      const savedOrder = await saveOrder(buildOrderRecord(snapshot));
+      const savedOrder = await saveOrder(orderRecord);
       clearCartAfterOrder();
       showOrderConfirmation(savedOrder);
       return { savedOrder, snapshot };
