@@ -3492,7 +3492,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const saveOrder = async (orderRecord) => {
     try {
-      const response = await fetch('/.netlify/functions/createOrder', {
+      const response = await fetch('/api/createOrder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderRecord),
