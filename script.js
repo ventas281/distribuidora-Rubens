@@ -119,7 +119,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const toggleFiltersButton = document.getElementById('toggle-filters');
   const filterControls = document.getElementById('filter-controls');
   const productGeneralListEl = document.getElementById('product-general-list');
-  const productPopularListEl = document.getElementById('product-popular-list');
   const productRecommendedListEl = document.getElementById('product-recommended-list');
   const productCountEl = document.getElementById('product-count');
   const cartCountEl = document.getElementById('cart-count');
@@ -4179,17 +4178,15 @@ Total final: ${formatCurrency(order.totals.total)}`;
   };
 
   const renderProducts = () => {
-    if (!productGeneralListEl || !productPopularListEl || !productRecommendedListEl || !productCountEl) return;
+    if (!productGeneralListEl || !productRecommendedListEl || !productCountEl) return;
 
     const generalProducts = filteredProducts;
-    const popularProducts = filteredProducts.filter((product) => product.popular);
     const recommendedProducts = filteredProducts.filter((product) => product.recommended);
     console.log('productos después de filtros', generalProducts);
     console.log('productos sin imagen detectados', generalProducts.filter((product) => !product.image));
     console.log('Productos con colores después del render final:', generalProducts.filter((product) => normalizeProductPalette(product).length));
 
     renderProductGrid(productGeneralListEl, generalProducts, 'No hay productos generales para esta combinación.');
-    renderProductGrid(productPopularListEl, popularProducts, 'No hay productos populares para esta búsqueda.');
     renderProductGrid(productRecommendedListEl, recommendedProducts, 'No hay recomendaciones para esta fecha.');
 
     productCountEl.textContent = `Mostrando ${generalProducts.length} productos generales`;
