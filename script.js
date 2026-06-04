@@ -4081,16 +4081,6 @@ Total final: ${formatCurrency(order.totals.total)}`;
     ` : '';
     const productPalette = normalizeProductPalette(product);
     const productOptionLabels = normalizeProductOptionLabels(product);
-    const colorsMarkup = productPalette.length ? `
-      <div class="product-options-block product-colors-block" aria-label="Colores disponibles">
-        <small>Colores disponibles</small>
-        <div class="product-color-preview">
-          ${productPalette.map((swatch) => `
-            <span class="product-color-preview-item" title="${escapeHtml(swatch.name)}" style="background:${escapeHtml(swatch.color)};"></span>
-          `).join('')}
-        </div>
-      </div>
-    ` : '';
     const optionsMarkup = productOptionLabels.length ? `
       <div class="product-options-block" aria-label="Opciones disponibles">
         <small>Opciones disponibles</small>
@@ -4122,7 +4112,6 @@ Total final: ${formatCurrency(order.totals.total)}`;
       </div>
       <h3>${product.name}</h3>
       <p>${product.description}</p>
-      ${colorsMarkup}
       ${optionsMarkup}
       ${finishSelectorMarkup}
       ${sizeSelectorMarkup}
