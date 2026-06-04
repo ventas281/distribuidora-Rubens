@@ -740,6 +740,15 @@ td small,
   font-weight: 850;
 }
 
+.order-status-select {
+  min-width: 132px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+  font: inherit;
+}
+
 .activity-list,
 .compact-list,
 .rank-list,

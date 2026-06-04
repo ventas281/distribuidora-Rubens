@@ -32,7 +32,7 @@
         <p>Carrito: <span id="cart-count">0</span> items</p>
         <button class="btn btn-primary" id="view-cart">Ver carrito</button>
       </div>
-      <a class="whatsapp-link header-ws" href="https://wa.me/5255610015?text=Hola,%20me%20gustaria%20recibir%20informacion%20sobre%20pinturas%20y%20productos%20de%20Rubens%20Distribuidora." target="_blank" aria-label="WhatsApp">WhatsApp</a>
+      <a class="whatsapp-link header-ws" href="https://wa.me/525539318779?text=Hola,%20me%20gustaria%20recibir%20informacion%20sobre%20pinturas%20y%20productos%20de%20Rubens%20Distribuidora." target="_blank" aria-label="WhatsApp">WhatsApp</a>
     </div>
   </header>
 
@@ -245,7 +245,7 @@
               </div>
               <div>
                 <strong>Transferencia Bancaria SPEI</strong>
-                <p>Realiza tu pago mediante transferencia bancaria. Una vez realizado el pago, envíanos tu comprobante por WhatsApp para procesar tu pedido.</p>
+                <p>Realiza tu pago mediante transferencia bancaria y confirma el pedido para que ventas pueda validar tu pago.</p>
               </div>
             </div>
 
@@ -277,7 +277,7 @@
             <label>CLABE:<input type="text" id="payment-clabe" value="014180605210667968" readonly></label>
             <label class="payment-grid-wide">Concepto:<input type="text" id="payment-concept" placeholder="Pedido Ruben's Distribuidora"></label>
           </div>
-          <button class="btn btn-primary" id="send-transfer-whatsapp" type="button">Enviar comprobante por WhatsApp</button>
+          <button class="btn btn-primary" id="send-transfer-whatsapp" type="button">Confirmar pedido</button>
         </div>
 
         <div class="payment-panel hidden" id="payment-mercado-panel">
@@ -287,17 +287,17 @@
             <ul>
               <li>Se usará el total actual de tu carrito.</li>
               <li>Al finalizar, recibirás la confirmación de tu pedido.</li>
-              <li>También puedes enviar tu pedido por WhatsApp si prefieres atención personalizada.</li>
+              <li>El pedido quedará registrado antes de abrir Mercado Pago.</li>
             </ul>
-            <p class="mercado-helper">Si el pago en línea no está disponible, envíanos tu pedido por WhatsApp y te ayudamos a finalizar la compra.</p>
+            <p class="mercado-helper">Si el pago en línea no está disponible, tu pedido seguirá registrado para que ventas pueda contactarte.</p>
           </div>
           <button class="btn btn-primary" id="mercadoPagoBtn" type="button">Pagar con Mercado Pago</button>
-          <button class="btn btn-secondary hidden" id="mercado-whatsapp-fallback" type="button">Enviar pedido por WhatsApp</button>
+          <button class="btn btn-secondary hidden" id="mercado-whatsapp-fallback" type="button">Confirmar pedido sin pago en línea</button>
         </div>
 
         <div class="payment-panel hidden" id="payment-cash-panel">
           <p class="payment-note">Paga en efectivo al recoger tu pedido en tienda.</p>
-          <button class="btn btn-primary" id="pay-in-store-whatsapp" type="button">Pagar en tienda</button>
+          <button class="btn btn-primary" id="pay-in-store-whatsapp" type="button">Confirmar pedido</button>
         </div>
 
         <div class="order-confirmation-actions">

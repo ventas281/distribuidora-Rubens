@@ -10,6 +10,7 @@
   const SUPABASE_URL = SUPABASE_REST_URL.replace(/\/rest\/v1\/?$/, '');
   const SUPABASE_KEY = 'sb_publishable_IPQVpAeDJwNh_bZ575tz5w_8hAUzsEL';
   const SUPABASE_PRODUCTS_TABLE = 'productos';
+  const SUPABASE_ORDERS_TABLE = 'pedidos';
   const AUTHORIZED_ADMIN_EMAIL = 'ventas@rubensdistribuidora.com';
   const getAdminAuthRedirectTo = () => `${window.location.origin}/admin.html`;
 
@@ -33,47 +34,8 @@
     ],
   };
 
-  const sampleOrders = [
-    {
-      id: 'RB-1001',
-      customer: 'Carlos Mendoza',
-      phone: '525510022372',
-      products: 'Thermotek 5 Anos, Membrana reforzada',
-      total: 3200,
-      payment: 'Transferencia SPEI',
-      status: 'Nuevo',
-    },
-    {
-      id: 'RB-1002',
-      customer: 'Laura Hernandez',
-      phone: '5255610015',
-      products: 'Barniz Marino Brillante 4 Litros',
-      total: 1915,
-      payment: 'Mercado Pago',
-      status: 'Pagado',
-    },
-    {
-      id: 'RB-1003',
-      customer: 'Jorge Ramirez',
-      phone: '525500000000',
-      products: 'Brochas Perfect, Masking Tape Azul',
-      total: 315,
-      payment: 'Efectivo en tienda',
-      status: 'Pendiente',
-    },
-    {
-      id: 'RB-1004',
-      customer: 'Ana Lopez',
-      phone: '525511112222',
-      products: 'Sikaflex 1A Purform',
-      total: 300,
-      payment: 'Transferencia SPEI',
-      status: 'Entregado',
-    },
-  ];
-
   const defaultSettings = {
-    whatsapp: '525510022372',
+    whatsapp: '525539318779',
     email: 'ventas@rubensdistribuidora.com',
     address: 'Av. Azcapotzalco 756, Col. Los Reyes, CDMX',
     hours: 'Lunes a viernes 9:00 a 18:00\nSabado 9:00 a 14:00',
@@ -277,7 +239,12 @@
       return writeJson(KEYS.banners, banners.map(normalizeBanner), storage);
     },
     loadSettings(storage = getLocalStorage()) {
-      return { ...defaultSettings, ...readJson(KEYS.settings, {}, storage) };
+      const settings = { ...defaultSettings, ...readJson(KEYS.settings, {}, storage) };
+      if (settings.whatsapp === '525510022372' || settings.whatsapp === '5255610015') {
+        settings.whatsapp = defaultSettings.whatsapp;
+        writeJson(KEYS.settings, settings, storage);
+      }
+      return settings;
     },
     saveSettings(settings, storage = getLocalStorage()) {
       return writeJson(KEYS.settings, { ...defaultSettings, ...settings }, storage);
@@ -328,6 +295,9 @@
     cancelBannerEdit: $('#cancel-banner-edit'),
     ordersTable: $('#orders-table'),
     ordersMobile: $('#orders-mobile'),
+    ordersEmpty: $('#orders-empty'),
+    ordersStatus: $('#orders-status'),
+    refreshOrders: $('#refresh-orders'),
     settingsForm: $('#settings-form'),
     settingsStatus: $('#settings-status'),
   };
@@ -375,6 +345,7 @@
   let banners = adminStore.loadBanners();
   let settings = adminStore.loadSettings();
   let metrics = adminStore.loadMetrics();
+  let orders = [];
   let productQuery = '';
   let currentProductImageData = '';
   let currentProductImageName = '';
@@ -620,6 +591,55 @@
       setStatus(elements.productStatus, 'Supabase no disponible. Usando localStorage temporal.', true);
     }
     renderAll();
+  };
+
+  const orderFromSupabaseRow = (row) => ({
+    id: String(row.id),
+    customer: String(row.cliente_nombre || ''),
+    phone: String(row.cliente_telefono || ''),
+    email: String(row.cliente_correo || ''),
+    address: String(row.direccion || ''),
+    delivery: String(row.tipo_entrega || ''),
+    payment: String(row.metodo_pago || ''),
+    products: Array.isArray(row.productos) ? row.productos : [],
+    total: Number(row.total) || 0,
+    status: String(row.estado || 'Nuevo'),
+    notes: String(row.notas || ''),
+    createdAt: row.created_at || '',
+  });
+
+  const loadOrdersFromSupabase = async () => {
+    const client = getSupabaseClient();
+    if (!client) throw new Error('Supabase no disponible.');
+    const { data, error } = await client
+      .from(SUPABASE_ORDERS_TABLE)
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(orderFromSupabaseRow);
+  };
+
+  const loadOrders = async () => {
+    setStatus(elements.ordersStatus, 'Cargando pedidos...', false, false);
+    try {
+      orders = await loadOrdersFromSupabase();
+      setStatus(elements.ordersStatus, '', false);
+    } catch (error) {
+      orders = [];
+      setStatus(elements.ordersStatus, `No se pudieron cargar los pedidos: ${getSupabaseErrorMessage(error)}`, true, false);
+    }
+    renderDashboard();
+    renderOrders();
+  };
+
+  const updateOrderStatus = async (id, status) => {
+    const client = getSupabaseClient();
+    if (!client) throw new Error('Supabase no disponible.');
+    const { error } = await client
+      .from(SUPABASE_ORDERS_TABLE)
+      .update({ estado: status })
+      .eq('id', id);
+    if (error) throw error;
   };
 
   const persistProductsFallback = () => {
@@ -892,6 +912,8 @@
       Nuevo: 'new',
       Pendiente: 'pending',
       Pagado: 'paid',
+      'En preparación': 'pending',
+      Enviado: 'paid',
       Entregado: 'delivered',
       Cancelado: 'cancelled',
     };
@@ -904,6 +926,7 @@
     elements.adminApp?.classList.remove('hidden');
     renderAll();
     loadProductsWithFallback().then(() => seedProductsFromCatalogIfNeeded());
+    loadOrders();
   };
 
   const showLogin = (message = '') => {
@@ -947,7 +970,7 @@
     const activeProducts = products.filter((product) => product.active).length;
     const featuredProducts = products.filter((product) => product.featured).length;
     $('#stat-active-products').textContent = String(activeProducts);
-    $('#stat-orders').textContent = String(sampleOrders.length);
+    $('#stat-orders').textContent = String(orders.length);
     $('#stat-whatsapp').textContent = String(metrics.whatsappClicks);
     $('#stat-visits').textContent = String(metrics.visitsToday);
     $('#stat-featured').textContent = String(featuredProducts);
@@ -956,7 +979,7 @@
     $('#dashboard-summary').innerHTML = [
       `Productos guardados en admin: ${products.length}`,
       `Banners activos: ${activeBanners}`,
-      `Pedidos simulados listos para revision: ${sampleOrders.length}`,
+      `Pedidos pendientes de revision: ${orders.filter((order) => order.status === 'Nuevo' || order.status === 'Pendiente').length}`,
       `Configuracion cargada para WhatsApp: ${settings.whatsapp || 'Sin definir'}`,
     ].map((text) => `<div class="activity-item">${escapeHtml(text)}</div>`).join('');
 
@@ -1045,38 +1068,60 @@
   };
 
   const renderOrders = () => {
-    const rows = sampleOrders.map((order) => {
-      const message = encodeURIComponent(`Hola ${order.customer}, te contactamos de Ruben's Distribuidora sobre tu pedido ${order.id}.`);
-      const whatsAppUrl = `https://wa.me/${order.phone}?text=${message}`;
+    const statuses = ['Nuevo', 'Pendiente', 'Pagado', 'En preparación', 'Enviado', 'Entregado', 'Cancelado'];
+    const formatDate = (value) => value
+      ? new Intl.DateTimeFormat('es-MX', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
+      : 'Sin fecha';
+    const formatOrderProducts = (products) => products.map((product) => (
+      `${product.quantity || 1} x ${product.name || 'Producto'}`
+    )).join(', ');
+    const whatsappPhone = (value) => {
+      const digits = String(value || '').replace(/\D/g, '');
+      return digits.length === 10 ? `52${digits}` : digits;
+    };
+    const statusSelect = (order) => `
+      <select class="order-status-select" data-order-id="${escapeHtml(order.id)}" aria-label="Estado del pedido ${escapeHtml(order.id)}">
+        ${statuses.map((status) => `<option value="${escapeHtml(status)}" ${order.status === status ? 'selected' : ''}>${escapeHtml(status)}</option>`).join('')}
+      </select>
+    `;
+    const rows = orders.map((order) => {
+      const message = encodeURIComponent(`Hola, te contactamos de Rubens Distribuidora para confirmar tu pedido #${order.id}.`);
+      const phone = whatsappPhone(order.phone);
+      const whatsAppUrl = `https://wa.me/${phone}?text=${message}`;
       return `
         <tr>
-          <td><strong>${escapeHtml(order.id)}</strong></td>
+          <td><strong>#${escapeHtml(order.id)}</strong></td>
+          <td>${escapeHtml(formatDate(order.createdAt))}</td>
           <td>${escapeHtml(order.customer)}</td>
           <td>${escapeHtml(order.phone)}</td>
-          <td>${escapeHtml(order.products)}</td>
+          <td><a href="mailto:${escapeHtml(order.email)}">${escapeHtml(order.email)}</a></td>
+          <td>${escapeHtml(formatOrderProducts(order.products))}</td>
           <td>${formatCurrency(order.total)}</td>
           <td>${escapeHtml(order.payment)}</td>
-          <td>${orderPill(order.status)}</td>
-          <td><a class="whatsapp-button" href="${whatsAppUrl}" target="_blank" rel="noopener">Contactar</a></td>
+          <td>${statusSelect(order)}</td>
+          <td><a class="whatsapp-button" href="${whatsAppUrl}" target="_blank" rel="noopener">Contactar cliente</a></td>
         </tr>
       `;
     }).join('');
 
-    const cards = sampleOrders.map((order) => {
-      const message = encodeURIComponent(`Hola ${order.customer}, te contactamos de Ruben's Distribuidora sobre tu pedido ${order.id}.`);
+    const cards = orders.map((order) => {
+      const message = encodeURIComponent(`Hola, te contactamos de Rubens Distribuidora para confirmar tu pedido #${order.id}.`);
+      const phone = whatsappPhone(order.phone);
       return `
         <article class="mobile-card">
-          <strong>${escapeHtml(order.id)} / ${escapeHtml(order.customer)}</strong>
-          <small>${escapeHtml(order.products)}</small>
+          <strong>#${escapeHtml(order.id)} / ${escapeHtml(order.customer)}</strong>
+          <small>${escapeHtml(formatDate(order.createdAt))} / ${escapeHtml(order.email)}</small>
+          <small>${escapeHtml(formatOrderProducts(order.products))}</small>
           <p>${formatCurrency(order.total)} / ${escapeHtml(order.payment)}</p>
-          <div>${orderPill(order.status)}</div>
-          <a class="whatsapp-button" href="https://wa.me/${order.phone}?text=${message}" target="_blank" rel="noopener">Contactar por WhatsApp</a>
+          <div>${orderPill(order.status)} ${statusSelect(order)}</div>
+          <a class="whatsapp-button" href="https://wa.me/${phone}?text=${message}" target="_blank" rel="noopener">Contactar cliente</a>
         </article>
       `;
     }).join('');
 
     if (elements.ordersTable) elements.ordersTable.innerHTML = rows;
     if (elements.ordersMobile) elements.ordersMobile.innerHTML = cards;
+    elements.ordersEmpty?.classList.toggle('hidden', orders.length > 0);
   };
 
   const renderBanners = () => {
@@ -1395,6 +1440,28 @@
 
   elements.productTable?.addEventListener('click', handleProductAction);
   elements.productMobile?.addEventListener('click', handleProductAction);
+
+  const handleOrderStatusChange = async (event) => {
+    const select = event.target.closest('.order-status-select');
+    if (!select) return;
+    select.disabled = true;
+    setStatus(elements.ordersStatus, 'Actualizando estado...', false, false);
+    try {
+      await updateOrderStatus(select.dataset.orderId, select.value);
+      const order = orders.find((item) => item.id === select.dataset.orderId);
+      if (order) order.status = select.value;
+      setStatus(elements.ordersStatus, 'Estado actualizado.');
+      renderDashboard();
+      renderOrders();
+    } catch (error) {
+      setStatus(elements.ordersStatus, `No se pudo actualizar el estado: ${getSupabaseErrorMessage(error)}`, true, false);
+      await loadOrders();
+    }
+  };
+
+  elements.ordersTable?.addEventListener('change', handleOrderStatusChange);
+  elements.ordersMobile?.addEventListener('change', handleOrderStatusChange);
+  elements.refreshOrders?.addEventListener('click', loadOrders);
 
   elements.productSearch?.addEventListener('input', () => {
     productQuery = elements.productSearch.value;

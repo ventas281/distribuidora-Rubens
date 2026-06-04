@@ -184,17 +184,20 @@
         <section class="panel">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">Simulado</p>
+              <p class="eyebrow">Supabase</p>
               <h2>Pedidos recibidos</h2>
             </div>
+            <button class="secondary-button" id="refresh-orders" type="button">Actualizar</button>
           </div>
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
                   <th>Pedido</th>
+                  <th>Fecha</th>
                   <th>Cliente</th>
                   <th>Telefono</th>
+                  <th>Correo</th>
                   <th>Productos</th>
                   <th>Total</th>
                   <th>Pago</th>
@@ -206,6 +209,8 @@
             </table>
           </div>
           <div class="mobile-list" id="orders-mobile"></div>
+          <p class="empty-state hidden" id="orders-empty">Aun no hay pedidos guardados.</p>
+          <p class="form-status" id="orders-status" aria-live="polite"></p>
         </section>
       </section>
 

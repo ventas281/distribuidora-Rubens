@@ -235,11 +235,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const scheduledDeliveryLimitKm = 25;
   const paidDeliveryFee = 200;
   const fastDeliveryExtraFee = 150;
-  const paymentWhatsappNumber = '525510022372';
   const mercadoPagoPublicKey = window.MERCADO_PAGO_PUBLIC_KEY || 'APP_USR-1d421fc6-735f-4f5b-ac51-a5912edb29de';
   const mercadoPagoPreferenceId = window.MERCADO_PAGO_PREFERENCE_ID || '';
   const mercadoPagoLink = MERCADO_PAGO_CHECKOUT_URL || window.MERCADO_PAGO_LINK || '';
-  const mercadoPagoPendingOrderKey = 'rubensMercadoPagoPendingOrder';
   const orderEmailConfig = {
     provider: 'none',
     formspreeEndpoint: '',
@@ -365,6 +363,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_REST_URL = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co/rest/v1/';
   const SUPABASE_KEY = 'sb_publishable_IPQVpAeDJwNh_bZ575tz5w_8hAUzsEL';
   const SUPABASE_PRODUCTS_TABLE = 'productos';
+  const SUPABASE_ORDERS_TABLE = 'pedidos';
 
   const parseAdminSizeOptions = (sizesText) => {
     const lines = String(sizesText || '').split('\n').map((line) => line.trim()).filter(Boolean);
@@ -3322,7 +3321,7 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   const paymentMethodLabels = {
-    transfer: 'Transferencia',
+    transfer: 'Transferencia SPEI',
     mercado: 'Mercado Pago',
     cash: 'Efectivo en tienda',
   };
@@ -3385,6 +3384,105 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   };
 
+  const buildOrderRecord = (order = buildOrderSummaryData()) => ({
+    cliente_nombre: order.customer.name,
+    cliente_telefono: order.customer.phone,
+    cliente_correo: order.customer.email,
+    direccion: order.customer.address,
+    tipo_entrega: order.deliveryMethod,
+    metodo_pago: order.paymentMethod,
+    productos: order.products,
+    total: order.totals.total,
+    estado: 'Nuevo',
+    notas: order.deliveryDetails,
+  });
+
+  const saveOrderDirectlyToSupabase = async (orderRecord) => {
+    const response = await fetch(`${SUPABASE_REST_URL}${SUPABASE_ORDERS_TABLE}?select=*`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify(orderRecord),
+    });
+    const data = await response.json().catch(() => []);
+    if (!response.ok) throw new Error(data?.message || `Supabase pedidos HTTP ${response.status}`);
+    return Array.isArray(data) ? data[0] : data;
+  };
+
+  const saveOrder = async (orderRecord) => {
+    try {
+      const response = await fetch('/.netlify/functions/createOrder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderRecord),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.order) throw new Error(data.message || data.error || 'No se pudo guardar el pedido.');
+      return data.order;
+    } catch (error) {
+      return saveOrderDirectlyToSupabase(orderRecord);
+    }
+  };
+
+  const clearCartAfterOrder = () => {
+    cart = [];
+    saveCart();
+    renderCartWithDelivery();
+    updateCartCount();
+  };
+
+  const showOrderConfirmation = (savedOrder) => {
+    const orderNumber = savedOrder?.id ? ` #${savedOrder.id}` : '';
+    if (paymentSummaryEl) {
+      paymentSummaryEl.innerHTML = `
+        <strong>Pedido recibido correctamente${orderNumber}.</strong>
+        <p>En breve confirmaremos disponibilidad y entrega.</p>
+      `;
+    }
+    setOrderEmailStatus('Pedido recibido correctamente. En breve confirmaremos disponibilidad y entrega.');
+  };
+
+  let orderSubmissionInProgress = false;
+  const registerCurrentOrder = async () => {
+    if (orderSubmissionInProgress) throw new Error('El pedido ya se está guardando.');
+    if (cart.length === 0) {
+      showPaymentRequiredNotice();
+      throw new Error('Tu carrito está vacío.');
+    }
+    if (!validateOrderCustomerData()) throw new Error('Completa los campos obligatorios.');
+    if (!Array.from(paymentMethodButtons).some((button) => button.classList.contains('is-selected'))) {
+      showPaymentRequiredNotice();
+      throw new Error('Selecciona un método de pago.');
+    }
+
+    orderSubmissionInProgress = true;
+    const snapshot = buildOrderSummaryData();
+    setOrderEmailStatus('Guardando pedido...');
+    try {
+      const savedOrder = await saveOrder(buildOrderRecord(snapshot));
+      clearCartAfterOrder();
+      showOrderConfirmation(savedOrder);
+      return { savedOrder, snapshot };
+    } catch (error) {
+      setOrderEmailStatus('No se pudo guardar el pedido. Intenta nuevamente.', true);
+      throw error;
+    } finally {
+      orderSubmissionInProgress = false;
+    }
+  };
+
+  const confirmCurrentOrder = async () => {
+    try {
+      await registerCurrentOrder();
+    } catch (error) {
+      console.error('Error al confirmar pedido:', error);
+    }
+  };
+
   const buildOrderSummaryText = (intro = 'Nuevo pedido Ruben\'s Distribuidora') => {
     const order = buildOrderSummaryData();
     const productLines = order.products.map((item) => (
@@ -3410,10 +3508,6 @@ Subtotal: ${formatCurrency(order.totals.subtotal)}
 Envío: ${formatCurrency(order.totals.shipping)}
 Descuento: ${formatCurrency(order.totals.discount)}
 Total final: ${formatCurrency(order.totals.total)}`;
-  };
-
-  const openOrderWhatsapp = (orderText) => {
-    window.open(`https://wa.me/${paymentWhatsappNumber}?text=${encodeURIComponent(orderText)}`, '_blank');
   };
 
   const getCustomerConfirmationMessage = () => (
@@ -3444,7 +3538,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
   const getMexicanPhoneDigits = (value) => getPhoneDigits(value).slice(0, 10);
   const isValidMexicanPhone = (value) => getMexicanPhoneDigits(value).length === 10;
   const phoneValidationMessage = 'Ingresa un número válido de 10 dígitos';
-  const requiredPaymentMessage = 'Llena los campos obligatorios';
+  const requiredPaymentMessage = 'Completa los campos obligatorios para confirmar tu pedido.';
   let paymentStatusTimeout = null;
 
   const sanitizePaymentPhoneInput = () => {
@@ -3635,24 +3729,6 @@ Total final: ${formatCurrency(order.totals.total)}`;
     return 'Correo listo para configurar: agrega EmailJS o Formspree en ORDER_EMAIL_CONFIG.';
   };
 
-  const sendOrderByWhatsapp = (intro = 'Hola, quiero confirmar este pedido en Ruben\'s Distribuidora') => {
-    if (cart.length === 0) {
-      alert('Tu carrito está vacío. Agrega productos para continuar.');
-      return;
-    }
-    if (!validateOrderCustomerData()) return;
-
-    const orderText = buildOrderSummaryText(intro);
-    openOrderWhatsapp(orderText);
-
-    setOrderEmailStatus('Preparando confirmación por correo...');
-    sendOrderEmails(orderText)
-      .then((message) => setOrderEmailStatus(message))
-      .catch(() => {
-        setOrderEmailStatus('No se pudo enviar el correo automático. El pedido por WhatsApp sí quedó preparado.', true);
-      });
-  };
-
   const renderPaymentSummary = () => {
     if (!paymentSummaryEl) return;
     const totals = getOrderTotals();
@@ -3713,17 +3789,6 @@ Total final: ${formatCurrency(order.totals.total)}`;
     return bankData.length
       ? `\nDatos SPEI capturados:\n${bankData.map(([label, value]) => `${label}: ${value}`).join('\n')}`
       : '';
-  };
-
-  const buildTransferWhatsappMessage = () => {
-    const orderText = buildOrderSummaryText('Confirmo este pedido en Ruben\'s Distribuidora');
-    return `Hola, adjunto mi comprobante de transferencia SPEI para validar mi pedido.\n\n${orderText}${getTransferBankText()}`;
-  };
-
-  const openTransferWhatsapp = () => {
-    if (!validateOrderCustomerData()) return;
-    const message = encodeURIComponent(buildTransferWhatsappMessage());
-    window.open(`https://wa.me/${paymentWhatsappNumber}?text=${message}`, '_blank');
   };
 
   const stopPaymentActionIfInvalid = (event) => {
@@ -3829,18 +3894,8 @@ Total final: ${formatCurrency(order.totals.total)}`;
     return data.preference_id || data.id || null;
   };
 
-  const buildMercadoPagoValidationMessage = () => (
-    `${buildOrderSummaryText('Hola, quiero pagar con Mercado Pago este pedido en Ruben\'s Distribuidora')}\n\nPago con Mercado Pago en validación.`
-  );
-
-  const openMercadoPagoFallbackWhatsapp = () => {
-    const message = encodeURIComponent(buildMercadoPagoValidationMessage());
-    window.open(`https://wa.me/${paymentWhatsappNumber}?text=${message}`, '_blank');
-    setOrderEmailStatus('Mercado Pago queda en validación por WhatsApp hasta conectar el backend seguro.');
-  };
-
   const showMercadoPagoSetupMessage = () => {
-    setOrderEmailStatus('Mercado Pago aún está en configuración. Puedes enviar tu pedido por WhatsApp mientras habilitamos el pago en línea.');
+    setOrderEmailStatus('Mercado Pago aún está en configuración. Puedes confirmar el pedido para que ventas te contacte.');
     if (mercadoWhatsappFallbackButton) {
       mercadoWhatsappFallbackButton.classList.remove('hidden');
     }
@@ -3857,7 +3912,6 @@ Total final: ${formatCurrency(order.totals.total)}`;
       const preferenceId = createdPreferenceId || mercadoPagoPreferenceId;
 
       if (preferenceId) {
-        rememberMercadoPagoOrder();
         try {
           await openMercadoPagoCheckout(preferenceId);
         } catch (error) {
@@ -3873,7 +3927,6 @@ Total final: ${formatCurrency(order.totals.total)}`;
 
       const checkoutUrl = window.MERCADO_PAGO_CHECKOUT_URL || mercadoPagoLink;
       if (checkoutUrl) {
-        rememberMercadoPagoOrder();
         window.open(checkoutUrl, '_blank');
         return;
       }
@@ -3881,38 +3934,6 @@ Total final: ${formatCurrency(order.totals.total)}`;
       await abrirMercadoPago();
     } catch (error) {
       await abrirMercadoPago();
-    }
-  };
-
-  const isMercadoPagoApprovedReturn = () => {
-    const params = new URLSearchParams(window.location.search);
-    const successValues = ['approved', 'success', 'accredited'];
-    return successValues.includes((params.get('status') || '').toLowerCase())
-      || successValues.includes((params.get('collection_status') || '').toLowerCase())
-      || successValues.includes((params.get('payment_status') || '').toLowerCase());
-  };
-
-  const rememberMercadoPagoOrder = () => {
-    const orderText = buildOrderSummaryText('Pago aprobado por Mercado Pago. Confirmo este pedido en Ruben\'s Distribuidora');
-    localStorage.setItem(mercadoPagoPendingOrderKey, JSON.stringify({
-      orderText,
-      createdAt: Date.now(),
-    }));
-  };
-
-  const sendPendingMercadoPagoOrder = () => {
-    if (!isMercadoPagoApprovedReturn()) return;
-    const savedOrder = localStorage.getItem(mercadoPagoPendingOrderKey);
-    if (!savedOrder) return;
-
-    try {
-      const pendingOrder = JSON.parse(savedOrder);
-      if (pendingOrder?.orderText) {
-        openOrderWhatsapp(pendingOrder.orderText);
-        localStorage.removeItem(mercadoPagoPendingOrderKey);
-      }
-    } catch (error) {
-      localStorage.removeItem(mercadoPagoPendingOrderKey);
     }
   };
 
@@ -4710,7 +4731,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
   if (checkoutButton) {
     checkoutButton.addEventListener('click', () => {
       if (cart.length === 0) {
-        alert('Tu carrito está vacío. Agrega productos para continuar.');
+        alert('Completa los campos obligatorios para confirmar tu pedido.');
         return;
       }
       if (!deliveryState.pickupConfirmed && (!deliveryState.postalCode || !deliveryState.durationText)) {
@@ -4785,7 +4806,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
   });
 
   if (sendTransferWhatsappButton) {
-    sendTransferWhatsappButton.addEventListener('click', openTransferWhatsapp);
+    sendTransferWhatsappButton.addEventListener('click', confirmCurrentOrder);
   }
 
   speiCopyButtons.forEach((button) => {
@@ -4796,9 +4817,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
   });
 
   if (payInStoreWhatsappButton) {
-    payInStoreWhatsappButton.addEventListener('click', () => {
-      sendOrderByWhatsapp('Hola, quiero pagar en tienda y confirmar este pedido en Ruben\'s Distribuidora');
-    });
+    payInStoreWhatsappButton.addEventListener('click', confirmCurrentOrder);
   }
 
   document.addEventListener('click', async (event) => {
@@ -4809,13 +4828,21 @@ Total final: ${formatCurrency(order.totals.total)}`;
 
       if (!validateOrderCustomerData()) return;
 
+      let orderWasRegistered = false;
       try {
-        const hasCartItems = Array.isArray(cart) && cart.length > 0;
+        const { snapshot } = await registerCurrentOrder();
+        orderWasRegistered = true;
+        const checkoutCart = snapshot.products.map((product) => ({
+          name: product.name,
+          quantity: product.quantity,
+          price: product.unitPrice,
+        }));
+        const hasCartItems = checkoutCart.length > 0;
         const mercadoPagoPayload = hasCartItems ? {
-          cart,
-          shippingCost: deliveryState.type === 'delivery' ? deliveryState.fee : 0,
-          customer: getCustomerData(),
-          deliveryMethod: getDeliveryMethodLabel(),
+          cart: checkoutCart,
+          shippingCost: snapshot.totals.shipping,
+          customer: snapshot.customer,
+          deliveryMethod: snapshot.deliveryMethod,
         } : {
           title: 'Compra Rubens Distribuidora',
           quantity: 1,
@@ -4875,16 +4902,18 @@ Total final: ${formatCurrency(order.totals.total)}`;
         alert('No se pudo crear la preferencia de Mercado Pago');
       } catch (error) {
         console.error('Error Mercado Pago:', error);
-        alert('Error al abrir Mercado Pago. Revisa consola.');
+        setOrderEmailStatus(
+          orderWasRegistered
+            ? 'El pedido quedó registrado, pero no se pudo abrir Mercado Pago. Ventas te contactará.'
+            : 'No se pudo guardar el pedido. Intenta nuevamente.',
+          true
+        );
       }
     }
   });
 
   if (mercadoWhatsappFallbackButton) {
-    mercadoWhatsappFallbackButton.addEventListener('click', () => {
-      if (!validateOrderCustomerData()) return;
-      openMercadoPagoFallbackWhatsapp();
-    });
+    mercadoWhatsappFallbackButton.addEventListener('click', confirmCurrentOrder);
   }
 
   if (closeDetailModal) {
@@ -4917,6 +4946,5 @@ Total final: ${formatCurrency(order.totals.total)}`;
 
   updateCartCount();
   renderCart();
-  sendPendingMercadoPagoOrder();
 });
 
