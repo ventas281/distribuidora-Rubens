@@ -1,5 +1,7 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co';
+const { createClient } = require('@supabase/supabase-js');
 const { sendOrderEmails } = require('../lib/order-email');
+const tableName = 'pedidos';
 
 const setJsonHeaders = (res) => {
   res.setHeader('Content-Type', 'application/json');
@@ -28,6 +30,13 @@ const isValidOrder = (order) => (
   && Array.isArray(order.productos)
   && order.productos.length > 0
 );
+
+const supabaseErrorDetails = (error) => ({
+  message: error?.message || '',
+  code: error?.code || '',
+  details: error?.details || '',
+  hint: error?.hint || '',
+});
 
 module.exports = async (req, res) => {
   console.log('createOrder ejecutado');
@@ -70,29 +79,51 @@ module.exports = async (req, res) => {
     notas: String(order.notas || '').trim(),
   };
 
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/pedidos?select=*`, {
-      method: 'POST',
-      headers: {
-        apikey: serviceRoleKey,
-        Authorization: `Bearer ${serviceRoleKey}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=representation',
-      },
-      body: JSON.stringify(safeOrder),
-    });
-    const data = await response.json().catch(() => []);
-    const supabaseError = response.ok ? null : data;
-    console.log('Resultado Supabase:', data, supabaseError);
+  console.log('SUPABASE_URL', process.env.SUPABASE_URL);
+  console.log('TABLE', tableName);
+  console.log('PAYLOAD', safeOrder);
 
-    if (!response.ok) {
+  let supabasePhase = 'connection';
+  try {
+    const supabase = createClient(SUPABASE_URL, serviceRoleKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
+
+    const {
+      data: connectionData,
+      error: connectionError,
+    } = await supabase.from(tableName).select('*').limit(1);
+    console.log('Resultado conexion Supabase:', connectionData, connectionError);
+
+    if (connectionError) {
+      const error = supabaseErrorDetails(connectionError);
+      console.error('SUPABASE_CONNECTION_ERROR', error);
       return sendJson(res, 500, {
-        error: 'Supabase order error',
-        supabaseStatus: response.status,
-        details: data,
+        error: 'SUPABASE_CONNECTION_ERROR',
+        ...error,
       });
     }
-    const savedOrder = Array.isArray(data) ? data[0] : data;
+
+    supabasePhase = 'insert';
+    const {
+      data,
+      error: insertError,
+    } = await supabase.from(tableName).insert(safeOrder).select('*').single();
+    console.log('Resultado Supabase:', data, insertError);
+
+    if (insertError) {
+      const error = supabaseErrorDetails(insertError);
+      console.error('SUPABASE_INSERT_ERROR', error);
+      return sendJson(res, 500, {
+        error: 'SUPABASE_INSERT_ERROR',
+        ...error,
+      });
+    }
+
+    const savedOrder = data;
     console.log('Pedido guardado correctamente', savedOrder);
 
     let mailgunResult;
@@ -114,10 +145,14 @@ module.exports = async (req, res) => {
 
     return sendJson(res, 201, { order: savedOrder, email: mailgunResult });
   } catch (error) {
-    console.log('Resultado Supabase:', null, error);
+    const details = supabaseErrorDetails(error);
+    const errorType = supabasePhase === 'insert'
+      ? 'SUPABASE_INSERT_ERROR'
+      : 'SUPABASE_CONNECTION_ERROR';
+    console.error(errorType, details);
     return sendJson(res, 500, {
-      error: 'Order creation error',
-      message: error.message,
+      error: errorType,
+      ...details,
     });
   }
 };

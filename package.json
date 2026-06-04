@@ -7,6 +7,7 @@
     "build": "echo \"Static site ready\""
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.107.0",
     "mercadopago": "^2.13.0"
   },
   "description": "A professional, fully-functional web application for an online paint store featuring 500+ paint products with easy navigation and shopping capabilities.",
