@@ -1,8 +1,9 @@
 const { createClient } = require('@supabase/supabase-js');
 const { sendOrderEmails } = require('../lib/order-email');
 const tableName = 'pedidos';
-let SUPABASE_URL = process.env.SUPABASE_URL || 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co';
+let SUPABASE_URL = process.env.SUPABASE_URL || '';
 SUPABASE_URL = SUPABASE_URL.trim().replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const setJsonHeaders = (res) => {
   res.setHeader('Content-Type', 'application/json');
@@ -60,10 +61,16 @@ module.exports = async (req, res) => {
   }
   if (!isValidOrder(order)) return sendJson(res, 400, { error: 'Pedido incompleto' });
 
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceRoleKey) {
+  if (!SUPABASE_URL) {
+    return sendJson(res, 500, {
+      error: 'Missing SUPABASE_URL',
+      SUPABASE_URL_FINAL: SUPABASE_URL,
+    });
+  }
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
     return sendJson(res, 500, {
       error: 'Missing SUPABASE_SERVICE_ROLE_KEY',
+      SUPABASE_URL_FINAL: SUPABASE_URL,
     });
   }
 
@@ -82,16 +89,16 @@ module.exports = async (req, res) => {
 
   console.log('SUPABASE_URL_FINAL', SUPABASE_URL);
   console.log('TABLE=', tableName);
-  console.log('SERVICE_ROLE_EXISTS=', !!serviceRoleKey);
+  console.log('SERVICE_ROLE_EXISTS=', !!SUPABASE_SERVICE_ROLE_KEY);
   console.log('PAYLOAD=', safeOrder);
 
   try {
-    const supabase = createClient(SUPABASE_URL, serviceRoleKey);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     console.log('Ejecutando insert:', tableName, safeOrder);
     const {
       data,
       error: insertError,
-    } = await supabase.from('pedidos').insert([safeOrder]).select();
+    } = await supabase.from('pedidos').insert([safeOrder]).select().single();
     console.log('Resultado Supabase:', data, insertError);
 
     if (insertError) {
@@ -99,11 +106,12 @@ module.exports = async (req, res) => {
       console.error('SUPABASE_INSERT_ERROR', error);
       return sendJson(res, 500, {
         error: 'SUPABASE_INSERT_ERROR',
+        SUPABASE_URL_FINAL: SUPABASE_URL,
         ...error,
       });
     }
 
-    const savedOrder = Array.isArray(data) && data.length > 0 ? data[0] : safeOrder;
+    const savedOrder = data || safeOrder;
     console.log('Pedido guardado correctamente', savedOrder);
 
     let mailgunResult;
@@ -129,6 +137,7 @@ module.exports = async (req, res) => {
     console.error('SUPABASE_INSERT_ERROR', details);
     return sendJson(res, 500, {
       error: 'SUPABASE_INSERT_ERROR',
+      SUPABASE_URL_FINAL: SUPABASE_URL,
       ...details,
     });
   }
