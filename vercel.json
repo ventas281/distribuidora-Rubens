@@ -4,7 +4,8 @@
   "functions": {
     "api/*.js": {
       "includeFiles": "lib/**",
-      "maxDuration": 30
+      "maxDuration": 30,
+      "runtime": "nodejs20.x"
     }
   }
 }
