@@ -1,22 +1,12 @@
 const { createClient } = require('@supabase/supabase-js');
 const { sendOrderEmails } = require('../lib/order-email');
 const tableName = 'pedidos';
-const schemaName = 'public';
-const SUPABASE_URL = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co';
+const defaultSupabaseUrl = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co';
 
-const normalizeSupabaseUrl = (value) => {
-  const rawUrl = String(value || SUPABASE_URL).trim();
-  const parsedUrl = new URL(rawUrl);
-  const expectedUrl = new URL(SUPABASE_URL);
-  if (parsedUrl.hostname !== expectedUrl.hostname) {
-    console.warn('SUPABASE_URL no apunta al proyecto esperado; usando proyecto configurado.', {
-      receivedHost: parsedUrl.hostname,
-      expectedHost: expectedUrl.hostname,
-    });
-    return expectedUrl.origin;
-  }
-  return parsedUrl.origin;
-};
+const normalizeSupabaseUrl = (value) => String(value || defaultSupabaseUrl)
+  .trim()
+  .replace(/\/rest\/v1\/?$/, '')
+  .replace(/\/+$/, '');
 
 const setJsonHeaders = (res) => {
   res.setHeader('Content-Type', 'application/json');
@@ -107,9 +97,8 @@ module.exports = async (req, res) => {
     notas: String(order.notas || '').trim(),
   };
 
-  console.log('SUPABASE_URL=', supabaseUrl);
-  console.log('SUPABASE_URL_RAW_PATH=', String(process.env.SUPABASE_URL || '').replace(supabaseUrl, '') || '/');
-  console.log('TABLE=', `${schemaName}.${tableName}`);
+  console.log('SUPABASE_URL_NORMALIZED=', supabaseUrl);
+  console.log('TABLE=', tableName);
   console.log('SERVICE_ROLE_EXISTS=', !!serviceRoleKey);
   console.log('PAYLOAD=', safeOrder);
 
@@ -129,19 +118,16 @@ module.exports = async (req, res) => {
         persistSession: false,
         autoRefreshToken: false,
       },
-      db: {
-        schema: schemaName,
-      },
       global: {
         fetch: supabaseFetch,
       },
     });
 
-    console.log('Ejecutando select de diagnostico:', `${schemaName}.${tableName}`);
+    console.log('Ejecutando select de diagnostico:', tableName);
     const {
       data: connectionData,
       error: connectionError,
-    } = await supabase.schema(schemaName).from(tableName).select('*').limit(1);
+    } = await supabase.from('pedidos').select('*').limit(1);
     console.log('Resultado conexion Supabase:', connectionData, connectionError);
 
     if (connectionError) {
@@ -154,11 +140,11 @@ module.exports = async (req, res) => {
     }
 
     supabasePhase = 'insert';
-    console.log('Ejecutando insert:', `${schemaName}.${tableName}`, safeOrder);
+    console.log('Ejecutando insert:', tableName, safeOrder);
     const {
       data,
       error: insertError,
-    } = await supabase.from(tableName).insert([safeOrder]).select();
+    } = await supabase.from('pedidos').insert([safeOrder]).select();
     console.log('Resultado Supabase:', data, insertError);
 
     if (insertError) {
