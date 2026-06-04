@@ -38,8 +38,8 @@ module.exports = async (req, res) => {
   }
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'Method not allowed' });
 
-  console.log('createOrder POST recibido');
-  console.log('body recibido', req.body);
+  console.log('POST recibido en createOrder');
+  console.log('Body:', req.body);
 
   let order;
   try {
@@ -82,24 +82,42 @@ module.exports = async (req, res) => {
       body: JSON.stringify(safeOrder),
     });
     const data = await response.json().catch(() => []);
+    const supabaseError = response.ok ? null : data;
+    console.log('Resultado Supabase:', data, supabaseError);
+
     if (!response.ok) {
-      return sendJson(res, response.status, { error: 'Supabase order error', details: data });
+      return sendJson(res, 500, {
+        error: 'Supabase order error',
+        supabaseStatus: response.status,
+        details: data,
+      });
     }
     const savedOrder = Array.isArray(data) ? data[0] : data;
     console.log('Pedido guardado correctamente', savedOrder);
 
-    let email = { sent: false };
+    let mailgunResult;
     try {
       console.log('Intentando enviar correo con Mailgun', savedOrder.id);
-      email = await sendOrderEmails(savedOrder);
+      mailgunResult = await sendOrderEmails(savedOrder);
+      console.log('Resultado Mailgun:', mailgunResult);
       console.log('Correo enviado correctamente', savedOrder.id);
     } catch (emailError) {
       console.error('Error enviando correo con Mailgun', emailError);
-      email = { sent: false, error: emailError.message };
+      mailgunResult = { sent: false, error: emailError.message };
+      console.log('Resultado Mailgun:', mailgunResult);
+      return sendJson(res, 200, {
+        order: savedOrder,
+        email: mailgunResult,
+        warning: 'Pedido guardado, pero no fue posible enviar el correo.',
+      });
     }
 
-    return sendJson(res, 201, { order: savedOrder, email });
+    return sendJson(res, 201, { order: savedOrder, email: mailgunResult });
   } catch (error) {
-    return sendJson(res, 500, { error: 'Order creation error', message: error.message });
+    console.log('Resultado Supabase:', null, error);
+    return sendJson(res, 500, {
+      error: 'Order creation error',
+      message: error.message,
+    });
   }
 };
