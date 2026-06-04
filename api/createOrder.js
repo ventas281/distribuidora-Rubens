@@ -38,6 +38,9 @@ module.exports = async (req, res) => {
   }
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'Method not allowed' });
 
+  console.log('createOrder POST recibido');
+  console.log('body recibido', req.body);
+
   let order;
   try {
     order = parseBody(req);
