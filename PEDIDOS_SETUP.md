@@ -25,7 +25,7 @@ Si `rubensdistribuidora.com` no apunta al despliegue Vercel, configura en
 `productos.html`:
 
 ```js
-window.ORDER_API_BASE_URL = 'https://TU-PROYECTO.vercel.app';
+window.ORDER_API_BASE_URL = 'https://distribuidora-rubens.vercel.app';
 ```
 
 Sin esta URL, `/api/createOrder` se solicita al mismo dominio del sitio. Si ese
