@@ -20,6 +20,8 @@ const errorDetails = (error) => ({
   status: error?.status || error?.statusCode || '',
 });
 
+const normalizeSupabaseUrl = (value) => new URL(String(value || '').trim()).origin;
+
 module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') {
     setJsonHeaders(res);
@@ -29,10 +31,15 @@ module.exports = async (req, res) => {
     return sendJson(res, 405, { error: 'Method not allowed' });
   }
 
-  const SUPABASE_URL = String(process.env.SUPABASE_URL || '')
-    .trim()
-    .replace(/\/rest\/v1\/?$/, '')
-    .replace(/\/+$/, '');
+  let SUPABASE_URL;
+  try {
+    SUPABASE_URL = normalizeSupabaseUrl(process.env.SUPABASE_URL);
+  } catch (error) {
+    return sendJson(res, 500, {
+      error: 'Invalid SUPABASE_URL',
+      ...errorDetails(error),
+    });
+  }
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -71,17 +78,19 @@ module.exports = async (req, res) => {
   }
 
   try {
-    console.log('TABLE', 'public.pedidos');
-    console.log('SUPABASE_URL_FINAL', SUPABASE_URL);
+    console.log('SUPABASE_URL', SUPABASE_URL);
+    console.log('SERVICE_ROLE_KEY_EXISTS', Boolean(SUPABASE_SERVICE_ROLE_KEY));
+    console.log('TABLE', 'pedidos');
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { data, error } = await supabase
-      .schema('public')
       .from('pedidos')
       .insert([safeOrder])
       .select()
       .single();
+    console.log('SUPABASE_RESULT', { data, error });
 
     if (error) {
+      console.error('SUPABASE_ERROR', error);
       return sendJson(res, 500, {
         error: 'SUPABASE_INSERT_ERROR',
         SUPABASE_URL_FINAL: SUPABASE_URL,
@@ -91,6 +100,7 @@ module.exports = async (req, res) => {
 
     return sendJson(res, 201, { order: data || safeOrder });
   } catch (error) {
+    console.error('SUPABASE_ERROR', error);
     return sendJson(res, 500, {
       error: 'SUPABASE_INSERT_ERROR',
       SUPABASE_URL_FINAL: SUPABASE_URL,
