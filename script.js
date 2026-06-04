@@ -3494,6 +3494,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const saveOrder = async (orderRecord) => {
     try {
       const createOrderUrl = `${ORDER_API_BASE_URL}/api/createOrder`;
+      console.log('ORDER_API_BASE_URL:', window.ORDER_API_BASE_URL);
+      console.log('Pedido a enviar:', orderRecord);
+      console.log('Productos:', orderRecord?.productos);
       console.log('Intentando crear pedido mediante endpoint Vercel:', createOrderUrl);
       const response = await fetch(createOrderUrl, {
         method: 'POST',
@@ -3946,11 +3949,11 @@ Total final: ${formatCurrency(order.totals.total)}`;
       La Public Key puede estar en frontend, pero el Access Token NO debe exponerse
       en GitHub Pages ni en ningún archivo público.
 
-      Netlify ejecuta /.netlify/functions/createPreference en servidor.
+      Vercel ejecuta /api/createPreference en servidor.
       Ahí debe configurarse MERCADO_PAGO_ACCESS_TOKEN como variable de entorno.
     */
     const order = buildOrderSummaryData();
-    const response = await fetch('/.netlify/functions/createPreference', {
+    const response = await fetch(`${ORDER_API_BASE_URL}/api/createPreference`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -4950,7 +4953,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
           deliveryMethod: getDeliveryMethodLabel(),
         };
 
-        const res = await fetch('/.netlify/functions/createPreference', {
+        const res = await fetch(`${ORDER_API_BASE_URL}/api/createPreference`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
