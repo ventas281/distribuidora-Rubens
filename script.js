@@ -435,7 +435,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_REST_URL = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co/rest/v1/';
   const SUPABASE_KEY = 'sb_publishable_IPQVpAeDJwNh_bZ575tz5w_8hAUzsEL';
   const SUPABASE_PRODUCTS_TABLE = 'productos';
-  const ORDER_API_BASE_URL = String(window.ORDER_API_BASE_URL || '').replace(/\/$/, '');
+  const ORDER_API_BASE_URL = window.location.hostname.includes('rubensdistribuidora.com')
+    ? 'https://rubensdistribuidora.com'
+    : 'https://distribuidora-rubens.vercel.app';
+  const ORDER_API_FALLBACK_URL = 'https://distribuidora-rubens.vercel.app';
+  const CREATE_PREFERENCE_API_BASE_URL = String(window.ORDER_API_BASE_URL || ORDER_API_FALLBACK_URL).replace(/\/$/, '');
 
   const parseAdminSizeOptions = (sizesText) => {
     const lines = String(sizesText || '').split('\n').map((line) => line.trim()).filter(Boolean);
@@ -3473,23 +3477,34 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   const saveOrder = async (orderRecord) => {
-    const createOrderUrl = `${ORDER_API_BASE_URL}/api/createOrder`;
-    console.log('ORDER_API_BASE_URL:', window.ORDER_API_BASE_URL);
+    const orderApiBaseUrls = [...new Set([ORDER_API_BASE_URL, ORDER_API_FALLBACK_URL])];
+    console.log('ORDER_API_BASE_URL:', ORDER_API_BASE_URL);
     console.log('Pedido a enviar:', orderRecord);
     console.log('Productos:', orderRecord?.productos);
-    console.log('Intentando crear pedido mediante endpoint Vercel:', createOrderUrl);
 
-    const response = await fetch(createOrderUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orderRecord),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (response.status !== 201 || !data.order) {
-      throw new Error(data.message || data.error || `No se pudo guardar el pedido. HTTP ${response.status}`);
+    let lastError;
+    for (const apiBaseUrl of orderApiBaseUrls) {
+      const createOrderUrl = `${apiBaseUrl}/api/createOrder`;
+      console.log('Intentando crear pedido:', createOrderUrl);
+      try {
+        const response = await fetch(createOrderUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderRecord),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data.order) {
+          console.log('Pedido creado correctamente:', data);
+          return data.order;
+        }
+        lastError = new Error(data.message || data.error || `No se pudo guardar el pedido. HTTP ${response.status}`);
+      } catch (error) {
+        lastError = error;
+      }
+      console.error('Falló endpoint de pedidos; intentando respaldo:', createOrderUrl, lastError);
     }
-    console.log('Pedido creado mediante endpoint Vercel:', data);
-    return data.order;
+
+    throw lastError || new Error('No se pudo guardar el pedido.');
   };
 
   const clearCartAfterOrder = () => {
@@ -3933,7 +3948,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
       Ahí debe configurarse MERCADO_PAGO_ACCESS_TOKEN como variable de entorno.
     */
     const order = buildOrderSummaryData();
-    const response = await fetch(`${ORDER_API_BASE_URL}/api/createPreference`, {
+    const response = await fetch(`${CREATE_PREFERENCE_API_BASE_URL}/api/createPreference`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -4933,7 +4948,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
           deliveryMethod: getDeliveryMethodLabel(),
         };
 
-        const res = await fetch(`${ORDER_API_BASE_URL}/api/createPreference`, {
+        const res = await fetch(`${CREATE_PREFERENCE_API_BASE_URL}/api/createPreference`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
