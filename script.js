@@ -3483,7 +3483,7 @@ window.addEventListener('DOMContentLoaded', () => {
     console.log('Productos:', orderRecord?.productos);
 
     let lastError;
-    for (const apiBaseUrl of orderApiBaseUrls) {
+    for (const [index, apiBaseUrl] of orderApiBaseUrls.entries()) {
       const createOrderUrl = `${apiBaseUrl}/api/createOrder`;
       console.log('Intentando crear pedido:', createOrderUrl);
       try {
@@ -3501,7 +3501,9 @@ window.addEventListener('DOMContentLoaded', () => {
       } catch (error) {
         lastError = error;
       }
-      console.error('Falló endpoint de pedidos; intentando respaldo:', createOrderUrl, lastError);
+      if (index < orderApiBaseUrls.length - 1) {
+        console.log('Endpoint principal no disponible; intentando respaldo.');
+      }
     }
 
     throw lastError || new Error('No se pudo guardar el pedido.');
@@ -3514,20 +3516,31 @@ window.addEventListener('DOMContentLoaded', () => {
     updateCartCount();
   };
 
-  const showOrderConfirmation = (savedOrder) => {
-    const orderNumber = savedOrder?.id ? ` #${savedOrder.id}` : '';
+  const showOrderConfirmation = () => {
+    const confirmationMessage = 'Pedido recibido correctamente. En breve confirmaremos disponibilidad y entrega.';
     if (paymentSummaryEl) {
-      paymentSummaryEl.innerHTML = `
-        <strong>Pedido recibido correctamente${orderNumber}.</strong>
-        <p>En breve confirmaremos disponibilidad y entrega.</p>
-      `;
+      paymentSummaryEl.textContent = confirmationMessage;
     }
-    setOrderEmailStatus('Pedido recibido correctamente. En breve confirmaremos disponibilidad y entrega.');
+    setOrderEmailStatus(confirmationMessage);
   };
 
   let orderSubmissionInProgress = false;
+  let successfulOrderSubmission = null;
   const registerCurrentOrder = async () => {
+    if (successfulOrderSubmission && cart.length === 0) {
+      showOrderConfirmation();
+      return successfulOrderSubmission;
+    }
+    if (cart.length > 0) successfulOrderSubmission = null;
     if (orderSubmissionInProgress) throw new Error('El pedido ya se está guardando.');
+
+    setOrderEmailStatus('');
+    if (paymentFormStatusEl) {
+      paymentFormStatusEl.textContent = '';
+      paymentFormStatusEl.classList.remove('is-error');
+      paymentFormStatusEl.classList.remove('is-floating');
+    }
+
     if (cart.length === 0) {
       showPaymentRequiredNotice();
       throw new Error('Tu carrito está vacío.');
@@ -3544,9 +3557,10 @@ window.addEventListener('DOMContentLoaded', () => {
     setOrderEmailStatus('Guardando pedido...');
     try {
       const savedOrder = await saveOrder(orderRecord);
+      successfulOrderSubmission = { savedOrder, snapshot };
       clearCartAfterOrder();
-      showOrderConfirmation(savedOrder);
-      return { savedOrder, snapshot };
+      showOrderConfirmation();
+      return successfulOrderSubmission;
     } catch (error) {
       setOrderEmailStatus('No se pudo guardar el pedido. Intenta nuevamente.', true);
       throw error;
@@ -3559,7 +3573,7 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       await registerCurrentOrder();
     } catch (error) {
-      console.error('Error al confirmar pedido:', error);
+      console.log('No se pudo confirmar el pedido:', error.message);
     }
   };
 
