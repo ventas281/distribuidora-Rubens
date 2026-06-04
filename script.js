@@ -436,6 +436,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_KEY = 'sb_publishable_IPQVpAeDJwNh_bZ575tz5w_8hAUzsEL';
   const SUPABASE_PRODUCTS_TABLE = 'productos';
   const SUPABASE_ORDERS_TABLE = 'pedidos';
+  const ORDER_API_BASE_URL = String(window.ORDER_API_BASE_URL || '').replace(/\/$/, '');
 
   const parseAdminSizeOptions = (sizesText) => {
     const lines = String(sizesText || '').split('\n').map((line) => line.trim()).filter(Boolean);
@@ -3492,15 +3493,19 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const saveOrder = async (orderRecord) => {
     try {
-      const response = await fetch('/api/createOrder', {
+      const createOrderUrl = `${ORDER_API_BASE_URL}/api/createOrder`;
+      console.log('Intentando crear pedido mediante endpoint Vercel:', createOrderUrl);
+      const response = await fetch(createOrderUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderRecord),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.order) throw new Error(data.message || data.error || 'No se pudo guardar el pedido.');
+      console.log('Pedido creado mediante endpoint Vercel:', data);
       return data.order;
     } catch (error) {
+      console.error('No se pudo ejecutar /api/createOrder; guardando directamente en Supabase sin correo:', error);
       return saveOrderDirectlyToSupabase(orderRecord);
     }
   };

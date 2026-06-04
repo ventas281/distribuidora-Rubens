@@ -20,3 +20,14 @@ La funcion `api/createOrder.js` guarda el pedido y llama internamente al helper
 Mailgun para enviar la notificacion a ventas y la confirmacion al cliente. Si
 Mailgun falla, el pedido permanece guardado. `api/send-order-email.js` reutiliza
 el mismo helper para envios manuales o pruebas.
+
+Si `rubensdistribuidora.com` no apunta al despliegue Vercel, configura en
+`productos.html`:
+
+```js
+window.ORDER_API_BASE_URL = 'https://TU-PROYECTO.vercel.app';
+```
+
+Sin esta URL, `/api/createOrder` se solicita al mismo dominio del sitio. Si ese
+dominio esta en GitHub Pages o Netlify, el checkout usa el respaldo directo de
+Supabase y no puede ejecutar Mailgun ni producir logs en Vercel.

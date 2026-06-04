@@ -30,6 +30,8 @@ const isValidOrder = (order) => (
 );
 
 module.exports = async (req, res) => {
+  console.log('createOrder ejecutado');
+
   if (req.method === 'OPTIONS') {
     setJsonHeaders(res);
     return res.status(200).end();
@@ -85,11 +87,11 @@ module.exports = async (req, res) => {
 
     let email = { sent: false };
     try {
-      console.log('Intentando enviar correo de pedido', savedOrder.id);
+      console.log('Intentando enviar correo con Mailgun', savedOrder.id);
       email = await sendOrderEmails(savedOrder);
-      console.log('Correo de pedido enviado', savedOrder.id);
+      console.log('Correo enviado correctamente', savedOrder.id);
     } catch (emailError) {
-      console.error('Error enviando correo de pedido', emailError);
+      console.error('Error enviando correo con Mailgun', emailError);
       email = { sent: false, error: emailError.message };
     }
 
