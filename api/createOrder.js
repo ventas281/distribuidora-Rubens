@@ -71,8 +71,11 @@ module.exports = async (req, res) => {
   }
 
   try {
+    console.log('TABLE', 'public.pedidos');
+    console.log('SUPABASE_URL_FINAL', SUPABASE_URL);
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { data, error } = await supabase
+      .schema('public')
       .from('pedidos')
       .insert([safeOrder])
       .select()
