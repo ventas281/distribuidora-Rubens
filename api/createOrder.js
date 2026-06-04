@@ -1,7 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
 const { sendOrderEmails } = require('../lib/order-email');
 const tableName = 'pedidos';
-const SUPABASE_URL = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co';
+let SUPABASE_URL = process.env.SUPABASE_URL || 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co';
+SUPABASE_URL = SUPABASE_URL.trim().replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
 
 const setJsonHeaders = (res) => {
   res.setHeader('Content-Type', 'application/json');
@@ -62,8 +63,7 @@ module.exports = async (req, res) => {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) {
     return sendJson(res, 500, {
-      error: 'Missing Supabase service role key',
-      message: 'Configura SUPABASE_SERVICE_ROLE_KEY en Vercel.',
+      error: 'Missing SUPABASE_SERVICE_ROLE_KEY',
     });
   }
 
@@ -80,7 +80,7 @@ module.exports = async (req, res) => {
     notas: String(order.notas || '').trim(),
   };
 
-  console.log('SUPABASE_URL=', SUPABASE_URL);
+  console.log('SUPABASE_URL_FINAL', SUPABASE_URL);
   console.log('TABLE=', tableName);
   console.log('SERVICE_ROLE_EXISTS=', !!serviceRoleKey);
   console.log('PAYLOAD=', safeOrder);
