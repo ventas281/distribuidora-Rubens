@@ -3,7 +3,10 @@
   "framework": null,
   "functions": {
     "api/*.js": {
-      "includeFiles": "lib/**",
+      "includeFiles": [
+        "lib/**",
+        "pages/api/**"
+      ],
       "maxDuration": 30
     }
   }
