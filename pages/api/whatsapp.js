@@ -6,14 +6,16 @@ const userStates = new Map();
 
 const MAIN_MENU = [
   '¡Hola! Bienvenido a Distribuidora Rubens. 🎨 Presiona una opción para ayudarte:',
-  '1️⃣ Hacer un pedido nuevo',
-  '2️⃣ Consultar el estatus de mi pedido',
-  '3️⃣ Hablar con un ejecutivo',
+  '1️⃣ Pedido nuevo',
+  '2️⃣ Estatus de pedido',
+  '3️⃣ Ejecutivo',
 ].join('\n');
 
-const normalizeSupabaseUrl = (value) => new URL(String(value || '').trim()).origin;
+function normalizeSupabaseUrl(value) {
+  return new URL(String(value || '').trim()).origin;
+}
 
-const getIncomingMessage = (body = {}) => {
+function extractIncomingMessage(body = {}) {
   const message = body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
   if (!message) return null;
 
@@ -21,9 +23,9 @@ const getIncomingMessage = (body = {}) => {
     from: message.from,
     text: String(message.text?.body || '').trim(),
   };
-};
+}
 
-const getSupabaseClient = () => {
+function getSupabaseClient() {
   const supabaseUrl = normalizeSupabaseUrl(process.env.SUPABASE_URL);
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -32,9 +34,9 @@ const getSupabaseClient = () => {
   }
 
   return createClient(supabaseUrl, serviceRoleKey);
-};
+}
 
-const getOrderStatusMessage = async (pedidoId) => {
+async function getOrderStatusMessage(pedidoId) {
   try {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase
@@ -55,9 +57,9 @@ const getOrderStatusMessage = async (pedidoId) => {
     console.error('SUPABASE_STATUS_ERROR', error);
     return 'Por ahora no pude consultar el estatus de tu pedido. Un ejecutivo de Distribuidora Rubens te atenderá en breve.';
   }
-};
+}
 
-const getBotResponse = async (from, text) => {
+async function getBotResponse(from, text) {
   const normalizedText = String(text || '').trim().toLowerCase();
   const currentState = userStates.get(from);
 
@@ -88,7 +90,7 @@ const getBotResponse = async (from, text) => {
     default:
       return MAIN_MENU;
   }
-};
+}
 
 async function handler(req, res) {
   if (req.method === 'GET') {
@@ -96,17 +98,14 @@ async function handler(req, res) {
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
 
-    const MY_SECRET_TOKEN = 'MiTokenSecretoDistribuidoraRubens2026';
-
     if (mode && token) {
       if (mode === 'subscribe' && token === MY_SECRET_TOKEN) {
         console.log('WEBHOOK_VERIFIED');
-        // Forzar texto plano para que Meta lo valide correctamente
         res.setHeader('Content-Type', 'text/plain');
         return res.status(200).send(challenge);
-      } else {
-        return res.status(403).end();
       }
+
+      return res.status(403).end();
     }
   }
 
@@ -114,7 +113,7 @@ async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const incomingMessage = getIncomingMessage(req.body);
+  const incomingMessage = extractIncomingMessage(req.body);
   if (!incomingMessage?.from) {
     return res.status(200).json({ ok: true, ignored: true });
   }
