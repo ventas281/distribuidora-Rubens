@@ -83,38 +83,23 @@ const sendWhatsAppMessage = async (toNumber, messageText) => {
   }
 };
 
-export async function GET(request) {
-  const searchParams = request.nextUrl.searchParams;
-  const mode = searchParams.get('hub.mode');
-  const token = searchParams.get('hub.verify_token');
-  const challenge = searchParams.get('hub.challenge');
+// Reemplaza tus export async function GET y POST con esto:
+module.exports = async (req, res) => {
+    if (req.method === 'GET') {
+        const { query } = req;
+        const mode = query['hub.mode'];
+        const token = query['hub.verify_token'];
+        const challenge = query['hub.challenge'];
 
-  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-    console.log('WEBHOOK_VERIFIED');
-    return new Response(challenge || '', {
-      status: 200,
-      headers: { 'Content-Type': 'text/plain' },
-    });
-  }
-
-  return new Response('Forbidden', { status: 403 });
-}
-
-export async function POST(request) {
-  try {
-    const body = await request.json();
-    const incomingMessage = getIncomingMessage(body);
-
-    if (!incomingMessage?.from) {
-      return new Response('EVENT_RECEIVED', { status: 200 });
+        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+            return res.status(200).send(challenge);
+        }
+        return res.status(403).send('Forbidden');
     }
 
-    const responseText = getBotResponse(incomingMessage.from, incomingMessage.text);
-    await sendWhatsAppMessage(incomingMessage.from, responseText);
-    return new Response('EVENT_RECEIVED', { status: 200 });
-  } catch (error) {
-    console.error('WHATSAPP_APP_ROUTE_ERROR', error);
-    return new Response('EVENT_RECEIVED', { status: 200 });
-  }
-}
-//Despliegue forzado
+    if (req.method === 'POST') {
+        const body = req.body;
+        // ... aquí va tu lógica de manejo de mensajes ...
+        return res.status(200).send('EVENT_RECEIVED');
+    }
+};
