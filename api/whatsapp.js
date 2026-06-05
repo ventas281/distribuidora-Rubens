@@ -82,24 +82,24 @@ const sendWhatsAppMessage = async (toNumber, messageText) => {
     throw new Error(data.error?.message || `WhatsApp HTTP ${response.status}`);
   }
 };
-
 // Reemplaza tus export async function GET y POST con esto:
 module.exports = async (req, res) => {
-    if (req.method === 'GET') {
-        const { query } = req;
-        const mode = query['hub.mode'];
-        const token = query['hub.verify_token'];
-        const challenge = query['hub.challenge'];
-
-        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-            return res.status(200).send(challenge);
-        }
-        return res.status(403).send('Forbidden');
+  if (req.method === 'GET') {
+    // Lógica para verificar el webhook de WhatsApp
+    const { query } = req;
+    const mode = query['hub.mode'];
+    const token = query['hub.verify_token'];
+    const challenge = query['hub.challenge'];
+    
+    // VERIFY_TOKEN debe ser igual al que pusiste en el Panel de Meta
+    if (mode === 'subscribe' && token === 'MiTokenSecretoDistribuidoraRubens2026') {
+      return res.status(200).send(challenge);
     }
+    return res.status(403).send('Forbidden');
+  }
 
-    if (req.method === 'POST') {
-        const body = req.body;
-        // ... aquí va tu lógica de manejo de mensajes ...
-        return res.status(200).send('EVENT_RECEIVED');
-    }
+  if (req.method === 'POST') {
+    // Aquí recibes los mensajes
+    return res.status(200).send('EVENT_RECEIVED');
+  }
 };
