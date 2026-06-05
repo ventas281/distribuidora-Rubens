@@ -110,6 +110,24 @@ const getBotResponse = async (from, text) => {
 };
 
 module.exports = async (req, res) => {
+  if (req.method === 'GET') {
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+
+    const MY_SECRET_TOKEN = 'MiTokenSecretoDistribuidoraRubens2026';
+
+    if (mode && token) {
+      if (mode === 'subscribe' && token === MY_SECRET_TOKEN) {
+        console.log('WEBHOOK_VERIFIED');
+        // Forzar texto plano para que Meta lo valide correctamente
+        res.setHeader('Content-Type', 'text/plain');
+        return res.status(200).send(challenge);
+      }
+      return res.status(403).end();
+    }
+  }
+
   if (req.method !== 'POST') {
     return sendJson(res, 405, { error: 'Method not allowed' });
   }
