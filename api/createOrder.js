@@ -40,13 +40,13 @@ module.exports = async (req, res) => {
       ...errorDetails(error),
     });
   }
-  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  if (!SUPABASE_URL || !serviceRoleKey) {
     return sendJson(res, 500, {
       error: 'Missing Supabase environment variables',
       SUPABASE_URL_FINAL: SUPABASE_URL,
-      serviceRoleExists: Boolean(SUPABASE_SERVICE_ROLE_KEY),
+      serviceRoleExists: Boolean(serviceRoleKey),
     });
   }
 
@@ -78,10 +78,20 @@ module.exports = async (req, res) => {
   }
 
   try {
-    console.log('SUPABASE_URL', SUPABASE_URL);
-    console.log('SERVICE_ROLE_KEY_EXISTS', Boolean(SUPABASE_SERVICE_ROLE_KEY));
-    console.log('TABLE', 'pedidos');
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    console.log('DEBUG_SUPABASE_CONFIG', {
+      url: SUPABASE_URL,
+      hasKey: Boolean(serviceRoleKey),
+      keyStart: serviceRoleKey ? serviceRoleKey.substring(0, 10) : null,
+    });
+
+    const supabase = createClient(SUPABASE_URL, serviceRoleKey);
+    console.log('DEBUG_CLIENT_CREATED');
+
+    console.log('DEBUG_BEFORE_INSERT', {
+      table: 'pedidos',
+      payload: safeOrder,
+    });
+
     const { data, error } = await supabase
       .from('pedidos')
       .insert([safeOrder])
