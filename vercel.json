@@ -1,10 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "functions": {
-    "api/*.js": {
-      "includeFiles": "{lib,pages/api}/**",
-      "maxDuration": 30
-    }
-  }
 }
