@@ -1,13 +1,5 @@
 {
-  "functions": {
-    "api/whatsapp.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
-  "routes": [
-    {
-      "src": "/api/whatsapp",
-      "dest": "/api/whatsapp.js"
-    }
+  "rewrites": [
+    { "source": "/api/whatsapp", "destination": "/api/whatsapp.js" }
   ]
 }
