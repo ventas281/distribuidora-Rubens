@@ -334,6 +334,25 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   const normalizeCategoryKey = (category) => categoryAliases[normalizeCategoryText(category)] || normalizeCategoryText(category).replace(/\s+/g, '-');
+  const isPaintStorePage = window.location.pathname.includes('/paint-store/');
+  const localAssetPath = (fileName) => `${isPaintStorePage ? '../' : ''}${fileName}`;
+  const fallbackProductImages = {
+    vinilica: 'sayer-magicolor.jpg',
+    esmalte: 'sayer-promaster.png',
+    epoxica: 'season-rain-waterproofing.png',
+    aerosoles: 'aerosol-alvamax.svg',
+    madera: 'sayer-ultra.png',
+    aplicadores: 'tintas_crop_0.png',
+    selladores: 'season-rain-waterproofing.jpg',
+    diluyentes: 'tintas_crop_1.png',
+    primerarios: 'sayer-contractor.jpg',
+  };
+  const getProductDisplayImage = (product) => {
+    const image = String(product.image || '').trim();
+    if (image) return image;
+    const fallback = fallbackProductImages[normalizeCategoryKey(product.category)];
+    return fallback ? localAssetPath(fallback) : localAssetPath('logo.png.png');
+  };
 
   const normalizeText = (text) => String(text || '')
     .toLowerCase()
@@ -4065,14 +4084,16 @@ Total final: ${formatCurrency(order.totals.total)}`;
       return `<button class="rating-star${isActive}" type="button" data-product-id="${product.id}" data-rating="${value}" aria-label="Calificar ${value} de 5">&#9733;</button>`;
     }).join('');
     let imageMarkup = '';
-    if (product.category === 'aerosoles' && product.image) {
+    const displayImage = getProductDisplayImage(product);
+    const shouldContainImage = product.imageFit === 'contain' || !product.image || product.category === 'aerosoles';
+    if (product.category === 'aerosoles' && displayImage) {
       imageMarkup = `
         <div class="aerosol-image-wrapper">
-          <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" class="aerosol-bg-image">
+          <img src="${escapeHtml(displayImage)}" alt="${escapeHtml(product.name)}" class="aerosol-bg-image">
         </div>
       `;
-    } else if (product.image) {
-      imageMarkup = `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" class="${product.imageFit === 'contain' ? 'product-image-contain' : ''}">`;
+    } else if (displayImage) {
+      imageMarkup = `<img src="${escapeHtml(displayImage)}" alt="${escapeHtml(product.name)}" class="${shouldContainImage ? 'product-image-contain' : ''}">`;
     } else {
       imageMarkup = 'Sin imagen';
     }
