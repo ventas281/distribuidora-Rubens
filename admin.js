@@ -12,7 +12,16 @@
   const SUPABASE_PRODUCTS_TABLE = 'productos';
   const SUPABASE_ORDERS_TABLE = 'pedidos';
   const AUTHORIZED_ADMIN_EMAIL = 'ventas@rubensdistribuidora.com';
-  const getAdminAuthRedirectTo = () => `${window.location.origin}/admin.html`;
+  const LOCAL_ADMIN_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
+  const isLocalAdminEnvironment = () => (
+    window.location.protocol === 'file:' || LOCAL_ADMIN_HOSTS.has(window.location.hostname)
+  );
+  const getAdminAuthRedirectTo = () => {
+    const adminPath = window.location.pathname.endsWith('/admin.html')
+      ? window.location.pathname
+      : '/admin.html';
+    return `${window.location.origin}${adminPath}`;
+  };
 
   const createId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
@@ -685,6 +694,10 @@
 
   // Iniciar sesión con Google mediante Supabase Auth OAuth.
   const signInWithGoogle = async () => {
+    if (isLocalAdminEnvironment()) {
+      showApp();
+      return;
+    }
     const client = getSupabaseClient();
     if (!client) {
       setStatus(elements.loginStatus, 'No se pudo iniciar Supabase Auth.', true, false);
@@ -740,6 +753,10 @@
 
   // Obtener sesión actual al abrir admin.html y proteger el dashboard.
   const initializeAdminAuth = async () => {
+    if (isLocalAdminEnvironment()) {
+      showApp();
+      return;
+    }
     const client = getSupabaseClient();
     if (!client) {
       showLogin('No se pudo cargar Supabase Auth.');
