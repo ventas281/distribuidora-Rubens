@@ -2,3 +2,4 @@ chrome-*/
 extensions/
 node_modules/
 Screenshot*.png
+paint-store/

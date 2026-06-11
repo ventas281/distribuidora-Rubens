@@ -351,7 +351,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const image = String(product.image || '').trim();
     if (image) return image;
     const fallback = fallbackProductImages[normalizeCategoryKey(product.category)];
-    return fallback ? localAssetPath(fallback) : localAssetPath('logo.png.png');
+    return fallback ? localAssetPath(fallback) : localAssetPath('logo.png');
   };
 
   const normalizeText = (text) => String(text || '')
