@@ -75,7 +75,7 @@ async function getBotResponse(from, text) {
 
   switch (normalizedText) {
     case '1':
-      return '¡Perfecto! Para levantar tu pedido, por favor visita nuestra tienda en línea para registrar tus datos de forma segura: https://distribuidora-rubens.vercel.app/';
+      return '¡Perfecto! Para levantar tu pedido, por favor visita nuestra tienda en línea para registrar tus datos de forma segura: https://rubensdistribuidora.com/';
     case '2':
       userStates.set(from, 'ESPERANDO_ID_PEDIDO');
       return 'Por favor, escribe el número de ID de tu pedido (solo los números):';

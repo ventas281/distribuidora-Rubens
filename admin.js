@@ -12,9 +12,8 @@
   const SUPABASE_PRODUCTS_TABLE = 'productos';
   const SUPABASE_ORDERS_TABLE = 'pedidos';
   const AUTHORIZED_ADMIN_EMAIL = 'ventas@rubensdistribuidora.com';
-  const LOCAL_ADMIN_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
   const isLocalAdminEnvironment = () => (
-    window.location.protocol === 'file:' || LOCAL_ADMIN_HOSTS.has(window.location.hostname)
+    window.location.protocol === 'file:'
   );
   const getAdminAuthRedirectTo = () => {
     const adminPath = window.location.pathname.endsWith('/admin.html')
@@ -815,69 +814,14 @@
     updateProductImagePreview('', '');
   };
 
-  const waitForCatalogCards = (iframe) => new Promise((resolve) => {
-    let attempts = 0;
-    const check = () => {
-      attempts += 1;
-      const doc = iframe.contentDocument;
-      const cards = doc ? Array.from(doc.querySelectorAll('.product-card')) : [];
-      if (cards.length || attempts > 80) {
-        resolve(cards);
-        return;
-      }
-      window.setTimeout(check, 100);
-    };
-    check();
-  });
-
-  const readCatalogProductsFromIframe = async () => {
-    const iframe = document.createElement('iframe');
-    iframe.src = 'productos.html?catalogoLocal=1';
-    iframe.title = 'Catalogo temporal para admin';
-    iframe.setAttribute('aria-hidden', 'true');
-    iframe.style.position = 'fixed';
-    iframe.style.width = '1px';
-    iframe.style.height = '1px';
-    iframe.style.opacity = '0';
-    iframe.style.pointerEvents = 'none';
-    iframe.style.left = '-9999px';
-    document.body.appendChild(iframe);
-
+  const readCatalogProductsFromSnapshot = async () => {
     try {
-      await new Promise((resolve, reject) => {
-        iframe.onload = resolve;
-        iframe.onerror = reject;
-      });
-      const cards = await waitForCatalogCards(iframe);
-      return cards.map((card) => {
-        const sizeButtons = Array.from(card.querySelectorAll('.size-option'));
-        const sizeText = sizeButtons.length
-          ? sizeButtons.map((button) => `${button.textContent.trim()}: ${formatCurrency(button.dataset.price)}`).join('\n')
-          : (card.querySelector('.product-volume')?.textContent || '').replace(/^Contenido:\s*/i, '').trim();
-        const priceText = card.querySelector('.product-price')?.textContent || '';
-        const imageEl = card.querySelector('.product-image img');
-        return normalizeProduct({
-          id: card.dataset.productId || undefined,
-          name: card.querySelector('h3')?.textContent || '',
-          brand: '',
-          category: card.querySelector('.product-tag')?.textContent || '',
-          subcategory: card.querySelector('.product-subtag')?.textContent || '',
-          description: card.querySelector('h3 + p')?.textContent || '',
-          sizes: sizeText || 'Presentacion unica',
-          price: sizeButtons.length
-            ? Math.min(...sizeButtons.map((button) => Number(button.dataset.price) || 0).filter(Boolean))
-            : parseCurrencyValue(priceText),
-          image: imageEl?.getAttribute('src') || '',
-          active: true,
-          featured: false,
-          promo: false,
-          source: 'catalog',
-        });
-      }).filter((product) => product.name);
+      const snapshot = JSON.parse(localStorage.getItem('rubensCatalogSnapshot') || '[]');
+      return Array.isArray(snapshot)
+        ? snapshot.map((product) => normalizeProduct(product)).filter((product) => product.name)
+        : [];
     } catch (error) {
       return [];
-    } finally {
-      iframe.remove();
     }
   };
 
@@ -888,7 +832,7 @@
 
   const syncProductsFromCatalog = async () => {
     setStatus(elements.productStatus, 'Importando catalogo actual...');
-    const catalogProducts = await readCatalogProductsFromIframe();
+    const catalogProducts = await readCatalogProductsFromSnapshot();
     console.log('productos recibidos desde catálogo local', catalogProducts);
     console.log('productos sin imagen detectados', catalogProducts.filter((product) => !getProductImageSource(product)));
     if (!catalogProducts.length) {

@@ -354,6 +354,31 @@ window.addEventListener('DOMContentLoaded', () => {
     return fallback ? localAssetPath(fallback) : localAssetPath('logo.png');
   };
 
+  const persistCatalogSnapshot = () => {
+    try {
+      const snapshot = products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        brand: product.brand || '',
+        category: product.categoryLabel || product.category || '',
+        subcategory: product.subcategory || '',
+        description: product.description || '',
+        sizes: Array.isArray(product.sizeOptions) && product.sizeOptions.length
+          ? product.sizeOptions.map((option) => `${option.label}: ${formatCurrency(option.price)}`).join('\n')
+          : (product.volume || 'Presentacion unica'),
+        price: Number(product.price) || 0,
+        image: getProductDisplayImage(product),
+        active: true,
+        featured: false,
+        promo: false,
+        source: 'catalog',
+      }));
+      localStorage.setItem('rubensCatalogSnapshot', JSON.stringify(snapshot));
+    } catch (error) {
+      console.warn('No se pudo guardar snapshot del catalogo.', error);
+    }
+  };
+
   const normalizeText = (text) => String(text || '')
     .toLowerCase()
     .normalize('NFD')
@@ -454,10 +479,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_REST_URL = 'https://jlxrrqjqqbbrzfzmlyuw.supabase.co/rest/v1/';
   const SUPABASE_KEY = 'sb_publishable_IPQVpAeDJwNh_bZ575tz5w_8hAUzsEL';
   const SUPABASE_PRODUCTS_TABLE = 'productos';
-  const ORDER_API_BASE_URL = window.location.hostname.includes('rubensdistribuidora.com')
-    ? 'https://rubensdistribuidora.com'
-    : 'https://distribuidora-rubens.vercel.app';
-  const ORDER_API_FALLBACK_URL = 'https://distribuidora-rubens.vercel.app';
+  const ORDER_API_BASE_URL = 'https://rubensdistribuidora.com';
+  const ORDER_API_FALLBACK_URL = 'https://rubensdistribuidora.com';
   const CREATE_PREFERENCE_API_BASE_URL = String(window.ORDER_API_BASE_URL || ORDER_API_FALLBACK_URL).replace(/\/$/, '');
 
   const parseAdminSizeOptions = (sizesText) => {
@@ -4458,6 +4481,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
 
   const initializeProductCatalog = async () => {
     generateProducts();
+    persistCatalogSnapshot();
     const params = new URLSearchParams(window.location.search);
     const useLocalCatalog = params.get('catalogoLocal') === '1';
     const requestedCategory = normalizeCategoryKey(params.get('categoria') || params.get('category'));
@@ -4492,6 +4516,7 @@ Total final: ${formatCurrency(order.totals.total)}`;
           total: products.length,
           supabase: supabaseProducts.length,
         });
+        persistCatalogSnapshot();
         renderCurrentCatalog();
       } else {
         console.log('Supabase cargó 0 productos. Usando catálogo local como fallback.');
